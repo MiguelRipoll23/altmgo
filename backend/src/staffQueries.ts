@@ -29,6 +29,40 @@ export type StaffAccountRow = {
 };
 
 /**
+ * One account, with everything the account's own page shows about it.
+ *
+ * The slots are the account's own column rather than something counted from the
+ * roster, because they are what the game compares a character count against: an
+ * account with four characters and three slots is over its limit, and a page that
+ * showed only the count would make that look like four and a spare.
+ */
+export type StaffAccountDetailRow = {
+  id: number;
+  display_name: string;
+  slots: number;
+  banned_until: Date | null;
+  ban_reason: string | null;
+  main_character_id: number | null;
+  main_character_name: string | null;
+  current_character_id: number | null;
+  current_character_name: string | null;
+  character_count: number;
+  roles: HeldRole[];
+};
+
+/** One character belonging to an account, as its owner's page lists it. */
+export type AccountCharacterRow = {
+  id: number;
+  name: string;
+  rank: number;
+  experience: number;
+  total_rewards: number;
+  created_at: Date;
+  last_seen_at: Date | null;
+  lobby_name: string | null;
+};
+
+/**
  * Which side of the game masters' mailbox a listing is about.
  *
  * The table is one mailbox with two kinds of letter in it: what a player wrote to
@@ -112,6 +146,85 @@ export async function listStaffAccounts(): Promise<StaffAccountRow[]> {
     left join characters main_character on main_character.id = account.main_character_id
     left join characters current_character on current_character.id = account.current_character_id
     order by account.display_name, account.id
+  `);
+}
+
+/**
+ * Reads one account, or nothing when there is no such account.
+ *
+ * It is the listing's own query narrowed to a single row rather than a new
+ * shape: the page it answers for is the listing's row opened, so the two have to
+ * agree about what an account is, and a second query would be a second answer.
+ * The ids of the main and current characters come with the names because the
+ * page links each of them to the character's own page, and a link built from a
+ * name would have to search for the id it already has.
+ */
+export async function findStaffAccount(
+  accountIdentifier: number,
+): Promise<StaffAccountDetailRow | undefined> {
+  const rows = await readRows<StaffAccountDetailRow>(database()`
+    select
+      account.id,
+      account.display_name,
+      account.slots,
+      account.banned_until,
+      account.ban_reason,
+      main_character.id as main_character_id,
+      main_character.name as main_character_name,
+      current_character.id as current_character_id,
+      current_character.name as current_character_name,
+      (
+        select count(*)::bigint
+        from characters character
+        where character.account_id = account.id
+      ) as character_count,
+      coalesce(
+        (
+          select json_agg(
+            json_build_object('role', held.role, 'granted_at', held.granted_at)
+            order by held.role
+          )
+          from account_roles held
+          where held.account_id = account.id
+        ),
+        '[]'::json
+      ) as roles
+    from accounts account
+    left join characters main_character on main_character.id = account.main_character_id
+    left join characters current_character on current_character.id = account.current_character_id
+    where account.id = ${accountIdentifier}
+    limit 1
+  `);
+
+  return rows[0];
+}
+
+/**
+ * The characters an account owns, most active first.
+ *
+ * The lobby comes from the presence table rather than being asked of the account,
+ * so a character sitting in a room is drawn where the staff characters page would
+ * draw it: a character that is somewhere is a character somebody can be asked
+ * about, and one that is nowhere is one they cannot.
+ */
+export async function listAccountCharacters(
+  accountIdentifier: number,
+): Promise<AccountCharacterRow[]> {
+  return readRows<AccountCharacterRow>(database()`
+    select
+      character.id,
+      character.name,
+      character.rank,
+      character.experience,
+      character.total_rewards,
+      character.created_at,
+      character.last_seen_at,
+      lobby.name as lobby_name
+    from characters character
+    left join character_presence presence on presence.character_id = character.id
+    left join lobbies lobby on lobby.id = presence.lobby_id
+    where character.account_id = ${accountIdentifier} and character.active
+    order by character.last_seen_at desc nulls last, character.name
   `);
 }
 

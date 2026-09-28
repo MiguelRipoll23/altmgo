@@ -6,7 +6,13 @@ import { isDiscordConfigured, sendChannelMessage } from '../discord.js';
 import { readBody, readBoolean, readInteger, readText } from '../requestBody.js';
 import { listNews, findNews } from '../newsQueries.js';
 import { findOutboxMail } from '../mailQueries.js';
-import { isGameMasterMailBox, listGameMasterMail, listStaffAccounts } from '../staffQueries.js';
+import {
+  findStaffAccount,
+  isGameMasterMailBox,
+  listAccountCharacters,
+  listGameMasterMail,
+  listStaffAccounts,
+} from '../staffQueries.js';
 import {
   editGameMasterMail,
   editNews,
@@ -121,6 +127,60 @@ managerRoutes.get('/manager/roles', requireManager, async (context) => {
         role: held.role,
         grantedAt: held.granted_at,
       })),
+    })),
+  });
+});
+
+/**
+ * One account, for the page the accounts list opens.
+ *
+ * It is a page of its own because a manager arrives at an account from two
+ * directions — from the list, and from a character's page that named the account
+ * the character belongs to — and both want the same answer: what this account
+ * holds and who plays on it. The roster is in the same response rather than a
+ * second request for it, so the page is one read that either arrives whole or
+ * does not arrive at all.
+ */
+managerRoutes.get('/manager/accounts/:identifier', requireManager, async (context) => {
+  const accountIdentifier = Number(context.req.param('identifier'));
+
+  if (!Number.isInteger(accountIdentifier) || accountIdentifier <= 0) {
+    return context.json({ error: 'No account has that id.' }, 404);
+  }
+
+  const account = await findStaffAccount(accountIdentifier);
+
+  if (!account) {
+    return context.json({ error: 'No account has that id.' }, 404);
+  }
+
+  const characters = await listAccountCharacters(accountIdentifier);
+
+  return context.json({
+    account: {
+      id: account.id,
+      displayName: account.display_name,
+      slots: account.slots,
+      mainCharacterId: account.main_character_id,
+      mainCharacterName: account.main_character_name,
+      currentCharacterId: account.current_character_id,
+      currentCharacterName: account.current_character_name,
+      bannedUntil: account.banned_until,
+      banReason: account.ban_reason,
+      roles: account.roles.map((held) => ({
+        role: held.role,
+        grantedAt: held.granted_at,
+      })),
+    },
+    characters: characters.map((character) => ({
+      id: character.id,
+      name: character.name,
+      rank: character.rank,
+      experience: character.experience,
+      totalRewards: character.total_rewards,
+      lobbyName: character.lobby_name,
+      createdAt: character.created_at,
+      lastSeenAt: character.last_seen_at,
     })),
   });
 });

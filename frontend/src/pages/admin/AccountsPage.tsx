@@ -1,5 +1,6 @@
 import { ShieldCheck, ShieldMinus, ShieldPlus } from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { apiRequest, describeError } from '../../api';
 import { DataTable, Panel, SectionHeading, formatDate, formatNumber } from '../../components/DataDisplay';
 import { StatusMessage } from '../../components/StatusMessage';
@@ -21,10 +22,10 @@ import { readSessionToken } from '../../session';
  */
 
 /** One role an account holds. */
-type HeldRole = { role: string; grantedAt: string };
+export type HeldRole = { role: string; grantedAt: string };
 
 /** One account, as the backend lists it. */
-type Account = {
+export type Account = {
   id: number;
   displayName: string;
   mainCharacterName: string | null;
@@ -140,7 +141,17 @@ export function AccountsPage() {
           loading={accounts.loading}
           loadingLabel="Reading the accounts…"
           columns={[
-            { header: 'Account', cell: (row) => row.displayName },
+            {
+              header: 'Account',
+              cell: (row) => (
+                <Link
+                  to={`/admin/accounts/${row.id}`}
+                  className="font-medium text-primary hover:underline"
+                >
+                  {row.displayName}
+                </Link>
+              ),
+            },
             { header: 'Main character', cell: (row) => row.mainCharacterName },
             { header: 'Current character', cell: (row) => row.currentCharacterName },
             {
@@ -159,7 +170,15 @@ export function AccountsPage() {
             },
             {
               header: 'Roles',
-              cell: (row) => <RoleButtons account={row} busy={busy} onChange={changeRole} />,
+              cell: (row) => (
+                <RoleButtons
+                  accountId={row.id}
+                  displayName={row.displayName}
+                  roles={row.roles}
+                  busy={busy}
+                  onChange={changeRole}
+                />
+              ),
             },
           ]}
         />
@@ -180,31 +199,39 @@ export function AccountsPage() {
  * the server is what refuses the last one. Drawing it and having it refuse is better
  * than hiding it: an operator who cannot take the role off somebody needs to be told
  * why, and "the button is missing" is not that.
+ *
+ * It is exported and given its account's fields rather than the row, because the
+ * account's own page draws the same controls from a different read of the same
+ * account, and two grant buttons is one more place for the permission to live.
  */
-function RoleButtons({
-  account,
+export function RoleButtons({
+  accountId,
+  displayName,
+  roles: held,
   busy,
   onChange,
 }: {
-  account: Account;
+  accountId: number;
+  displayName: string;
+  roles: HeldRole[];
   busy: boolean;
   onChange: (accountId: number, role: string, grant: boolean) => void;
 }) {
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       {roles.map((role) => {
-        const held = account.roles.some((known) => known.role === role.value);
+        const granted = held.some((known) => known.role === role.value);
 
-        return held ? (
+        return granted ? (
           <Badge key={role.value} variant="outline" className="gap-1">
             <ShieldCheck className="size-3" />
             {role.label}
             <button
               type="button"
               disabled={busy}
-              onClick={() => onChange(account.id, role.value, false)}
+              onClick={() => onChange(accountId, role.value, false)}
               className="ml-0.5 rounded hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              aria-label={`Take the ${role.label} role away from ${account.displayName}`}
+              aria-label={`Take the ${role.label} role away from ${displayName}`}
             >
               <ShieldMinus className="size-3" />
             </button>
@@ -215,8 +242,8 @@ function RoleButtons({
             variant="ghost"
             size="sm"
             disabled={busy}
-            onClick={() => onChange(account.id, role.value, true)}
-            aria-label={`Give ${account.displayName} the ${role.label} role`}
+            onClick={() => onChange(accountId, role.value, true)}
+            aria-label={`Give ${displayName} the ${role.label} role`}
           >
             <ShieldPlus />
             {role.label}
@@ -224,9 +251,7 @@ function RoleButtons({
         );
       })}
 
-      {account.roles.length === 0 ? (
-        <span className="text-xs text-muted-foreground">Player</span>
-      ) : null}
+      {held.length === 0 ? <span className="text-xs text-muted-foreground">Player</span> : null}
     </div>
   );
 }

@@ -23,6 +23,7 @@ import { SurvivalEventPage } from './pages/SurvivalEventPage';
 import { SurvivalTeamsPage } from './pages/SurvivalTeamsPage';
 import { TournamentEventPage } from './pages/TournamentEventPage';
 import { TournamentPage } from './pages/TournamentPage';
+import { AccountDetailPage } from './pages/admin/AccountDetailPage';
 import { AccountsPage } from './pages/admin/AccountsPage';
 import { AdminOverviewPage } from './pages/admin/AdminOverviewPage';
 import { AdminCharacterDetailPage } from './pages/admin/CharacterDetailPage';
@@ -209,6 +210,10 @@ export function App() {
           <Route
             path="accounts"
             element={<AdminStaffSection role="manager" page={<AccountsPage />} />}
+          />
+          <Route
+            path="accounts/:identifier"
+            element={<AdminStaffSection role="manager" page={<AccountDetailPage />} />}
           />
         </Route>
 
