@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
+import type { Context } from 'hono';
 import type { AppBindings } from '../authentication.js';
-import { requireAccount } from '../authentication.js';
+import { requireAccount, requireManager } from '../authentication.js';
 import {
   isCharacterSort,
   listEventSchedules,
@@ -17,6 +18,8 @@ import {
 import { listNews, findNews } from '../newsQueries.js';
 import { findAccountMail, isMailBox, listAccountMail } from '../mailQueries.js';
 import { listLobbyPresence, readPresenceTotals, readServerTotals } from '../presence.js';
+import { editGame, removeGame, type GameOutcome, type GameRefusal } from '../gameWrites.js';
+import { readBody, readText } from '../requestBody.js';
 import { readAccountPublicAddress } from '../publicAddresses.js';
 import { isClanBoard, isPlayerBoard, readClanBoard, readPlayerBoard } from '../rankingsQueries.js';
 
@@ -213,6 +216,76 @@ dashboardRoutes.get('/games', requireAccount, async (context) => {
       updatedAt: game.updated_at,
     })),
   });
+});
+
+/**
+ * What each refusal means to the person who pressed the button.
+ *
+ * The sentences name the field rather than the column, and the length ones say
+ * what the limit is, because an operator who has been told a name is too long has
+ * to guess at how much longer than what.
+ */
+const gameRefusalMessages: Record<GameRefusal['reason'], string> = {
+  name: 'That room name cannot be used. It is empty or longer than sixteen characters.',
+  comment: 'That comment cannot be used. It is longer than a room comment can be.',
+  'unknown-game': 'That room has stopped being hosted, so it is no longer here to change.',
+};
+
+/** Answers a game write with either its result or the sentence for why it failed. */
+function answerGame(context: Context<AppBindings>, outcome: GameOutcome<unknown>) {
+  if (outcome.ok) {
+    return context.json(outcome.value, 200);
+  }
+
+  return context.json({ error: gameRefusalMessages[outcome.refusal.reason] }, 400);
+}
+
+/**
+ * Corrects a hosted room's name and comment.
+ *
+ * It lives here beside the read rather than with the manager's other writes, because
+ * it is the only one of those about something the server is actively using: a game
+ * row is the host's, and this is a correction of it rather than a statement the
+ * server makes. The manager role is the same either way — a moderator runs events,
+ * and a room somebody is playing in is not an event.
+ */
+dashboardRoutes.put('/games/:identifier', requireManager, async (context) => {
+  const body = await readBody(context);
+  const identifier = Number(context.req.param('identifier'));
+
+  if (!Number.isInteger(identifier) || identifier <= 0) {
+    return context.json({ error: 'No such room.' }, 404);
+  }
+
+  return answerGame(
+    context,
+    await editGame(identifier, {
+      name: readText(body, 'name'),
+      comment: readText(body, 'comment'),
+    }),
+  );
+});
+
+/**
+ * Removes a hosted room.
+ *
+ * A refusal rather than a 404 when the room is not there, and deliberately: a room
+ * stops being listed once its host stops writing, so the commonest reason for
+ * pressing this on a room that has since ended is that the game is over. "It has
+ * stopped being hosted" is a sentence an operator can act on, where a bare not-found
+ * reads as a fault in the dashboard rather than as news about the game.
+ *
+ * What happens to a host that is still connected is the host subsystem's business,
+ * not this write's, and the page says so before the button is pressed.
+ */
+dashboardRoutes.delete('/games/:identifier', requireManager, async (context) => {
+  const identifier = Number(context.req.param('identifier'));
+
+  if (!Number.isInteger(identifier) || identifier <= 0) {
+    return context.json({ error: 'No such room.' }, 404);
+  }
+
+  return answerGame(context, await removeGame(identifier));
 });
 
 /** The Survival teams and the events they are played in. */
