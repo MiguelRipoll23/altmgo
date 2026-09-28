@@ -118,6 +118,19 @@ export async function readPresenceTotals(): Promise<PresenceTotalsRow> {
  * Every gameplay lobby with a count of what is connected to it, including the
  * lobbies that currently hold nobody: a lobby that is up and empty is a fact
  * the overview should show rather than hide by omission.
+ *
+ * The four restriction flags are quoted, and they are the only camelCase aliases
+ * in this repository, because an unquoted identifier is folded to lower case by
+ * Postgres. Written unquoted, "as beginnersOnly" names a column "beginnersonly",
+ * the driver builds its row with that key, and the row cast to a
+ * LobbyPresenceRow arrives holding four undefineds that no assertion can catch:
+ * the query succeeds, the route sends "restrictions": {}, and every lobby reports
+ * no restrictions. That is not a rare edge — Basic Training sets beginners_only
+ * and Replays sets replays_only on a stock deployment, so two of the nine lobbies
+ * on the overview were lying about themselves for as long as this was unquoted.
+ *
+ * Everything else this file aliases is snake_case or a single lower-case word,
+ * which is what folding to lower case does not change.
  */
 export async function listLobbyPresence(): Promise<LobbyPresenceRow[]> {
   const rows = await database()`
@@ -128,10 +141,10 @@ export async function listLobbyPresence(): Promise<LobbyPresenceRow[]> {
       lobby.subtype_id as subtype,
       lobby.ip_address as address,
       lobby.port,
-      lobby.begginers_only as beginnersOnly,
-      lobby.expansion_required as expansionRequired,
-      lobby.no_headshots as noHeadshots,
-      lobby.replays_only as replaysOnly,
+      lobby.begginers_only as "beginnersOnly",
+      lobby.expansion_required as "expansionRequired",
+      lobby.no_headshots as "noHeadshots",
+      lobby.replays_only as "replaysOnly",
       (
         select count(*)::int
         from character_presence presence
