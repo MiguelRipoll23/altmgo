@@ -1,5 +1,5 @@
 import { ArrowLeft, Mail } from 'lucide-react';
-import { Link, useLocation, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { Panel, SectionHeading, formatDate } from '../components/DataDisplay';
 import { StatusMessage } from '../components/StatusMessage';
 import { useApiResource } from '../components/useApiResource';
@@ -33,29 +33,28 @@ export type MailScope = 'inbox' | 'outbox';
  * detail page is: a link to a letter is a thing people paste to each other, and a
  * pasted link has to open the letter and not a list it once sat in.
  *
- * The query it arrived with is carried on the back link, so a reader who opened a
- * letter from the outbox goes back to the outbox rather than to whichever box
- * happens to be the default. The game master outbox arrives with no query and is
- * left alone, which is why the back link is built rather than hard-written.
+ * The mailbox a message was opened from is part of the address rather than a
+ * piece of state, so the back link returns to the list the reader was actually
+ * reading — a letter found in the outbox goes back to the outbox rather than to
+ * whichever mailbox happens to be first — and so a shared link names the list the
+ * sender was reading rather than leaving the reader to guess.
  */
 export function MailDetailPage({
   scope,
-  listPath,
-  listLabel,
+  back,
+  label,
 }: {
   scope: MailScope;
-  /** Where the back link returns to: the list this frame shows. */
-  listPath: string;
-  /** The words on the back link, which differ between an inbox and a sent list. */
-  listLabel: string;
+  /** Where the back link returns to: the list this message was opened from. */
+  back: string;
+  /** The words on the back link, which differ between a mailbox and a sent list. */
+  label: string;
 }) {
   const { identifier } = useParams();
-  const location = useLocation();
   const path = scope === 'outbox' ? `/api/manager/mail/${identifier}` : `/api/mail/${identifier}`;
   const { data, error, loading } = useApiResource<{ mail: MailMessage }>(path);
 
   const message = data?.mail ?? null;
-  const back = `${listPath}${location.search}`;
 
   return (
     <div className="space-y-6">
@@ -68,7 +67,7 @@ export function MailDetailPage({
         className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
       >
         <ArrowLeft className="size-4" />
-        {listLabel}
+        {label}
       </Link>
 
       {message === null ? (

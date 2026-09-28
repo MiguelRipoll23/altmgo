@@ -9,12 +9,11 @@ import {
   Trophy,
   UserCog,
   Users,
-  type LucideIcon,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { NavLink } from 'react-router-dom';
 import { isManager, isModerator, type StaffRole } from '../session';
-import { AccountMenu } from './AccountMenu';
+import { DashboardShell } from './DashboardShell';
+import type { SidebarSection } from './SidebarNav';
 
 /**
  * One section of the admin dashboard. The role is what decides whether the section
@@ -22,10 +21,7 @@ import { AccountMenu } from './AccountMenu';
  * is not a section, and showing it greyed out would only invite the click that is
  * then refused.
  */
-type Section = {
-  path: string;
-  label: string;
-  icon: LucideIcon;
+type Section = SidebarSection & {
   /** The role a caller needs, or nothing when any signed-in account may open it. */
   role?: StaffRole;
 };
@@ -48,9 +44,9 @@ type Section = {
  * server checks the same role on every call, so a browser with an edited role list
  * sees a section and is then refused by the API.
  *
- * The column itself is the same one the player dashboard draws, to the same
- * measure: the two frames are two views of one account, and the account card at
- * the foot of it is the only control that is on every page of both.
+ * The column is the one the player dashboard draws, in the shell that draws it
+ * there: the two frames are two views of one account, and the account card at the
+ * foot of it is the only control that is on every page of both.
  */
 const sections: Section[] = [
   { path: '/admin', label: 'Overview', icon: LayoutDashboard },
@@ -58,7 +54,15 @@ const sections: Section[] = [
   { path: '/admin/news', label: 'News', icon: Newspaper },
   { path: '/admin/clans', label: 'Clans', icon: Flag },
   { path: '/admin/games', label: 'Games', icon: Gamepad2 },
-  { path: '/admin/survival', label: 'Survival', icon: Swords },
+  {
+    path: '/admin/survival',
+    label: 'Survival',
+    icon: Swords,
+    children: [
+      { path: '/admin/survival/events', label: 'Events' },
+      { path: '/admin/survival/teams', label: 'Teams' },
+    ],
+  },
   { path: '/admin/tournament', label: 'Tournament', icon: Trophy },
   { path: '/admin/discord', label: 'Discord', icon: MessageSquare, role: 'manager' },
   {
@@ -85,7 +89,7 @@ function isPermitted(section: Section, roles: StaffRole[]): boolean {
   return section.role === 'manager' ? isManager(roles) : isModerator(roles);
 }
 
-/** The admin dashboard: a fixed column of sections down the left, the page beside them. */
+/** The admin dashboard: the sections down the left, the page beside them. */
 export function AdminLayout({
   accountName,
   roles,
@@ -95,49 +99,22 @@ export function AdminLayout({
   roles: StaffRole[];
   children: ReactNode;
 }) {
-  const visible = sections.filter((section) => isPermitted(section, roles));
-
   return (
-    <div className="min-h-screen bg-background text-foreground antialiased">
-      <aside className="fixed inset-y-0 left-0 z-40 flex w-64 flex-col gap-6 overflow-y-auto border-r border-border bg-card/60 px-5 pb-6 pt-5">
+    <DashboardShell
+      sections={sections.filter((section) => isPermitted(section, roles))}
+      accountName={accountName}
+      roles={roles}
+      frame={{ to: '/dashboard', label: 'Back to dashboard', icon: LayoutDashboard }}
+      brand={
         <p className="text-lg font-extrabold tracking-tight">
           <span className="text-primary">Alt</span>MGO
           <span className="ml-2 align-middle text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             Admin
           </span>
         </p>
-
-        <nav className="flex flex-1 flex-col gap-1">
-          {visible.map((section) => (
-            <NavLink
-              key={section.path}
-              to={section.path}
-              end={section.path === '/admin'}
-              className={({ isActive }) =>
-                [
-                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition',
-                  isActive
-                    ? 'bg-primary/10 font-semibold text-primary'
-                    : 'font-medium text-muted-foreground hover:bg-muted/60 hover:text-foreground',
-                ].join(' ')
-              }
-            >
-              <section.icon className="size-4 shrink-0" />
-              {section.label}
-            </NavLink>
-          ))}
-        </nav>
-
-        <AccountMenu
-          accountName={accountName}
-          roles={roles}
-          frame={{ to: '/dashboard', label: 'Back to dashboard', icon: LayoutDashboard }}
-        />
-      </aside>
-
-      <main className="min-w-0 pl-64">
-        <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-8">{children}</div>
-      </main>
-    </div>
+      }
+    >
+      {children}
+    </DashboardShell>
   );
 }

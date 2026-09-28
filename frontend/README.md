@@ -14,8 +14,10 @@ browser. There is deliberately no `vercel.json` here: this app is not deployed o
 | `/dashboard` | the server's figures and the caller's published address, whose tile carries the update button |
 | `/dashboard/news`, `/admin/news` | the published news, newest first |
 | `/dashboard/news/:id`, `/admin/news/:id` | one news item, on a page of its own so it can be linked to |
-| `/dashboard/mail` | the mail sent to the caller's own characters |
-| `/dashboard/mail/:id` | one inbox message |
+| `/dashboard/mail` | redirects to the inbox; the other mailboxes are `/dashboard/mail/outbox` and `/dashboard/mail/all` |
+| `/dashboard/mail/inbox/:id`, `/dashboard/mail/outbox/:id`, `/dashboard/mail/all/:id` | one message, under the mailbox it was opened from |
+| `/dashboard/survival/events`, `/dashboard/survival/teams` | the Survival schedule and the ladder, as two pages |
+| `/dashboard/rankings/players`, `/dashboard/rankings/clans` | the player and clan boards, as two pages |
 | `/admin/announcements/mail/:id` | one game master message, as it was sent to every inbox |
 | `/admin` | the same overview read as the server rather than as the account, plus what is published |
 | anything else | not found |

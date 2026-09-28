@@ -1,18 +1,22 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AdminRoute, AdminStaffSection } from './components/AdminRoute';
 import { DashboardRoute, OverviewSection } from './components/DashboardRoute';
 import { ClansPage } from './pages/ClansPage';
 import { GamesPage } from './pages/GamesPage';
 import { HomePage } from './pages/HomePage';
+import { MailAllPage } from './pages/MailAllPage';
 import { MailDetailPage } from './pages/MailDetailPage';
-import { MailPage } from './pages/MailPage';
+import { MailInboxPage } from './pages/MailInboxPage';
+import { MailOutboxPage } from './pages/MailOutboxPage';
 import { NewsDetailPage } from './pages/NewsDetailPage';
 import { NewsPage } from './pages/NewsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
-import { RankingsPage } from './pages/RankingsPage';
+import { RankingsClansPage } from './pages/RankingsClansPage';
+import { RankingsPlayersPage } from './pages/RankingsPlayersPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { SignInPage } from './pages/SignInPage';
-import { SurvivalPage } from './pages/SurvivalPage';
+import { SurvivalEventsPage } from './pages/SurvivalEventsPage';
+import { SurvivalTeamsPage } from './pages/SurvivalTeamsPage';
 import { TournamentPage } from './pages/TournamentPage';
 import { AccountsPage } from './pages/admin/AccountsPage';
 import { AdminOverviewPage } from './pages/admin/AdminOverviewPage';
@@ -46,6 +50,21 @@ import { EventOperationsPage } from './pages/admin/EventOperationsPage';
  * is the key the router resolves relative paths by. Five lines repeated is cheaper
  * than an id that collides.
  *
+ * A section the sidebar splits into sub-options is a set of routes rather than one
+ * route with a view chosen inside it: survival's events and teams, rankings'
+ * players and clans, and the three mailboxes are each their own page with its own
+ * path, so each can be linked to, reloaded and opened in a second window on its
+ * own, and the sidebar's sub-option is the same address the page is at. The bare
+ * section path redirects to its first sub-option rather than being a page of its
+ * own, so there is no address that shows the section without showing something in
+ * it.
+ *
+ * A detail page under a set of sub-options keeps the sub-option in its own
+ * segment, so a mailbox is named by the path — `/mail/outbox/41` rather than
+ * `/mail/41?box=outbox`. A page reached from two of its own lists then has one
+ * address per list rather than one address and a parameter that says which list
+ * was meant, and no id ever shares a route with the name of a list it is not in.
+ *
  * The staff sections exist once, in the admin tree: Discord, accounts and
  * announcements speak for the server and need a manager, and the event operations
  * run the events and need a moderator. The check in the route decides what the
@@ -66,18 +85,31 @@ export function App() {
             path="news/:identifier"
             element={<NewsDetailPage scope="player" listPath="/dashboard/news" />}
           />
-          <Route path="mail" element={<MailPage />} />
+          <Route path="mail" element={<Navigate to="mail/inbox" replace />} />
+          <Route path="mail/inbox" element={<MailInboxPage />} />
+          <Route path="mail/outbox" element={<MailOutboxPage />} />
+          <Route path="mail/all" element={<MailAllPage />} />
           <Route
-            path="mail/:identifier"
-            element={
-              <MailDetailPage scope="inbox" listPath="/dashboard/mail" listLabel="Your inbox" />
-            }
+            path="mail/inbox/:identifier"
+            element={<MailDetailPage scope="inbox" back="/dashboard/mail/inbox" label="Inbox" />}
+          />
+          <Route
+            path="mail/outbox/:identifier"
+            element={<MailDetailPage scope="inbox" back="/dashboard/mail/outbox" label="Outbox" />}
+          />
+          <Route
+            path="mail/all/:identifier"
+            element={<MailDetailPage scope="inbox" back="/dashboard/mail/all" label="All mail" />}
           />
           <Route path="clans" element={<ClansPage />} />
           <Route path="games" element={<GamesPage />} />
-          <Route path="survival" element={<SurvivalPage />} />
+          <Route path="survival" element={<Navigate to="survival/events" replace />} />
+          <Route path="survival/events" element={<SurvivalEventsPage />} />
+          <Route path="survival/teams" element={<SurvivalTeamsPage />} />
           <Route path="tournament" element={<TournamentPage />} />
-          <Route path="rankings" element={<RankingsPage />} />
+          <Route path="rankings" element={<Navigate to="rankings/players" replace />} />
+          <Route path="rankings/players" element={<RankingsPlayersPage />} />
+          <Route path="rankings/clans" element={<RankingsClansPage />} />
         </Route>
 
         <Route path="/admin" element={<AdminRoute />}>
@@ -89,7 +121,9 @@ export function App() {
           />
           <Route path="clans" element={<ClansPage />} />
           <Route path="games" element={<GamesPage />} />
-          <Route path="survival" element={<SurvivalPage />} />
+          <Route path="survival" element={<Navigate to="survival/events" replace />} />
+          <Route path="survival/events" element={<SurvivalEventsPage />} />
+          <Route path="survival/teams" element={<SurvivalTeamsPage />} />
           <Route path="tournament" element={<TournamentPage />} />
           <Route path="characters" element={<CharactersPage />} />
           <Route
@@ -114,11 +148,7 @@ export function App() {
               <AdminStaffSection
                 role="manager"
                 page={
-                  <MailDetailPage
-                    scope="outbox"
-                    listPath="/admin/announcements"
-                    listLabel="Sent mail"
-                  />
+                  <MailDetailPage scope="outbox" back="/admin/announcements" label="Sent mail" />
                 }
               />
             }
