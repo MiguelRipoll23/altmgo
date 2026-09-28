@@ -8,6 +8,7 @@ import {
   Shield,
   Swords,
   Trophy,
+  UserRound,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { StaffRole } from '../session';
@@ -22,11 +23,13 @@ import type { SidebarSection } from './SidebarNav';
  * may make.
  *
  * The order is the shape of a session rather than the shape of the schema: who is
- * on, what the server has said to them, who they play with and where, what is
- * running, the two event ladders, and finally where they stand on the boards.
- * News and mail sit second and third because they are the two things addressed to
- * the reader personally — the client shows the news on the way in and the mail in
- * the inbox, and these are the same two lists without leaving the browser.
+ * on, who the reader is playing as, what the server has said to them, who they
+ * play with and where, what is running, the two event ladders, and finally where
+ * they stand on the boards. Characters sit second because they are what the
+ * overview's published address belongs to — the page above names a figure without
+ * saying whose it is — and News and mail follow as the two things addressed to the
+ * reader personally: the client shows the news on the way in and the mail in the
+ * inbox, and these are the same two lists without leaving the browser.
  *
  * Mail, Survival and rankings are the sections that are more than one page, so
  * they carry their sub-options. Their rows are headings with a disclosure rather
@@ -41,6 +44,7 @@ import type { SidebarSection } from './SidebarNav';
  */
 const sections: SidebarSection[] = [
   { path: '/dashboard', label: 'Overview', icon: LayoutDashboard },
+  { path: '/dashboard/characters', label: 'Characters', icon: UserRound },
   { path: '/dashboard/news', label: 'News', icon: Newspaper },
   {
     path: '/dashboard/mail',

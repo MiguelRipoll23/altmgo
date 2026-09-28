@@ -5,10 +5,12 @@ import { ClansPage } from './pages/ClansPage';
 import { ClanDetailPage } from './pages/ClanDetailPage';
 import { GamesPage } from './pages/GamesPage';
 import { HomePage } from './pages/HomePage';
+import { CharacterDetailPage } from './pages/CharacterDetailPage';
 import { MailAllPage } from './pages/MailAllPage';
 import { MailDetailPage } from './pages/MailDetailPage';
 import { MailInboxPage } from './pages/MailInboxPage';
 import { MailOutboxPage } from './pages/MailOutboxPage';
+import { MyCharactersPage } from './pages/MyCharactersPage';
 import { NewsDetailPage } from './pages/NewsDetailPage';
 import { NewsPage } from './pages/NewsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -79,6 +81,14 @@ import { EventOperationsPage } from './pages/admin/EventOperationsPage';
  * inside the event's page. The bare event path is the registrations, so the
  * address a card has always led to is still an address and not a redirect.
  *
+ * The player's own characters are pages in the player tree, and the staff search
+ * over every account is the admin frame's: they were the same address once, and
+ * the frame whose route registered first was the frame that answered. The staff
+ * reads are under `/api/admin` for that reason, while the reads both frames make
+ * of the same rows — news, clans, games, the events, the boards — stay shared,
+ * because a second copy of a read any player may make is a second thing to keep
+ * correct.
+ *
  * The staff sections exist once, in the admin tree: Discord, accounts and
  * announcements speak for the server and need a manager, and the event operations
  * run the events and need a moderator. The check in the route decides what the
@@ -94,6 +104,8 @@ export function App() {
 
         <Route path="/dashboard" element={<DashboardRoute />}>
           <Route index element={<OverviewSection />} />
+          <Route path="characters" element={<MyCharactersPage />} />
+          <Route path="characters/:identifier" element={<CharacterDetailPage />} />
           <Route path="news" element={<NewsPage />} />
           <Route
             path="news/:identifier"

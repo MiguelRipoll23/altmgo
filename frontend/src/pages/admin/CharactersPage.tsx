@@ -56,10 +56,10 @@ export function CharactersPage() {
   const [selected, setSelected] = useState<number | null>(null);
 
   const list = useApiResource<{ characters: Character[] }>(
-    `/api/characters?term=${encodeURIComponent(submitted)}&sort=${sort}`,
+    `/api/admin/characters?term=${encodeURIComponent(submitted)}&sort=${sort}`,
   );
   const profile = useApiResource<CharacterProfile>(
-    selected === null ? null : `/api/characters/${selected}`,
+    selected === null ? null : `/api/admin/characters/${selected}`,
   );
 
   return (

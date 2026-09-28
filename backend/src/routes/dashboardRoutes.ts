@@ -128,8 +128,18 @@ dashboardRoutes.get('/overview', requireAccount, async (context) => {
   });
 });
 
-/** Searches the characters of every account, for the characters section. */
-dashboardRoutes.get('/characters', requireAccount, async (context) => {
+/**
+ * Searches the characters of every account, for the admin frame's characters
+ * section.
+ *
+ * It is under `/admin` because it is that frame's read and not a player's. A bare
+ * `/api/characters` was a collision waiting to happen: it and the account's own
+ * characters were the same address, and whichever route was registered first was
+ * the one that answered, so the staff page was quietly being handed the reader's
+ * own two characters however it filtered. Everything else in this file is a read
+ * both frames make of the same rows and is deliberately shared; this one is not.
+ */
+dashboardRoutes.get('/admin/characters', requireAccount, async (context) => {
   const term = context.req.query('term')?.trim() ?? '';
   const requested = context.req.query('sort') ?? 'name';
   const sort = isCharacterSort(requested) ? requested : 'name';
@@ -155,8 +165,8 @@ dashboardRoutes.get('/characters', requireAccount, async (context) => {
   });
 });
 
-/** One character's profile. */
-dashboardRoutes.get('/characters/:identifier', requireAccount, async (context) => {
+/** One character's profile, for the same section and under the same prefix. */
+dashboardRoutes.get('/admin/characters/:identifier', requireAccount, async (context) => {
   const character = await findCharacterDetail(Number(context.req.param('identifier')));
 
   if (!character) {
