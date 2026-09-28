@@ -22,15 +22,30 @@ would have to be trusted to pass it along.
 - **Register and sign in** with the credentials the game itself uses. An account made here can be
   signed into in game and the other way round, because both store the same password digest over the
   same `accounts` row.
-- **A dashboard** with a sidebar of sections — overview, characters, games, survival, tournament and
-  rankings — reading the game server's own tables. The overview leads with how many players are
-  connected and which lobby each is in, taken from `character_presence` rather than from a total the
-  server keeps, so the count and the list beside it are the same reading of the same moment.
-- **Moderator and manager tooling.** A moderator can form a survival team, put a character on one
-  (which is how a `server-` prefixed character from a dedicated match room joins — there is no client
-  on the other end of a room nobody is sitting at), change a team or member state, and publish an
-  event so it becomes enterable. A manager holds every one of those and can additionally write an
-  official message into a Discord channel.
+- **A dashboard** with a fixed sidebar of sections — overview, characters, games, survival, tournament,
+  rankings and discord — reading the game server's own tables. The overview leads with how many
+  players are connected and which gameplay lobby each is in, taken from `character_presence` rather
+  than from a total the server keeps, so the count and the list beside it are the same reading of the
+  same moment. Only `type_id = 2` rows are listed: the gate and the account server are permanent
+  services nobody plays on. It also shows the public address the signed-in account's most recently
+  active character publishes, with a button to re-publish it after a network change.
+- **Survival and tournament are open to any signed-in account.** The ladder and the bracket are public
+  in the game, so the pages read them for players too; the controls that write — forming, renaming and
+  removing a team, publishing, editing and withdrawing an event, changing a state — are drawn for
+  moderators only, and the server refuses them whatever the browser drew.
+- **Server characters.** The `server-` prefixed characters that stand in for dedicated match rooms are
+  created on demand rather than seeded: a moderator asks for six and six are written, up to a pool of
+  sixteen, attached to the `server` account. Ones that already exist are used as they are, and because
+  a character fills one slot on one team at a time, the pool moves them — putting one on a team takes
+  it off the other. This replaces typing a `server-` name by hand, which is how a moderator used to
+  place one.
+- **Moderator and manager tooling.** A manager holds every moderator permission and can additionally
+  write an official message into a Discord channel, which is its own sidebar section rather than a
+  card on the overview — it is the one control there that reaches outside the game, and it should not
+  sit within reach of the click that dismisses a refresh.
+- **The interface is shadcn/ui on Radix, with lucide icons.** The components live in
+  `frontend/src/components/ui/` and the design tokens in `frontend/src/index.css`, so a colour is
+  changed in one place rather than written into every page.
 - **Making a game joinable.** A host whose game is reachable only on the tailnet the players share is
   sent a chat line in game: `Go to <site> and sign in to make your game joinable to other players
   outside your network`. Signing in publishes the caller's public address for every character of the
