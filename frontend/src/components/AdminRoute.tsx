@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { AdminLayout } from './AdminLayout';
+import { useSessionAccount } from './useSessionAccount';
 import {
   isManager,
   isModerator,
-  readSessionAccount,
   readSessionRoles,
   readSessionToken,
   type StaffRole,
@@ -28,8 +28,10 @@ export function AdminRoute() {
 
   const roles = readSessionRoles();
 
+  const account = useSessionAccount();
+
   return (
-    <AdminLayout accountName={readSessionAccount()} roles={roles}>
+    <AdminLayout accountName={account?.displayName ?? null} roles={roles}>
       <Outlet />
     </AdminLayout>
   );

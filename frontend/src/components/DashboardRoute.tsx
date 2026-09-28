@@ -1,7 +1,9 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { DashboardLayout } from './DashboardLayout';
+import { useSessionAccount } from './useSessionAccount';
+import { readSessionRoles, readSessionToken } from '../session';
 import { OverviewPage } from '../pages/OverviewPage';
-import { readSessionAccount, readSessionRoles, readSessionToken } from '../session';
+
 
 /**
  * The layout every player-dashboard section renders inside.
@@ -26,8 +28,10 @@ export function DashboardRoute() {
     return <Navigate to="/signin" replace state={{ from: location.pathname }} />;
   }
 
+  const account = useSessionAccount();
+
   return (
-    <DashboardLayout accountName={readSessionAccount()} roles={readSessionRoles()}>
+    <DashboardLayout accountName={account?.displayName ?? null} roles={readSessionRoles()}>
       <Outlet />
     </DashboardLayout>
   );

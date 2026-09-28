@@ -6,7 +6,7 @@ import { apiRequest, describeError } from '../api';
 import { PageHeading, PageLayout } from '../components/PageLayout';
 import { StatusMessage } from '../components/StatusMessage';
 import type { StatusKind } from '../components/StatusMessage';
-import { writeSessionAccount, writeSessionRoles, writeSessionToken } from '../session';
+import { writeSessionRoles, writeSessionToken } from '../session';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { Input } from '../components/ui/input';
@@ -41,7 +41,6 @@ export function SignInPage() {
 
       writeSessionToken(payload.token);
       writeSessionRoles(payload.account.roles);
-      writeSessionAccount(payload.account.displayName);
 
       // Signing in returns the browser to the section it asked for, which the
       // dashboard remembered on the way out. Anything else — a mistyped path, or

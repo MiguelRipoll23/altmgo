@@ -55,7 +55,7 @@ export function DashboardShell({
   children,
 }: {
   sections: SidebarSection[];
-  accountName: string;
+  accountName: string | null;
   roles: StaffRole[];
   /** The way out of this frame, which only the account card leads to. */
   frame: { to: string; label: string; icon: LucideIcon };

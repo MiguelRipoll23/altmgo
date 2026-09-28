@@ -1,4 +1,4 @@
-import { LogOut, ShieldCheck, type LucideIcon } from 'lucide-react';
+import { ChevronUp, LogOut, ShieldCheck, type LucideIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { clearSessionToken, type StaffRole } from '../session';
 import { Badge } from './ui/badge';
@@ -33,7 +33,15 @@ export function AccountMenu({
   roles,
   frame,
 }: {
-  accountName: string;
+  /**
+   * The name to show, or nothing while the server is being asked for it.
+   *
+   * It is drawn as a placeholder bar rather than as words, because a control that
+   * briefly says "your account" to somebody who is signed in is a lie told in the
+   * one place on the page that is about who they are, and a blank one is only a
+   * moment of a request already in flight.
+   */
+  accountName: string | null;
   roles: StaffRole[];
   /**
    * The way out of the frame this menu is drawn in, when there is one.
@@ -52,14 +60,27 @@ export function AccountMenu({
     <DropdownMenu>
       <DropdownMenuTrigger
         className="flex w-full items-center gap-3 rounded-lg border border-border bg-card/60 px-3 py-2.5 text-left text-sm font-medium text-foreground transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        aria-label="Account and roles"
+        aria-label={accountName === null ? 'Account and roles' : `${accountName}, account and roles`}
       >
-        <span className="min-w-0 flex-1 truncate">{accountName}</span>
+        {accountName === null ? (
+          // `flex-1` rather than a fixed width, so the chevron is already where it
+          // is going to be and the card does not move under the reader's cursor as
+          // the name arrives.
+          <span
+            className="h-4 w-24 max-w-full flex-1 animate-pulse rounded bg-muted"
+            aria-hidden="true"
+          />
+        ) : (
+          <span className="min-w-0 flex-1 truncate">{accountName}</span>
+        )}
+        <ChevronUp className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="start" side="top" className="w-56">
         <DropdownMenuLabel className="font-normal">
-          <span className="block truncate font-medium text-foreground">{accountName}</span>
+          <span className="block truncate font-medium text-foreground">
+            {accountName ?? 'Signed in'}
+          </span>
           <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
             Signed in
           </span>

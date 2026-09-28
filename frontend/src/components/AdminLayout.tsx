@@ -100,7 +100,7 @@ export function AdminLayout({
   roles,
   children,
 }: {
-  accountName: string;
+  accountName: string | null;
   roles: StaffRole[];
   children: ReactNode;
 }) {

@@ -20,6 +20,7 @@ import { findAccountMail, isMailBox, listAccountMail } from '../mailQueries.js';
 import { listLobbyPresence, readPresenceTotals, readServerTotals } from '../presence.js';
 import { editGame, removeGame, type GameOutcome, type GameRefusal } from '../gameWrites.js';
 import { readBody, readText } from '../requestBody.js';
+import { findAccountById } from '../accounts.js';
 import { readAccountPublicAddress } from '../publicAddresses.js';
 import { isClanBoard, isPlayerBoard, readClanBoard, readPlayerBoard } from '../rankingsQueries.js';
 
@@ -194,6 +195,35 @@ dashboardRoutes.get('/admin/characters/:identifier', requireAccount, async (cont
       createdAt: character.created_at,
       lastSeenAt: character.last_seen_at,
     },
+  });
+});
+
+/**
+ * Who the caller is.
+ *
+ * One account, named by the token, read from the row. The token already carries a
+ * display name, and the dashboard could have taken it from there — but that claim
+ * is a snapshot from whenever the token was issued, so a player who renames would
+ * be greeted by the old name until their session expired, and the browser could
+ * print a name the server had never heard of. Reading the row makes the heading and
+ * the permission the same answer.
+ *
+ * It is here beside the overview rather than with the sign-in routes because the
+ * sign-in is the only moment this was true before: the name was fetched once, kept
+ * in the browser for the life of the tab, and gone by the time somebody opened a
+ * second tab or followed a pasted link. The token outlives both.
+ */
+dashboardRoutes.get('/account', requireAccount, async (context) => {
+  const account = await findAccountById(context.get('accountIdentifier'));
+
+  if (!account) {
+    // A token that verifies against a row that is not there is a session for an
+    // account that has since been removed, which is the same thing as no session.
+    return context.json({ error: 'That account no longer exists.' }, 401);
+  }
+
+  return context.json({
+    account: { id: account.id, displayName: account.display_name },
   });
 });
 

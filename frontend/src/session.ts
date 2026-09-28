@@ -5,7 +5,6 @@
  */
 const storageKey = 'altmgo.session';
 const rolesKey = 'altmgo.roles';
-const accountKey = 'altmgo.account';
 
 /** The staff roles a signed-in account holds. */
 export type StaffRole = 'moderator' | 'manager';
@@ -24,25 +23,6 @@ export function writeSessionToken(token: string): void {
 export function clearSessionToken(): void {
   window.localStorage.removeItem(storageKey);
   window.localStorage.removeItem(rolesKey);
-  window.sessionStorage.removeItem(accountKey);
-}
-
-/**
- * Stores the name the sign-in answered with, so the layout can say who is
- * signed in before any request has run.
- *
- * It is a display name and nothing else. The token is the only thing that
- * authorises a request, and every route reads the account from the token rather
- * than from here, so a name edited in the browser changes one heading and
- * nothing an account may do.
- */
-export function writeSessionAccount(displayName: string): void {
-  window.sessionStorage.setItem(accountKey, displayName);
-}
-
-/** The name stored at the last sign-in, or a placeholder when there was none. */
-export function readSessionAccount(): string {
-  return window.sessionStorage.getItem(accountKey) ?? 'your account';
 }
 
 /**
