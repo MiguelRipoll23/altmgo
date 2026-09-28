@@ -66,37 +66,39 @@ export function experienceAtLevel(level: number): number {
 }
 
 /**
- * How far along the current level a character is, for a gauge.
+ * How far along the ladder a character is, for a gauge.
+ *
+ * The ratio is the level against the ceiling — level 12 is 12 of 22 — and not how
+ * far through the current level they are. It was the second, and that made the bar
+ * wrong for most of the characters on the server: the game starts every new
+ * character at `ExperienceAtLevel(12)`, which is exactly the threshold that level 12
+ * begins at, so a brand new character had a ratio of precisely zero and a bar with
+ * nothing in it. The reading was "this character has done nothing since the moment
+ * they were created", which is true and is not what a level bar is for.
+ *
+ * It is also what the client draws. The level table's own notes record that the
+ * automatch gauge is twenty-three columns wide — levels zero through twenty-two —
+ * with a centre column that clamps at either end, so the client's gauge is a ladder
+ * of levels and not a fill within one. A continuous bar over the same ladder is the
+ * nearest honest equivalent in a list of cards.
  *
  * `atCeiling` says the character has run out of table: the client clamps its own
- * gauge to the last level rather than refusing to draw one, so the bar is drawn
- * full and the page says the ceiling is reached rather than inventing a
- * twenty-third level to be short of.
+ * gauge to the last level rather than refusing to draw one, so the bar is drawn full
+ * and the page says the ceiling is reached rather than inventing a twenty-third
+ * level to be short of.
  */
 export function characterLevelProgress(experience: number): {
   level: number;
-  /** The experience this level began at. */
-  from: number;
-  /** The experience the next level begins at, or the same as `from` at the ceiling. */
-  to: number;
-  /** How much of the way across the level this character is, from 0 to 1. */
+  /** How much of the way from level zero to the ceiling this character is, from 0 to 1. */
   ratio: number;
   atCeiling: boolean;
 } {
   const level = characterLevel(experience);
-  const from = experienceAtLevel(level);
-  const to = experienceAtLevel(level + 1);
-
-  if (level >= MaximumLevel) {
-    return { level, from, to: from, ratio: 1, atCeiling: true };
-  }
 
   return {
     level,
-    from,
-    to,
-    ratio: Math.min(1, Math.max(0, (experience - from) / (to - from))),
-    atCeiling: false,
+    ratio: Math.min(1, Math.max(0, level / MaximumLevel)),
+    atCeiling: level >= MaximumLevel,
   };
 }
 

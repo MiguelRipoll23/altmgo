@@ -125,19 +125,18 @@ export function CharacterDetailPage() {
  * The level bar, reading as the client reads it: the level, out of the levels there
  * are.
  *
- * No experience is printed, and that is the whole change from how it was drawn. The
- * experience total is a real figure about the character, but every character on a
- * level shares the same bar and differs in that number, so a page showing "1,240
- * experience" beside a bar the same length as everybody else's says something true
- * and something unhelpful at once. The level is the part two characters can be
- * compared on, and it is the part the client itself shows. The thresholds stay in
- * `lib/game.ts`, where the width of the bar is computed from them; they are not put
- * in front of the reader.
+ * The bar is the level against the ceiling, which is the same thing the heading
+ * says, and no experience is printed. The experience total is a real figure about
+ * the character, but every character on a level draws the same bar and differs in
+ * that number, so a page showing "1,240 experience" beside a bar the same length
+ * as everybody else's says something true and something unhelpful at once. The
+ * thresholds stay in `lib/game.ts`, where the level is derived from them; they are
+ * not put in front of the reader.
  *
  * The bar is a `div` with a meter role rather than a progress element because the
- * figure being drawn is a position within a band rather than progress towards an
- * end: a native progress bar would say "22 of 22" for a character at the ceiling,
- * which is not what the client's gauge says at all.
+ * figure being drawn is a level on a ladder rather than progress towards an end: a
+ * native progress bar would carry its own label, and this one says "12 of 22" in
+ * the heading above it already.
  */
 export function LevelGauge({ experience }: { experience: number }) {
   const { level, ratio, atCeiling } = characterLevelProgress(experience);

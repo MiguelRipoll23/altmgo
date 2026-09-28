@@ -130,12 +130,12 @@ export function MyCharactersPage() {
 }
 
 /**
- * The level bar, without the figures under it.
+ * The level bar, at the height a card can carry.
  *
- * It is the gauge the client draws under a character, at the height a card can
- * carry: the list has six figures per character and the bar is the one of them
- * that cannot be read as a number. The detail page is where the two experience
- * totals are written out.
+ * It is the gauge the client draws under a character: the list has six figures per
+ * character and the bar is the one of them that cannot be read as a number, so it
+ * is the one thing here that shows progress rather than stating a fact. The detail
+ * page is where the level is written out beside it.
  */
 function LevelBar({ experience }: { experience: number }) {
   const { level, ratio } = characterLevelProgress(experience);
