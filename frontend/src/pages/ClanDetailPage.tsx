@@ -52,7 +52,7 @@ export function ClanDetailPage() {
     <div className="space-y-6">
       <Link
         to="/dashboard/clans"
-        className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+        className="inline-flex items-center gap-2 text-base font-medium text-primary hover:underline"
       >
         <ArrowLeft className="size-4" />
         All clans
@@ -70,7 +70,7 @@ export function ClanDetailPage() {
           loading ? (
             <LoadingBlock label="Reading the clan…" />
           ) : error === null ? (
-            <p className="text-sm text-muted-foreground">That clan could not be read.</p>
+            <p className="text-base text-muted-foreground">That clan could not be read.</p>
           ) : null
         ) : (
           <ClanFacts clan={clan} />
@@ -145,16 +145,16 @@ function ClanFacts({ clan }: { clan: Clan }) {
       </dl>
 
       <div>
-        <p className="text-xs uppercase tracking-widest text-muted-foreground">Notice</p>
-        <p className="mt-1 text-sm text-foreground/90">
+        <p className="text-base uppercase tracking-widest text-muted-foreground">Notice</p>
+        <p className="mt-1 text-base text-foreground/90">
           {clan.notice.trim().length === 0 ? 'This clan has published no notice.' : clan.notice}
         </p>
       </div>
 
       {clan.comment.trim().length === 0 ? null : (
         <div>
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">Comment</p>
-          <p className="mt-1 text-sm text-foreground/90">{clan.comment}</p>
+          <p className="text-base uppercase tracking-widest text-muted-foreground">Comment</p>
+          <p className="mt-1 text-base text-foreground/90">{clan.comment}</p>
         </div>
       )}
     </div>
@@ -165,8 +165,8 @@ function ClanFacts({ clan }: { clan: Clan }) {
 function Detail({ label, value }: { label: string; value: string | null }) {
   return (
     <div>
-      <dt className="text-xs uppercase tracking-widest text-muted-foreground">{label}</dt>
-      <dd className="mt-1 text-sm text-foreground/90">{value ?? '—'}</dd>
+      <dt className="text-base uppercase tracking-widest text-muted-foreground">{label}</dt>
+      <dd className="mt-1 text-base text-foreground/90">{value ?? '—'}</dd>
     </div>
   );
 }

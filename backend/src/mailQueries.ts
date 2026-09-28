@@ -22,10 +22,10 @@ import { database } from './database.js';
  */
 
 /** Which side of the delivery a listing is about. */
-export type MailBox = 'inbox' | 'outbox' | 'all';
+export type MailBox = 'inbox' | 'outbox';
 
 /** Every box a listing may name, so an unknown one is refused rather than guessed. */
-export const MailBoxes: readonly MailBox[] = ['inbox', 'outbox', 'all'];
+export const MailBoxes: readonly MailBox[] = ['inbox', 'outbox'];
 
 /** Whether a name is one of the boxes. */
 export function isMailBox(name: string): name is MailBox {
@@ -48,15 +48,15 @@ export type AccountMailRow = {
 /**
  * The messages on one side of the account's mail, newest first.
  *
- * The box is asked for rather than inferred from which column matched, because
- * "all" is a real question a player asks — what has this account said and been
- * said to it, in one list — and it is answered by the same query widening its
- * condition rather than by two calls the page then merges.
+ * There is no third box holding both sides. A mail row is one message, so the
+ * union of the two lists is the same rows a second time rather than a different
+ * set, and a reader who wants both can read both; what a union does add is a
+ * question the two lists already answer between them, and a third place for a
+ * message to be in when somebody is looking for it.
  *
  * A deleted message is left out of the side that deleted it, so a letter the
- * player threw away does not reappear in the "all" box through the other end of
- * the same row: the row is still there for the sender's list, which is what the
- * flags are for.
+ * player threw away does not reappear through the other end of the same row: the
+ * row is still there for the sender's list, which is what the flags are for.
  */
 export async function listAccountMail(
   accountIdentifier: number,

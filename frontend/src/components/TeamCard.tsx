@@ -40,7 +40,7 @@ const memberStateNames: Record<number, string> = { 1: 'Pending', 2: 'Ready' };
  */
 function Roster({ team }: { team: Team }) {
   if (team.members.length === 0) {
-    return <p className="text-sm text-muted-foreground">This team has nobody on it.</p>;
+    return <p className="text-base text-muted-foreground">This team has nobody on it.</p>;
   }
 
   return (
@@ -51,7 +51,7 @@ function Roster({ team }: { team: Team }) {
           className="flex flex-col gap-2 rounded-lg border border-border bg-background/40 px-3 py-2.5"
         >
           <div className="flex items-center gap-2">
-            <span className="w-4 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
+            <span className="w-4 shrink-0 text-right text-base tabular-nums text-muted-foreground">
               {member.slot}
             </span>
             <span className="min-w-0 flex-1 truncate font-medium text-foreground">
@@ -90,7 +90,7 @@ export function TeamCard({ team }: { team: Team }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="font-semibold text-foreground">{team.name}</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <p className="mt-0.5 text-base text-muted-foreground">
             {teamStateNames[team.state] ?? `State ${team.state}`} · {team.members.length} member
             {team.members.length === 1 ? '' : 's'} · {team.consecutive_wins} win
             {team.consecutive_wins === 1 ? '' : 's'}

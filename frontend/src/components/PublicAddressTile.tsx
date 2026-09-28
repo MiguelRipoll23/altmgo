@@ -80,8 +80,8 @@ export function PublicAddressTile({
             <p
               className={
                 report.kind === 'success'
-                  ? 'text-xs text-muted-foreground'
-                  : 'text-xs text-destructive'
+                  ? 'text-base text-muted-foreground'
+                  : 'text-base text-destructive'
               }
             >
               {report.message}
@@ -89,7 +89,7 @@ export function PublicAddressTile({
           )}
 
           {address === null ? (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-base text-muted-foreground">
               None of your characters has a connection row yet, so there is no address to publish.
               Open a game in the client first.
             </p>

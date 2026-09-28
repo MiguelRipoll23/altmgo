@@ -6,7 +6,6 @@ import { GamesPage } from './pages/GamesPage';
 import { OverviewPage } from './pages/OverviewPage';
 import { HomePage } from './pages/HomePage';
 import { CharacterDetailPage } from './pages/CharacterDetailPage';
-import { MailAllPage } from './pages/MailAllPage';
 import { MailDetailPage } from './pages/MailDetailPage';
 import { MailInboxPage } from './pages/MailInboxPage';
 import { MailOutboxPage } from './pages/MailOutboxPage';
@@ -86,7 +85,6 @@ export function App() {
           <Route path="mail" element={<Navigate to="mail/inbox" replace />} />
           <Route path="mail/inbox" element={<MailInboxPage />} />
           <Route path="mail/outbox" element={<MailOutboxPage />} />
-          <Route path="mail/all" element={<MailAllPage />} />
           <Route
             path="mail/inbox/:identifier"
             element={<MailDetailPage back="/dashboard/mail/inbox" label="Inbox" />}
@@ -94,10 +92,6 @@ export function App() {
           <Route
             path="mail/outbox/:identifier"
             element={<MailDetailPage back="/dashboard/mail/outbox" label="Outbox" />}
-          />
-          <Route
-            path="mail/all/:identifier"
-            element={<MailDetailPage back="/dashboard/mail/all" label="All mail" />}
           />
           <Route path="clans" element={<ClansPage />} />
           <Route path="clans/:identifier" element={<ClanDetailPage />} />

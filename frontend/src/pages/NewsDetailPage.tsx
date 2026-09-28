@@ -48,7 +48,7 @@ export function NewsDetailPage({ listPath }: {
     <div className="space-y-6">
       <Link
         to={listPath}
-        className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+        className="inline-flex items-center gap-2 text-base font-medium text-primary hover:underline"
       >
         <ArrowLeft className="size-4" />
         All news
@@ -69,7 +69,7 @@ export function NewsDetailPage({ listPath }: {
           loading ? (
             <LoadingBlock label="Reading the item…" />
           ) : error === null ? (
-            <p className="text-sm text-muted-foreground">That news item could not be read.</p>
+            <p className="text-base text-muted-foreground">That news item could not be read.</p>
           ) : null
         ) : (
           <>
@@ -78,11 +78,11 @@ export function NewsDetailPage({ listPath }: {
               {item.important ? <Badge variant="warning">important</Badge> : null}
             </div>
 
-            <p className="mb-4 text-xs uppercase tracking-widest text-muted-foreground">
+            <p className="mb-4 text-base uppercase tracking-widest text-muted-foreground">
               Published {formatDate(item.publishedAt)}
             </p>
 
-            <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
+            <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground/90">
               {item.body}
             </p>
           </>

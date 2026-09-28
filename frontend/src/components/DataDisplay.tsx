@@ -25,7 +25,7 @@ export function SectionHeading({ title, subtitle }: { title: string; subtitle?: 
   return (
     <div className="mb-6">
       <h1 className="text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">{title}</h1>
-      {subtitle === undefined ? null : <p className="mt-2 text-sm text-muted-foreground">{subtitle}</p>}
+      {subtitle === undefined ? null : <p className="mt-2 text-base text-muted-foreground">{subtitle}</p>}
     </div>
   );
 }
@@ -77,7 +77,7 @@ export function Panel({ title, description, footer, children, className }: {
  */
 export function LoadingBlock({ label }: { label: string }) {
   return (
-    <p role="status" className="flex items-center gap-2 py-1 text-sm text-muted-foreground">
+    <p role="status" className="flex items-center gap-2 py-1 text-base text-muted-foreground">
       <RefreshCw className="size-4 shrink-0 animate-spin" />
       {label}
     </p>
@@ -122,12 +122,12 @@ export function StatTile({
         <p
           className={cn(
             'font-extrabold tracking-tight text-foreground',
-            textual ? 'font-mono text-sm break-all' : 'text-3xl tabular-nums',
+            textual ? 'font-mono text-base break-all' : 'text-3xl tabular-nums',
           )}
         >
           {value}
         </p>
-        <p className="mt-1 text-xs uppercase tracking-widest text-muted-foreground">{label}</p>
+        <p className="mt-1 text-base uppercase tracking-widest text-muted-foreground">{label}</p>
       </div>
 
       {action === undefined ? null : <div className="mt-3">{action}</div>}
@@ -211,7 +211,7 @@ export function DataTable<T>({
     return loading ? (
       <LoadingBlock label={loadingLabel} />
     ) : (
-      <p className="text-sm text-muted-foreground">{empty}</p>
+      <p className="text-base text-muted-foreground">{empty}</p>
     );
   }
 

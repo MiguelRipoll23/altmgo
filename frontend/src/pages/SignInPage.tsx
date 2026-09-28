@@ -95,7 +95,7 @@ export function SignInPage() {
         </CardContent>
       </Card>
 
-      <p className="mt-6 text-center text-sm text-muted-foreground">
+      <p className="mt-6 text-center text-base text-muted-foreground">
         No account yet?{' '}
         <Link to="/register" className="font-medium text-primary hover:underline">
           Register

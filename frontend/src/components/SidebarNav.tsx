@@ -24,7 +24,7 @@ export type SidebarSection = {
 /** The classes a section row carries, active or not. Both frames draw the same. */
 function sectionClasses(isActive: boolean): string {
   return [
-    'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition',
+    'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-base transition',
     isActive
       ? 'bg-primary/10 font-semibold text-primary'
       : 'font-medium text-muted-foreground hover:bg-muted/60 hover:text-foreground',
@@ -38,7 +38,7 @@ function sectionClasses(isActive: boolean): string {
  */
 function subSectionClasses(isActive: boolean): string {
   return [
-    'flex items-center rounded-lg py-2 pl-3 pr-3 text-xs transition',
+    'flex items-center rounded-lg py-2 pl-3 pr-3 text-base transition',
     isActive
       ? 'bg-primary/10 font-semibold text-primary'
       : 'font-medium text-muted-foreground hover:bg-muted/60 hover:text-foreground',

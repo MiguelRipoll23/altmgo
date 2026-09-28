@@ -48,7 +48,7 @@ function DropdownMenuItem({
     <DropdownMenuPrimitive.Item
       data-slot="dropdown-menu-item"
       className={cn(
-        'relative flex cursor-default select-none items-center gap-2 rounded-md px-2 py-2 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:size-4',
+        'relative flex cursor-default select-none items-center gap-2 rounded-md px-2 py-2 text-base outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:size-4',
         className,
       )}
       {...props}
@@ -62,7 +62,7 @@ function DropdownMenuLabel({
 }: ComponentProps<typeof DropdownMenuPrimitive.Label>) {
   return (
     <DropdownMenuPrimitive.Label
-      className={cn('px-2 py-1.5 text-sm font-semibold', className)}
+      className={cn('px-2 py-1.5 text-base font-semibold', className)}
       {...props}
     />
   );

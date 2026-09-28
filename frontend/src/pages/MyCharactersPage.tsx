@@ -73,7 +73,7 @@ export function MyCharactersPage() {
         loading ? (
           <LoadingBlock label="Reading the characters…" />
         ) : (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-base text-muted-foreground">
             This account has no characters yet. Create one in the client.
           </p>
         )
@@ -98,25 +98,25 @@ export function MyCharactersPage() {
                   <p className="text-2xl font-extrabold tracking-tight text-foreground">
                     Level {formatNumber(characterLevelProgress(character.experience).level)}
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-base text-muted-foreground">
                     {formatNumber(character.experience)} exp
                   </p>
                 </div>
 
                 <LevelBar experience={character.experience} />
 
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-base">
                   <CharacterTitleCell rank={character.rank} />
                   <span className="text-muted-foreground tabular-nums">
                     {formatNumber(character.totalRewards)} rewards
                   </span>
                 </div>
 
-                <p className="text-xs text-muted-foreground">
+                <p className="text-base text-muted-foreground">
                   Last seen {formatDate(character.lastSeenAt)}
                 </p>
 
-                <span className="mt-auto inline-flex items-center gap-1.5 text-sm font-medium text-primary">
+                <span className="mt-auto inline-flex items-center gap-1.5 text-base font-medium text-primary">
                   See the character
                   <ChevronRight className="size-4 transition group-hover:translate-x-0.5" />
                 </span>

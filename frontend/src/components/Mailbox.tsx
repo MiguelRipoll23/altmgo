@@ -6,7 +6,7 @@ import { useApiResource } from './useApiResource';
 import { Badge } from './ui/badge';
 
 /** Which side of a delivery a mailbox lists. */
-export type MailboxName = 'inbox' | 'outbox' | 'all';
+export type MailboxName = 'inbox' | 'outbox';
 
 /** One message in the caller's own mail, on either side of the delivery. */
 type AccountMessage = {
@@ -32,21 +32,17 @@ const mailboxes: Record<MailboxName, { title: string; subtitle: string; empty: s
     subtitle: 'What your characters have sent, newest first.',
     empty: 'None of your characters has sent any mail.',
   },
-  all: {
-    title: 'All mail',
-    subtitle: 'Everything to and from your characters, newest first.',
-    empty: 'There is no mail on this account yet.',
-  },
 };
 
 /**
  * One window of one mailbox.
  *
  * A mail row is a single message with a read and a deleted flag at each end, so
- * the three mailboxes are three views of one table rather than three tables, and
- * "all" is that one row once rather than twice. A message deleted on your own side
- * stays out even there: the row survives for the other end, which is what the
- * flags are for.
+ * the two mailboxes are two views of one table rather than two tables. A message
+ * deleted on one side is out of that side's list and in the other's, which is
+ * what the flags are for — and it is why there is no third list holding both: a
+ * union of these two is the same rows a second time, in a different order the
+ * reader did not ask for.
  *
  * The list is subjects, both names and the date, not bodies: a letter is a
  * paragraph, and a mailbox that expanded every one of them underneath its own list
@@ -56,7 +52,7 @@ const mailboxes: Record<MailboxName, { title: string; subtitle: string; empty: s
  * flag belongs to the other end of it.
  *
  * A subject links to `/mail/<box>/<id>` rather than to `/mail/<id>` with the box
- * carried alongside. The three mailboxes are separate pages, and a reader who
+ * carried alongside. The two mailboxes are separate pages, and a reader who
  * opens a letter from the outbox should be able to share that address and land on
  * the letter, with the mailbox they were reading named in it rather than left in a
  * piece of state the link would have to guess.

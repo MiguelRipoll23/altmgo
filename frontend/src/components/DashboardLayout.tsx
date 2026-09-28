@@ -51,7 +51,6 @@ const sections: SidebarSection[] = [
     children: [
       { path: '/dashboard/mail/inbox', label: 'Inbox' },
       { path: '/dashboard/mail/outbox', label: 'Outbox' },
-      { path: '/dashboard/mail/all', label: 'All' },
     ],
   },
   { path: '/dashboard/clans', label: 'Clans', icon: Flag },

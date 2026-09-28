@@ -13,7 +13,7 @@ function Label({ className, ...props }: ComponentProps<typeof LabelPrimitive.Roo
   return (
     <LabelPrimitive.Root
       className={cn(
-        'text-sm font-medium leading-none text-foreground/80 peer-disabled:cursor-not-allowed peer-disabled:opacity-70',
+        'text-base font-medium leading-none text-foreground/80 peer-disabled:cursor-not-allowed peer-disabled:opacity-70',
         className,
       )}
       {...props}

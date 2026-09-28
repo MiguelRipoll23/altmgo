@@ -58,7 +58,7 @@ export function PageHeading({ subtitle }: { subtitle: ReactNode }) {
       <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
         Welcome to <span className="text-primary">Alt</span>MGO
       </h1>
-      <p className="mt-2 text-sm text-muted-foreground">{subtitle}</p>
+      <p className="mt-2 text-base text-muted-foreground">{subtitle}</p>
     </div>
   );
 }

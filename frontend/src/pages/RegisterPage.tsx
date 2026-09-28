@@ -77,7 +77,7 @@ export function RegisterPage() {
                 value={username}
                 onChange={(event) => setUsername(event.target.value)}
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-base text-muted-foreground">
                 This is the ID you sign into the game with.
               </p>
             </div>
@@ -95,7 +95,7 @@ export function RegisterPage() {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-base text-muted-foreground">
                 Use a unique password that you don't use anywhere else.
               </p>
             </div>
@@ -108,7 +108,7 @@ export function RegisterPage() {
         </CardContent>
       </Card>
 
-      <p className="mt-6 text-center text-sm text-muted-foreground">
+      <p className="mt-6 text-center text-base text-muted-foreground">
         Already registered?{' '}
         <Link to="/signin" className="font-medium text-primary hover:underline">
           Sign in

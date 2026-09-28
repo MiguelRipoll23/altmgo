@@ -10,7 +10,7 @@ import { cn } from '../../lib/utils';
  * of its own beyond the tint that separates it from the row behind it.
  */
 const badgeVariants = cva(
-  'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider',
+  'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-base font-semibold uppercase tracking-wider',
   {
     variants: {
       variant: {

@@ -30,7 +30,7 @@ function CardHeader({ className, ...props }: ComponentProps<'div'>) {
 function CardTitle({ className, ...props }: ComponentProps<'h2'>) {
   return (
     <h2
-      className={cn('text-xs font-semibold uppercase tracking-widest text-muted-foreground', className)}
+      className={cn('text-base font-semibold uppercase tracking-widest text-muted-foreground', className)}
       {...props}
     />
   );
@@ -38,7 +38,7 @@ function CardTitle({ className, ...props }: ComponentProps<'h2'>) {
 
 /** The sentence under a card's title. */
 function CardDescription({ className, ...props }: ComponentProps<'p'>) {
-  return <p className={cn('text-sm text-muted-foreground', className)} {...props} />;
+  return <p className={cn('text-base text-muted-foreground', className)} {...props} />;
 }
 
 /** The body of a card. */

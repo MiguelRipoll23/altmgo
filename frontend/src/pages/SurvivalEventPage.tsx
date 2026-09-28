@@ -48,7 +48,7 @@ export function SurvivalEventPage() {
     <div className="space-y-6">
       <Link
         to="/dashboard/survival/events"
-        className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+        className="inline-flex items-center gap-2 text-base font-medium text-primary hover:underline"
       >
         <ArrowLeft className="size-4" />
         All Survival events
@@ -63,7 +63,7 @@ export function SurvivalEventPage() {
 
       {schedule === undefined ? (
         schedules.loading ? (
-          <p className="text-sm text-muted-foreground">Reading the event…</p>
+          <p className="text-base text-muted-foreground">Reading the event…</p>
         ) : (
           <StatusMessage kind="error">
             There is no Survival event with that id. It may have been withdrawn.
@@ -75,8 +75,8 @@ export function SurvivalEventPage() {
             <div className="flex items-start gap-3">
               <CalendarClock className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
               <div>
-                <dt className="text-xs uppercase tracking-widest text-muted-foreground">Window</dt>
-                <dd className="mt-1 text-sm text-foreground">
+                <dt className="text-base uppercase tracking-widest text-muted-foreground">Window</dt>
+                <dd className="mt-1 text-base text-foreground">
                   {schedule.publish_start === 0
                     ? 'Open now'
                     : `Opens ${formatEpoch(schedule.publish_start)}`}
@@ -91,8 +91,8 @@ export function SurvivalEventPage() {
             <div className="flex items-start gap-3">
               <Users className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
               <div>
-                <dt className="text-xs uppercase tracking-widest text-muted-foreground">Field</dt>
-                <dd className="mt-1 text-sm text-foreground">
+                <dt className="text-base uppercase tracking-widest text-muted-foreground">Field</dt>
+                <dd className="mt-1 text-base text-foreground">
                   {schedule.team_capacity} teams
                   <br />
                   {schedule.enabled ? (
@@ -115,7 +115,7 @@ export function SurvivalEventPage() {
         teams.loading ? (
           <LoadingBlock label="Reading the teams…" />
         ) : (
-          <p className="text-sm text-muted-foreground">No team has been formed on Survival.</p>
+          <p className="text-base text-muted-foreground">No team has been formed on Survival.</p>
         )
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">

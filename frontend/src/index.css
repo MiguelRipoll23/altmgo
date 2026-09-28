@@ -82,4 +82,19 @@
   body {
     @apply bg-background text-foreground antialiased;
   }
+
+  /*
+   * 16px is the floor for every piece of text in the dashboard, and this is the
+   * one place that is enforced rather than repeated in a hundred class names.
+   * Tailwind's preflight still shrinks `<small>` to 80% and `<sub>`/`<sup>` to
+   * 75%, which on a 16px body is 12.8px and 12px — below the floor, and
+   * reachable by typing a tag rather than by choosing a size. Neither element is
+   * used today; overriding them means the next person who writes one gets the
+   * floor instead of a smaller exception to it.
+   */
+  small,
+  sub,
+  sup {
+    font-size: 1rem;
+  }
 }

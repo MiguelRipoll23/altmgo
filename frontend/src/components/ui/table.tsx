@@ -12,7 +12,7 @@ import { cn } from '../../lib/utils';
 function Table({ className, ...props }: ComponentProps<'table'>) {
   return (
     <div className="relative w-full overflow-x-auto">
-      <table className={cn('w-full caption-bottom border-collapse text-sm', className)} {...props} />
+      <table className={cn('w-full caption-bottom border-collapse text-base', className)} {...props} />
     </div>
   );
 }
@@ -38,7 +38,7 @@ function TableHead({ className, ...props }: ComponentProps<'th'>) {
   return (
     <th
       className={cn(
-        'h-10 whitespace-nowrap px-3 text-left align-middle text-xs font-semibold uppercase tracking-widest text-muted-foreground',
+        'h-10 whitespace-nowrap px-3 text-left align-middle text-base font-semibold uppercase tracking-widest text-muted-foreground',
         className,
       )}
       {...props}

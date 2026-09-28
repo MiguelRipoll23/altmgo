@@ -23,9 +23,9 @@ type MailMessage = {
 /**
  * One message, on its own page.
  *
- * The inbox, the outbox and the full mailbox are three lists of the same messages,
- * so this is one page reached from all three. The only thing that differs is where
- * the back link goes, and that is the reader's choice rather than the page's, so it
+ * The inbox and the outbox are two lists of the same messages, so this is one
+ * page reached from either. The only thing that differs between them is where the
+ * back link goes, and that is the reader's choice rather than the page's, so it
  * travels in the address.
  *
  * It is a page rather than an expansion under the list for the reason the news
@@ -58,7 +58,7 @@ export function MailDetailPage({ back, label }: {
     <div className="space-y-6">
       <Link
         to={back}
-        className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+        className="inline-flex items-center gap-2 text-base font-medium text-primary hover:underline"
       >
         <ArrowLeft className="size-4" />
         {label}
@@ -80,13 +80,13 @@ export function MailDetailPage({ back, label }: {
           loading ? (
             <LoadingBlock label="Reading the message…" />
           ) : error === null ? (
-            <p className="text-sm text-muted-foreground">That message could not be read.</p>
+            <p className="text-base text-muted-foreground">That message could not be read.</p>
           ) : null
         ) : (
           <>
             <div className="mb-4 flex flex-wrap items-center gap-3">
               <Mail className="size-4 shrink-0 text-muted-foreground" />
-              <p className="text-xs uppercase tracking-widest text-muted-foreground">
+              <p className="text-base uppercase tracking-widest text-muted-foreground">
                 {/*
                   A letter in the game masters' mailbox carries the name of the
                   character that wrote it as well as the signature the writer chose,
@@ -99,7 +99,7 @@ export function MailDetailPage({ back, label }: {
               </p>
             </div>
 
-            <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
+            <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground/90">
               {message.body}
             </p>
           </>

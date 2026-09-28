@@ -99,7 +99,7 @@ export function TournamentEventPage({ area = 'registrations' }: { area?: Tournam
     <div className="space-y-6">
       <Link
         to="/dashboard/tournament"
-        className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+        className="inline-flex items-center gap-2 text-base font-medium text-primary hover:underline"
       >
         <ArrowLeft className="size-4" />
         All Tournament events
@@ -154,7 +154,7 @@ function Registrations({ data, loading }: { data: Tournament | null; loading: bo
         {loading ? (
           <LoadingBlock label="Reading the registrations…" />
         ) : (
-          <p className="text-sm text-muted-foreground">Nobody has registered for this event.</p>
+          <p className="text-base text-muted-foreground">Nobody has registered for this event.</p>
         )}
       </Panel>
     );
@@ -169,10 +169,10 @@ function Registrations({ data, loading }: { data: Tournament | null; loading: bo
             className="rounded-lg border border-border bg-background/40 px-4 py-3"
           >
             <p className="font-semibold text-foreground">{entry.character_name}</p>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 text-base text-muted-foreground">
               {entry.team_name ?? 'No team yet'}
             </p>
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="mt-1 text-base text-muted-foreground">
               Place {entry.slot_index} · reserved {formatDate(entry.reserved_at)}
             </p>
           </div>
@@ -192,11 +192,11 @@ function BracketPanel({ data, loading }: { data: Tournament | null; loading: boo
         loading ? (
           <LoadingBlock label="Reading the bracket…" />
         ) : (
-          <p className="text-sm text-muted-foreground">This event has not been drawn yet.</p>
+          <p className="text-base text-muted-foreground">This event has not been drawn yet.</p>
         )
       ) : (
         <>
-          <p className="mb-4 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+          <p className="mb-4 flex flex-wrap items-center gap-2 text-base text-muted-foreground">
             <Trophy className="size-4 shrink-0" />
             Round {bracket.current_round}
             {bracket.champion_team_name === null ? null : (
@@ -208,7 +208,7 @@ function BracketPanel({ data, loading }: { data: Tournament | null; loading: boo
           </p>
 
           {bracket.seeds.length === 0 ? (
-            <p className="text-sm text-muted-foreground">The bracket has no seeds.</p>
+            <p className="text-base text-muted-foreground">The bracket has no seeds.</p>
           ) : (
             <ol className="grid gap-2 sm:grid-cols-2">
               {bracket.seeds.map((seed) => (
@@ -216,7 +216,7 @@ function BracketPanel({ data, loading }: { data: Tournament | null; loading: boo
                   key={seed.seed_index}
                   className="flex items-center gap-3 rounded-lg border border-border bg-background/40 px-4 py-2.5"
                 >
-                  <span className="w-6 shrink-0 text-right text-sm tabular-nums text-muted-foreground">
+                  <span className="w-6 shrink-0 text-right text-base tabular-nums text-muted-foreground">
                     {seed.seed_index + 1}
                   </span>
                   <span className="font-medium text-foreground">
@@ -250,7 +250,7 @@ function Fixtures({ data, loading }: { data: Tournament | null; loading: boolean
         {loading ? (
           <LoadingBlock label="Reading the fixtures…" />
         ) : (
-          <p className="text-sm text-muted-foreground">No fixture has been played.</p>
+          <p className="text-base text-muted-foreground">No fixture has been played.</p>
         )}
       </Panel>
     );
@@ -268,11 +268,11 @@ function Fixtures({ data, loading }: { data: Tournament | null; loading: boolean
               key={fixture.id}
               className="rounded-lg border border-border bg-background/40 px-4 py-3"
             >
-              <p className="text-xs uppercase tracking-widest text-muted-foreground">
+              <p className="text-base uppercase tracking-widest text-muted-foreground">
                 Round {fixture.round_index + 1}
               </p>
 
-              <p className="mt-2 flex items-center gap-2 text-sm">
+              <p className="mt-2 flex items-center gap-2 text-base">
                 <Swords className="size-3.5 shrink-0 text-muted-foreground" />
                 <span className={first ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
                   {fixture.first_team_name ?? 'To be decided'}
@@ -283,7 +283,7 @@ function Fixtures({ data, loading }: { data: Tournament | null; loading: boolean
                 </span>
               </p>
 
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="mt-1 text-base text-muted-foreground">
                 {winner === null ? 'No winner reported' : `${winner} won`} ·{' '}
                 {formatDate(fixture.reported_at)}
               </p>

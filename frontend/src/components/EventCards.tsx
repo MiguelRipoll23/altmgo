@@ -57,7 +57,7 @@ export function EventCards({
     return loading ? (
       <LoadingBlock label={loadingLabel} />
     ) : (
-      <p className="text-sm text-muted-foreground">{empty}</p>
+      <p className="text-base text-muted-foreground">{empty}</p>
     );
   }
 
@@ -76,17 +76,17 @@ export function EventCards({
             {schedule.enabled ? null : <Badge variant="secondary">not open</Badge>}
           </div>
 
-          <p className="flex items-center gap-2 text-sm text-muted-foreground">
+          <p className="flex items-center gap-2 text-base text-muted-foreground">
             <CalendarClock className="size-4 shrink-0" />
             {windowOf(schedule)}
           </p>
 
-          <p className="flex items-center gap-2 text-sm text-muted-foreground">
+          <p className="flex items-center gap-2 text-base text-muted-foreground">
             <Users className="size-4 shrink-0" />
             {schedule.team_capacity} teams in the field
           </p>
 
-          <span className="mt-auto inline-flex items-center gap-1.5 text-sm font-medium text-primary">
+          <span className="mt-auto inline-flex items-center gap-1.5 text-base font-medium text-primary">
             See the event
             <ChevronRight className="size-4 transition group-hover:translate-x-0.5" />
           </span>

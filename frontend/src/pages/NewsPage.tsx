@@ -58,9 +58,9 @@ export function NewsPage({ basePath = '/dashboard' }: { basePath?: string }) {
       {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">Reading the news…</p>
+        <p className="text-base text-muted-foreground">Reading the news…</p>
       ) : (data?.news ?? []).length === 0 ? (
-        <p className="text-sm text-muted-foreground">No news has been published.</p>
+        <p className="text-base text-muted-foreground">No news has been published.</p>
       ) : (
         <div className="space-y-4">
           {(data?.news ?? []).map((item) => (
@@ -79,15 +79,15 @@ export function NewsPage({ basePath = '/dashboard' }: { basePath?: string }) {
                 {item.important ? <Badge variant="warning">important</Badge> : null}
               </div>
 
-              <p className="text-xs uppercase tracking-widest text-muted-foreground">
+              <p className="text-base uppercase tracking-widest text-muted-foreground">
                 {formatDate(item.publishedAt)}
               </p>
 
-              <p className="mt-3 text-sm leading-relaxed text-foreground/80">
+              <p className="mt-3 text-base leading-relaxed text-foreground/80">
                 {preview(item.body)}
               </p>
 
-              <span className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary">
+              <span className="mt-3 inline-flex items-center gap-1.5 text-base font-medium text-primary">
                 Read the whole item
                 <ArrowRight className="size-3.5" />
               </span>

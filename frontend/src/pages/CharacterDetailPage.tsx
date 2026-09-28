@@ -52,7 +52,7 @@ export function CharacterDetailPage() {
     <div className="space-y-6">
       <Link
         to="/dashboard/characters"
-        className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+        className="inline-flex items-center gap-2 text-base font-medium text-primary hover:underline"
       >
         <ArrowLeft className="size-4" />
         All characters
@@ -70,17 +70,17 @@ export function CharacterDetailPage() {
           loading ? (
             <LoadingBlock label="Reading the character…" />
           ) : error === null ? (
-            <p className="text-sm text-muted-foreground">That character could not be read.</p>
+            <p className="text-base text-muted-foreground">That character could not be read.</p>
           ) : null
         ) : (
           <div className="space-y-5">
             <LevelGauge experience={character.experience} />
 
             <div className="flex flex-wrap items-center gap-3">
-              <p className="text-sm text-muted-foreground">Worn title</p>
+              <p className="text-base text-muted-foreground">Worn title</p>
               <CharacterTitleCell rank={character.rank} />
               {character.rank > 0 && isClientTitle(character.rank) ? (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-base text-muted-foreground">
                   Title {character.rank} of the client&apos;s {ClientTitleCount}.
                 </p>
               ) : null}
@@ -104,12 +104,12 @@ export function CharacterDetailPage() {
 
           {character.comment.trim().length === 0 ? null : (
             <div className="mt-5">
-              <p className="text-xs uppercase tracking-widest text-muted-foreground">Comment</p>
-              <p className="mt-1 text-sm text-foreground/90">{character.comment}</p>
+              <p className="text-base uppercase tracking-widest text-muted-foreground">Comment</p>
+              <p className="mt-1 text-base text-foreground/90">{character.comment}</p>
             </div>
           )}
 
-          <p className="mt-5 flex items-start gap-2 text-xs text-muted-foreground">
+          <p className="mt-5 flex items-start gap-2 text-base text-muted-foreground">
             <Link2 className="mt-0.5 size-3.5 shrink-0" />
             The address is the one the game server last saw this character connect from. It is
             corrected by publishing from the client, and it is the address another player joins
@@ -167,7 +167,7 @@ export function LevelGauge({ experience }: { experience: number }) {
       </div>
 
       {atCeiling ? (
-        <p className="mt-2 text-xs text-muted-foreground">
+        <p className="mt-2 text-base text-muted-foreground">
           Level {MaximumLevel} is the highest the table defines; this character is past its
           last threshold, and the bar is drawn full because the client draws it full there.
         </p>
@@ -180,8 +180,8 @@ export function LevelGauge({ experience }: { experience: number }) {
 export function Detail({ label, value }: { label: string; value: string | null }) {
   return (
     <div>
-      <dt className="text-xs uppercase tracking-widest text-muted-foreground">{label}</dt>
-      <dd className="mt-1 text-sm text-foreground/90">{value ?? '—'}</dd>
+      <dt className="text-base uppercase tracking-widest text-muted-foreground">{label}</dt>
+      <dd className="mt-1 text-base text-foreground/90">{value ?? '—'}</dd>
     </div>
   );
 }

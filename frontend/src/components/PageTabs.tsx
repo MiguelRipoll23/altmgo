@@ -44,7 +44,7 @@ export function PageTabs({ tabs, label }: { tabs: PageTab[]; label: string }) {
           end
           className={({ isActive }) =>
             cn(
-              '-mb-px flex items-center gap-2 border-b-2 px-3 py-2 text-sm font-medium transition',
+              '-mb-px flex items-center gap-2 border-b-2 px-3 py-2 text-base font-medium transition',
               isActive
                 ? 'border-primary text-foreground'
                 : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground',
@@ -54,7 +54,7 @@ export function PageTabs({ tabs, label }: { tabs: PageTab[]; label: string }) {
           {tab.label}
 
           {tab.badge === undefined ? null : (
-            <span className="rounded-full bg-muted px-2 py-0.5 text-xs tabular-nums text-muted-foreground">
+            <span className="rounded-full bg-muted px-2 py-0.5 text-base tabular-nums text-muted-foreground">
               {tab.badge}
             </span>
           )}

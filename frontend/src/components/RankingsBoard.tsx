@@ -142,7 +142,7 @@ export function RankingsBoard({ subject }: { subject: BoardSubject }) {
             </Select>
           </div>
 
-          <label className="flex h-9 items-center gap-2 text-sm text-foreground/80">
+          <label className="flex h-9 items-center gap-2 text-base text-foreground/80">
             <input
               type="checkbox"
               checked={month}
@@ -175,7 +175,7 @@ export function RankingsBoard({ subject }: { subject: BoardSubject }) {
                 Previous
               </Button>
 
-              <p className="text-sm text-muted-foreground">
+              <p className="text-base text-muted-foreground">
                 {formatNumber(first)}–{formatNumber(last)} of {formatNumber(data.total)}
                 <span className="mx-2 text-border">·</span>
                 page {formatNumber(page)} of {formatNumber(pages)}

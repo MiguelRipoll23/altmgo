@@ -38,7 +38,7 @@ export function StatusMessage({ kind, children }: { kind: StatusKind; children: 
       role="status"
       aria-live="polite"
       className={cn(
-        'flex items-start gap-2.5 rounded-lg border px-4 py-3 text-sm font-medium',
+        'flex items-start gap-2.5 rounded-lg border px-4 py-3 text-base font-medium',
         className,
       )}
     >
@@ -64,7 +64,7 @@ export function OutcomeNotice({
   children: ReactNode;
 }) {
   return (
-    <Card className={cn('flex items-start gap-2.5 p-4 text-sm font-medium', appearances[tone].className)}>
+    <Card className={cn('flex items-start gap-2.5 p-4 text-base font-medium', appearances[tone].className)}>
       {children}
     </Card>
   );

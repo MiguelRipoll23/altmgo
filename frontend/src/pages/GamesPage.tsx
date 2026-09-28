@@ -52,7 +52,7 @@ export function GamesPage() {
         </Button>
 
         {loading || data === null ? null : (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-base text-muted-foreground">
             {formatNumber(data.games.length)} {data.games.length === 1 ? 'room' : 'rooms'} being hosted
           </p>
         )}
