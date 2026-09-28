@@ -2,7 +2,6 @@ import { Pencil, Trash2, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 import { apiRequest } from '../api';
 import { readSessionToken } from '../session';
-import { DataTable, type Column } from './DataDisplay';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -53,61 +52,78 @@ const teamStateNames: Record<number, string> = { 1: 'Joinable', 9: 'Queued' };
 const memberStateNames: Record<number, string> = { 1: 'Pending', 2: 'Ready' };
 
 /**
- * The roster's columns.
+ * The roster, as a grid of cards rather than a table.
  *
- * The last column is the one a player does not get: it is the control that
- * changes a state, and a team on a public ladder that any signed-in account can
- * read should not also be one any of them can re-queue.
+ * A team is four or five people, and the table asked a reader to hold three
+ * columns in their head to answer the only question the roster is asked — who is
+ * on it, and are they ready — while the surrounding team card is already a card,
+ * so a table inside it was a table inside a card inside a panel. The tournament
+ * pages draw their entries and their fixtures as small bordered tiles for exactly
+ * the same reason, and a roster is closer to one of those than to a column of
+ * figures: it is a handful of people, read one at a time.
+ *
+ * The slot is on the tile rather than in a column because it is the one thing
+ * about a member that is not about the member: it is the order the team put them
+ * in, and a reader scanning a roster wants the name first.
  */
-function rosterColumns(team: Team, mayWrite: boolean, onWrite: Write): Column<Member>[] {
-  const columns: Column<Member>[] = [
-    { header: 'Slot', cell: (row) => row.slot, className: 'text-right tabular-nums' },
-    {
-      header: 'Character',
-      cell: (row) =>
-        row.name.startsWith('server-') ? (
-          <span className="flex items-center gap-2">
-            {row.name}
-            <Badge variant="secondary">server</Badge>
-          </span>
-        ) : (
-          row.name
-        ),
-    },
-    { header: 'State', cell: (row) => memberStateNames[row.state] ?? `State ${row.state}` },
-  ];
-
-  if (mayWrite) {
-    columns.push({
-      header: 'Set',
-      cell: (row) => (
-        <span className="flex flex-wrap gap-1.5">
-          {memberStates.map((option) => (
-            <Button
-              key={option.value}
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                onWrite(
-                  () =>
-                    apiRequest(`/api/moderator/teams/${team.id}/members/${row.slot}`, {
-                      method: 'PUT',
-                      token: readSessionToken(),
-                      body: { state: option.value },
-                    }),
-                  `${row.name} is ${option.label.toLowerCase()}.`,
-                )
-              }
-            >
-              {option.label}
-            </Button>
-          ))}
-        </span>
-      ),
-    });
+function Roster({ team, mayWrite, onWrite }: { team: Team; mayWrite: boolean; onWrite: Write }) {
+  if (team.members.length === 0) {
+    return <p className="text-sm text-muted-foreground">This team has nobody on it.</p>;
   }
 
-  return columns;
+  return (
+    <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+      {team.members.map((member) => (
+        <li
+          key={member.slot}
+          className="flex flex-col gap-2 rounded-lg border border-border bg-background/40 px-3 py-2.5"
+        >
+          <div className="flex items-center gap-2">
+            <span className="w-4 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
+              {member.slot}
+            </span>
+            <span className="min-w-0 flex-1 truncate font-medium text-foreground">
+              {member.name}
+            </span>
+            {member.name.startsWith('server-') ? <Badge variant="secondary">server</Badge> : null}
+          </div>
+
+          <div className="flex items-center justify-between gap-2 pl-6">
+            <Badge variant={member.state === 2 ? 'success' : 'secondary'}>
+              {memberStateNames[member.state] ?? `State ${member.state}`}
+            </Badge>
+
+            {mayWrite ? (
+              <span className="flex flex-wrap gap-1.5">
+                {memberStates.map((option) => (
+                  <Button
+                    key={option.value}
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-2"
+                    disabled={member.state === (option.value === 'ready' ? 2 : 1)}
+                    onClick={() =>
+                      onWrite(
+                        () =>
+                          apiRequest(`/api/moderator/teams/${team.id}/members/${member.slot}`, {
+                            method: 'PUT',
+                            token: readSessionToken(),
+                            body: { state: option.value },
+                          }),
+                        `${member.name} is ${option.label.toLowerCase()}.`,
+                      )
+                    }
+                  >
+                    {option.label}
+                  </Button>
+                ))}
+              </span>
+            ) : null}
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
 }
 
 /**
@@ -218,12 +234,7 @@ export function TeamCard({
       ) : null}
 
       <div className="mt-4">
-        <DataTable
-          rows={team.members}
-          rowKey={(row) => row.slot}
-          empty="This team has nobody on it."
-          columns={rosterColumns(team, mayWrite, onWrite)}
-        />
+        <Roster team={team} mayWrite={mayWrite} onWrite={onWrite} />
       </div>
 
       {mayWrite ? (

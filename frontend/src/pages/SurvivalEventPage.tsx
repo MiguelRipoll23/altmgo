@@ -1,6 +1,6 @@
 import { ArrowLeft, CalendarClock, Users } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
-import { Panel, SectionHeading } from '../components/DataDisplay';
+import { LoadingBlock, Panel, SectionHeading } from '../components/DataDisplay';
 import { StatusMessage } from '../components/StatusMessage';
 import { TeamCard, type Team } from '../components/TeamCard';
 import { useApiResource } from '../components/useApiResource';
@@ -103,19 +103,23 @@ export function SurvivalEventPage({ basePath = '/dashboard' }: { basePath?: stri
         </Panel>
       )}
 
-      <Panel title="The ladder">
-        {teams.error === null ? null : <StatusMessage kind="error">{teams.error}</StatusMessage>}
+      <SectionHeading title="The ladder" />
 
-        {teams.data?.teams.length === 0 && !teams.loading ? (
+      {teams.error === null ? null : <StatusMessage kind="error">{teams.error}</StatusMessage>}
+
+      {teams.data?.teams.length === 0 ? (
+        teams.loading ? (
+          <LoadingBlock label="Reading the teams…" />
+        ) : (
           <p className="text-sm text-muted-foreground">No team has been formed on Survival.</p>
-        ) : null}
-
-        <div className="space-y-4">
+        )
+      ) : (
+        <div className="grid gap-4 lg:grid-cols-2">
           {(teams.data?.teams ?? []).map((team) => (
             <TeamCard key={team.id} team={team} mayWrite={false} onWrite={noop} onChanged={noop} />
           ))}
         </div>
-      </Panel>
+      )}
     </div>
   );
 }

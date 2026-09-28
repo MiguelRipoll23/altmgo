@@ -1,4 +1,4 @@
-import { Panel, SectionHeading } from '../components/DataDisplay';
+import { LoadingBlock, SectionHeading } from '../components/DataDisplay';
 import { StatusMessage } from '../components/StatusMessage';
 import { TeamCard, type Team } from '../components/TeamCard';
 import { useApiResource } from '../components/useApiResource';
@@ -28,11 +28,20 @@ const SurvivalMode = 4;
  * players who came to read the ladder, and a "create team" form and a roster
  * editor sitting on it put a delete-shaped control within a click of a refresh
  * button for no benefit to the reader.
+ *
+ * The teams are drawn as cards in a grid, and their rosters as cards inside them,
+ * for the reason the tournament pages draw their registrations and fixtures as
+ * cards: a ladder is a handful of teams of a handful of people, and a page of it
+ * is read one team at a time rather than by matching columns. They are not inside
+ * a panel either — a card inside a card inside a card is three frames saying the
+ * same thing, and the outermost one was only there to hold the list.
  */
 export function SurvivalTeamsPage() {
   const { data, error, loading } = useApiResource<{ teams: Team[] }>(
     `/api/events/${SurvivalMode}/teams`,
   );
+
+  const teams = data?.teams ?? [];
 
   return (
     <div className="space-y-6">
@@ -43,17 +52,19 @@ export function SurvivalTeamsPage() {
 
       {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
 
-      <Panel title="Teams">
-        {data?.teams.length === 0 && !loading ? (
+      {teams.length === 0 ? (
+        loading ? (
+          <LoadingBlock label="Reading the teams…" />
+        ) : (
           <p className="text-sm text-muted-foreground">No team has been formed on Survival.</p>
-        ) : null}
-
-        <div className="space-y-4">
-          {(data?.teams ?? []).map((team) => (
+        )
+      ) : (
+        <div className="grid gap-4 lg:grid-cols-2">
+          {teams.map((team) => (
             <TeamCard key={team.id} team={team} mayWrite={false} onWrite={noop} onChanged={noop} />
           ))}
         </div>
-      </Panel>
+      )}
     </div>
   );
 }
