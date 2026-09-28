@@ -1,9 +1,9 @@
-import { database } from './database';
+import { database } from './database.js';
 
 /**
  * A character with the peer endpoint it has registered. The address is the one
- * the game server saw when the client last connected, which is the value a host
- * link exists to correct.
+ * the game server saw when the client last connected, which is the value signing
+ * in at the site exists to correct.
  */
 export type CharacterRow = {
   id: number;

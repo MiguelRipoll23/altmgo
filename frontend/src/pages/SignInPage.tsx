@@ -1,21 +1,22 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { apiRequest, describeError } from '../api';
 import { PageHeading, PageLayout } from '../components/PageLayout';
 import { StatusMessage } from '../components/StatusMessage';
 import type { StatusKind } from '../components/StatusMessage';
-import { writeSessionToken } from '../session';
-import { hintClassName, inputClassName, labelClassName, panelClassName, primaryButtonClassName } from '../theme';
+import { writeSessionAccount, writeSessionRoles, writeSessionToken } from '../session';
+import { inputClassName, labelClassName, panelClassName, primaryButtonClassName } from '../theme';
 
 type LoginResponse = {
   token: string;
-  account: { id: number; displayName: string };
+  account: { id: number; displayName: string; roles: string[] };
 };
 
 /** Signs in with the credentials the game uses, and keeps the token it answers with. */
 export function SignInPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [status, setStatus] = useState<{ kind: StatusKind; message: string } | null>(null);
@@ -24,7 +25,9 @@ export function SignInPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitting(true);
-    setStatus({ kind: 'progress', message: 'Signing in…' });
+    // The button says what is happening; the banner is only for what happened, so
+    // the refusal from the attempt before this one is cleared rather than left up.
+    setStatus(null);
 
     try {
       const payload = await apiRequest<LoginResponse>('/api/auth/login', {
@@ -33,7 +36,15 @@ export function SignInPage() {
       });
 
       writeSessionToken(payload.token);
-      navigate('/dashboard', { replace: true });
+      writeSessionRoles(payload.account.roles);
+      writeSessionAccount(payload.account.displayName);
+
+      // Signing in returns the browser to the section it asked for, which the
+      // dashboard remembered on the way out. Anything else — a mistyped path, or
+      // no path at all — lands on the overview rather than on a deep link that
+      // may itself have been mistyped.
+      const requested = (location.state as { from?: string } | null)?.from;
+      navigate(requested ?? '/dashboard', { replace: true });
     } catch (error) {
       setStatus({ kind: 'error', message: describeError(error) });
       setSubmitting(false);
@@ -45,7 +56,7 @@ export function SignInPage() {
       <PageHeading subtitle="Sign in with the same ID and password you use in game" />
 
       <div className={panelClassName}>
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-5" noValidate>
           {status === null ? null : <StatusMessage kind={status.kind}>{status.message}</StatusMessage>}
 
           <div>
@@ -78,11 +89,10 @@ export function SignInPage() {
               onChange={(event) => setPassword(event.target.value)}
               className={inputClassName}
             />
-            <p className={hintClassName}>The password is never stored on this site.</p>
           </div>
 
           <button type="submit" disabled={submitting} className={`${primaryButtonClassName} w-full`}>
-            Sign in
+            {submitting ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
       </div>

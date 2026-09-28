@@ -1,9 +1,10 @@
 import { Hono } from 'hono';
 import type { Context } from 'hono';
-import type { AppBindings } from '../authentication';
-import { hashPassword, issueSessionToken } from '../authentication';
-import { createAccount, findAccountByName } from '../accounts';
-import { isUniqueViolation } from '../database';
+import type { AppBindings } from '../authentication.js';
+import { hashPassword, issueSessionToken } from '../authentication.js';
+import { createAccount, findAccountByName } from '../accounts.js';
+import { isUniqueViolation } from '../database.js';
+import { listRolesOfAccount } from '../roles.js';
 
 export const authenticationRoutes = new Hono<AppBindings>();
 
@@ -102,8 +103,17 @@ authenticationRoutes.post('/auth/login', async (context) => {
 
   const token = await issueSessionToken(account.id, account.display_name);
 
+  // The roles travel with the sign-in so the dashboard can show the sections
+  // this account may open without waiting for a first call to fail. They are a
+  // hint, not the permission: every route reads them again, so an account that
+  // was demoted after signing in sees the section until a check refuses it, and
+  // a hand-edited role list in the browser buys nothing.
   return context.json({
     token,
-    account: { id: account.id, displayName: account.display_name },
+    account: {
+      id: account.id,
+      displayName: account.display_name,
+      roles: await listRolesOfAccount(account.id),
+    },
   });
 });

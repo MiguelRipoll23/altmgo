@@ -3,112 +3,137 @@
 The companion site for the AltMGO game server: accounts, the characters they own, and the page a
 tailnet host is sent to so their game can be joined from outside their network.
 
-Two deployments, one repository:
+One repository, one Vercel project, one origin:
 
-| folder | what it is | Vercel root directory |
-| --- | --- | --- |
-| `frontend/` | Vite + React + Tailwind single-page site | `frontend` |
-| `backend/` | Hono API on Vercel Functions, reading the game's Neon database | `backend` |
+| folder | what it is |
+| --- | --- |
+| `frontend/` | Vite + React + Tailwind single-page site, built to `frontend/dist` and served as static files |
+| `backend/` | Hono app, reading the game's Neon database |
+| `api/` | the deployment's one function: a catch-all that hands every `/api/...` request to the Hono app |
 
-They are **two Vercel projects**, because Vercel detects one framework per project and these are
-two: the frontend is a static Vite build, the backend is a Hono app whose routes run as functions.
+`vercel.json` at the root builds the site, serves `frontend/dist`, and wires the two together. Because
+the site and the API share an origin, the browser calls `/api/...` directly: there is no cross-origin
+request to allow, no build-time API origin to set, and — the reason it matters most here — the address
+the site publishes is read from the request's own connection rather than through a proxy hop that
+would have to be trusted to pass it along.
 
 ## What it does
 
 - **Register and sign in** with the credentials the game itself uses. An account made here can be
   signed into in game and the other way round, because both store the same password digest over the
   same `accounts` row.
-- **Dashboard** listing the account's characters, the public address each has published, and whether
-  the game server is answering.
-- **Host links.** A host whose game is reachable only on the tailnet the players share is sent a chat
-  line in game: `Go to <site>/<code> to make your game available to join from other players outside
-  your network`. Opening it publishes the visitor's public address for that character.
+- **A dashboard** with a sidebar of sections — overview, characters, games, survival, tournament and
+  rankings — reading the game server's own tables. The overview leads with how many players are
+  connected and which lobby each is in, taken from `character_presence` rather than from a total the
+  server keeps, so the count and the list beside it are the same reading of the same moment.
+- **Moderator and manager tooling.** A moderator can form a survival team, put a character on one
+  (which is how a `server-` prefixed character from a dedicated match room joins — there is no client
+  on the other end of a room nobody is sitting at), change a team or member state, and publish an
+  event so it becomes enterable. A manager holds every one of those and can additionally write an
+  official message into a Discord channel.
+- **Making a game joinable.** A host whose game is reachable only on the tailnet the players share is
+  sent a chat line in game: `Go to <site> and sign in to make your game joinable to other players
+  outside your network`. Signing in publishes the caller's public address for every character of the
+  account that has a connection row, and the dashboard says whether that made it discoverable.
+
+## Who may do what
+
+The staff surface is decided by one table, `account_roles`, holding one row per account per role. It
+was a single integer column on `accounts` before this change, which could only ever say "one of
+these", and every reader had to agree what each number meant — the change is what lets a dashboard
+ask "is this a moderator" and be answered.
+
+A **manager holds every moderator permission**. A manager is somebody who has been trusted with the
+moderation work as well, so making them re-approve the same actions under a second role would be
+ceremony rather than safety. The two names are still kept apart wherever the distinction is the point.
+
+Granting a role is a row:
+
+```sql
+insert into account_roles (account_id, role) values (:account, 'moderator')
+```
+
+The dashboard reads the roles on every request rather than trusting them from the session token, so a
+revoked role stops working at once instead of whenever the token it was minted into expires. The
+browser is told the roles at sign-in so the sidebar can show the sections that account may open, but
+that is a hint and never the permission.
 
 ## Environment variables
 
-Both projects read them from Vercel's project settings.
+One project reads them from Vercel's project settings.
 
-| project | name | what it is |
-| --- | --- | --- |
-| backend | `DATABASE_URL` | Neon connection string — the **pooled** one |
-| backend | `JWT_SECRET` | the game server's own secret |
-| backend | `SERVER_IP` | game server address, `host` or `host:port`, no scheme — optional, see below |
-| frontend | `VITE_API_BASE_URL` | origin of the backend deployment, no trailing slash |
+| name | what it is |
+| --- | --- |
+| `DATABASE_URL` | Neon connection string — the **pooled** one |
+| `JWT_SECRET` | signs this site's session tokens |
+| `DISCORD_BOT_TOKEN` | bot token the manager writes official messages from — optional |
 
-`JWT_SECRET` does double duty: it signs the site's session tokens, and it is the key the host-link
-code is derived from. It must be the **same value the game server has**, or the codes the lobby
-sends will not resolve. It is also the game's bearer-token signing key, so it is a real secret —
-keep it in the Vercel environment, never in the repository.
+`VITE_API_BASE_URL` is deliberately **not** set: with one origin the calls stay relative. It is still
+honoured if it is set, which is what running the site and the API as two projects would need.
+
+`JWT_SECRET` signs this site's own session tokens, and nothing outside this app verifies them — so it
+does **not** have to be the game server's secret, and a value of its own is better. It is still a real
+secret: it is what makes a token the backend issues unforgeable, so keep it in the Vercel
+environment, never in the repository.
+
+`DISCORD_BOT_TOKEN` is optional. With it absent, the Discord message control is refused rather than
+failing halfway through a send. It is a token of *this* deployment: the game server holds one of its
+own for its slash commands, and publishing that one here would hand the bot to every signed-in
+moderator.
 
 ## Local development
 
 ```sh
-# backend
-cd backend
-cp .env.example .env          # fill in the three values
-npm install
-npm run dev                   # vercel dev, on http://localhost:3000
+npm install                   # once, at the root — this is an npm workspaces repo
 
-# frontend, in another shell
-cd frontend
-cp .env.example .env
-npm install
+cd backend && cp .env.example .env    # DATABASE_URL, JWT_SECRET, SERVER_IP
+cd frontend && cp .env.example .env   # VITE_API_BASE_URL, see below
+
 npm run dev                   # vite, on http://localhost:5173
+
+# the API, in another shell, from the root
+vercel dev                    # on http://localhost:3000
 ```
 
-Point `VITE_API_BASE_URL` at `http://localhost:3000` while developing locally.
+Locally the two run on two ports, so they are two origins and the frontend needs
+`VITE_API_BASE_URL=http://localhost:3000` to reach the API. Deployed they are one origin, and that is
+exactly why the variable is unset there.
 
 ## Deploying
 
 1. Push this folder to a Git repository.
-2. Create a Vercel project for `backend/`, with **Root Directory** `backend`, and set the three
-   environment variables. `DATABASE_URL` is the Neon connection string; Neon's pooled endpoint is
-   the right one, because a function invocation is a connection.
-3. Create a second project for `frontend/`, with **Root Directory** `frontend`, and set
-   `VITE_API_BASE_URL` to the backend's production origin.
-4. The framework presets are pinned in each `vercel.json`, so neither project needs build settings
-   typed in by hand.
+2. Import it into Vercel as **one project**, with the repository root as the root directory — that is
+   where `vercel.json`, `api/` and the workspaces `package.json` live.
+3. Set `DATABASE_URL` and `JWT_SECRET`. `DATABASE_URL` is the Neon connection string; Neon's pooled
+   endpoint is the right one, because a function invocation is a connection.
+4. Nothing else is typed in by hand: `vercel.json` pins the build command, the output directory and
+   the route order below.
 
-## The health check
+## How the two halves are wired at the edge
 
-The dashboard reports whether the game server is reachable. The check is relayed by the backend with
-a plain `GET http://<SERVER_IP>/health` rather than asked from the browser: this site is served over
-https and the game server answers plain http, so a browser would refuse the mixed request outright.
+`vercel.json` lists its rewrites in the order they are applied, and the order is the whole point:
 
-The game server grew a `/health` route for this, answered under an allow-all CORS policy. It returns
-`{"status":"ok","timestamp":"..."}` and touches no store.
+1. `/api/(.*)` → the function. Without this rule only **one** path segment reaches the app: Vercel's
+   own route for the catch-all function covers `/api/<segment>` and answers every deeper path with a
+   404, so `/api/auth/login` would never arrive.
+2. `/(.*)` → `/index.html`, so a deep link like `/dashboard` loads the site and the browser routes it.
+   It has to come second — it matches `/api/...` too, and the first rule that matches wins.
 
-**`SERVER_IP` is optional, and on a tailnet-only deployment there is no right value for it.** When
-the game server joins the players' tailnet rather than being exposed, nothing on the internet can
-reach it, so the check can only report that it cannot ask. That is why an unset `SERVER_IP` answers
-`{"online": false, "reason": "..."}` instead of failing — and why the dashboard shows the reason
-rather than an error. Set it to the public address of the game server's HTTP API once that exists
-(a tunnel, or a port forward); the deployed site then needs a redeploy to pick the value up.
+## Publishing the address
 
-## The host link contract
+A host's game is reachable at the address the game server saw their client at — which on a tailnet is
+the tailnet address, reachable by the players and by nobody else. Signing in corrects it: the site
+reads the address the request arrived from and writes it where the game server hands it out.
 
-The code in the URL is derived, never stored, so it can only be resolved by someone holding the same
-secret. In full:
+The write covers every character of the account that signed in and holds a row in
+`character_connections` — that is, every character the game server has seen. **The connection table
+is the only thing consulted.** A row there means there is an address to correct; no row means there is
+no endpoint anyone will read, so nothing is written for it.
 
-1. `secret` is `JWT_SECRET` as UTF-8 bytes, `name` is the character's name as UTF-8 bytes, taken
-   exactly and case included.
-2. `digest = HMAC-SHA256(key = secret, message = name)`.
-3. `value` = the first four bytes of `digest` read big-endian.
-4. `code` = `value mod 10000`, as decimal with leading zeros to four digits.
-
-| secret | name | code |
-| --- | --- | --- |
-| `secret` | `Snake` | `1068` |
-| `secret` | `Raiden` | `5274` |
-| `a-long-base64-secret` | `OCELOT` | `0150` |
-
-A code is resolved **only against characters hosting a game right now** — the hosts of `games` rows
-updated within the last hour. That is the whole reason four digits are enough: a handful of
-concurrent hosts is a handful of codes, where the whole character table would collide constantly and
-a code would stop naming one character. A code that matches two hosts is refused rather than
-guessed.
-
-The write is a single column:
+Whether the character is in a room is deliberately **not** asked. The row outlives the room, the game
+server overwrites the address when a client registers its endpoint and again when a host's own game
+server starts, and a game opened after signing in is a reason to press refresh rather than a reason
+the sign-in did nothing:
 
 ```sql
 update character_connections
@@ -119,8 +144,13 @@ where character_id = :character_id
 Only the address is corrected. The port the client listens on is already right, because the client
 reports it itself; only the address the server saw was wrong, since it saw the tailnet one.
 
-> **The link is a credential.** Anyone who has it can change that character's published address
-> while that host is in a game, which is why the page asks before writing rather than writing on
-> load — a prefetcher or a link scanner would otherwise be able to act on it.
+Three properties of the address are worth knowing, because they are what the design is:
 
-The full contract, from the game server's side, is in that repository's `docs/HOST_LINKS.md`.
+- It is the **caller's**, read from the request the browser sent. Nobody can publish an address for
+  somebody else's game, and a token is the whole permission.
+- It is **IPv4 only**. The game stores the address in a sixteen-byte field, so a v6 connection has
+  nowhere to publish and is refused rather than truncated.
+- It is **superseded by the game server**. The server writes what it saw when a client registers its
+  endpoint, and again when a host's own game server starts, so a corrected address survives only
+  until one of those happens again. That is why the dashboard keeps a refresh button: open the game,
+  then press it.

@@ -1,13 +1,15 @@
 import { createHash } from 'node:crypto';
 import { sign, verify } from 'hono/jwt';
-import type { MiddlewareHandler } from 'hono';
-import { readEnvironment } from './environment';
+import type { Context, MiddlewareHandler } from 'hono';
+import { readEnvironment } from './environment.js';
+import { isManager, isModerator, listRolesOfAccount } from './roles.js';
 
 /** Variables a request carries once it has been authenticated. */
 export type AppBindings = {
   Variables: {
     accountIdentifier: number;
     accountName: string;
+    accountRoles: string[];
   };
 };
 
@@ -32,9 +34,16 @@ export function hashPassword(password: string): string {
 }
 
 /**
- * Issues the bearer token a signed-in browser sends back. It is signed with the
- * same secret the game server uses, which is what lets a token be checked
+ * Issues the bearer token a signed-in browser sends back. It is signed with a
+ * secret only this deployment holds, which is what lets a token be checked
  * without a session table, and is also why the secret must not be published.
+ * Nothing outside this app verifies these tokens.
+ *
+ * The token names the account and nothing else about its permissions: the roles
+ * are read from the database on every request, so a revoked role stops working
+ * immediately rather than whenever the token it was minted into happens to
+ * expire. A role written into the token would be a claim the account could keep
+ * presenting for a week after being demoted.
  */
 export function issueSessionToken(accountIdentifier: number, accountName: string): Promise<string> {
   const expiresAt = Math.floor(Date.now() / 1000) + SessionDays * 24 * 60 * 60;
@@ -65,9 +74,42 @@ export const requireAccount: MiddlewareHandler<AppBindings> = async (context, ne
 
     context.set('accountIdentifier', identifier);
     context.set('accountName', typeof payload.name === 'string' ? payload.name : '');
+    context.set('accountRoles', await listRolesOfAccount(identifier));
   } catch {
     return context.json({ error: 'Your session has expired. Sign in again.' }, 401);
   }
 
   await next();
 };
+
+/**
+ * Rejects a request from somebody who is not staff, naming the one role that
+ * would have opened it.
+ *
+ * A signed-in player who reaches a moderator route is answered 403 rather than
+ * 404: the route exists and the token was good, so there is nothing to hide, and
+ * a player who has been demoted deserves to be told that rather than left
+ * wondering why the page 404s.
+ */
+function requireRole(allowed: (roles: readonly string[]) => boolean, role: string): MiddlewareHandler<AppBindings> {
+  return async (context: Context<AppBindings>, next) => {
+    if (!allowed(context.get('accountRoles'))) {
+      return context.json({ error: `This action needs the ${role} role.` }, 403);
+    }
+
+    await next();
+  };
+}
+
+/**
+ * Requires the moderator permissions, which a manager also holds: creating a
+ * team, adding a player to one, changing a player's state and scheduling an
+ * event.
+ */
+export const requireModerator: MiddlewareHandler<AppBindings> = requireRole(isModerator, 'moderator');
+
+/**
+ * Requires the manager permissions, which a moderator does not hold: the
+ * actions that reach outside the game, such as writing a Discord message.
+ */
+export const requireManager: MiddlewareHandler<AppBindings> = requireRole(isManager, 'manager');

@@ -1,0 +1,17 @@
+{
+  "name": "altmgo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "AltMGO: accounts, characters and host links for a Metal Gear Online 2 server.",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace frontend",
+    "dev": "npm run dev --workspace frontend",
+    "preview": "npm run preview --workspace frontend",
+    "typecheck": "npm run typecheck --workspace backend && npm run typecheck --workspace frontend"
+  }
+}

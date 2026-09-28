@@ -22,7 +22,7 @@ export function describeError(error: unknown): string {
 
 /** Options a request can carry. */
 export type RequestOptions = {
-  method?: 'GET' | 'POST';
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
   body?: unknown;
   token?: string;
 };

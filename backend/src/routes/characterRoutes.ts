@@ -1,13 +1,13 @@
 import { Hono } from 'hono';
-import type { AppBindings } from '../authentication';
-import { requireAccount } from '../authentication';
-import { listCharactersForAccount } from '../characters';
+import type { AppBindings } from '../authentication.js';
+import { requireAccount } from '../authentication.js';
+import { listCharactersForAccount } from '../characters.js';
 
 export const characterRoutes = new Hono<AppBindings>();
 
 /**
  * The signed-in account and its characters, each with the address it published.
- * The address is what the host link corrects, so it is the figure the dashboard
+ * The address is what signing in corrects, so it is the figure the dashboard
  * exists to show.
  */
 characterRoutes.get('/characters', requireAccount, async (context) => {
