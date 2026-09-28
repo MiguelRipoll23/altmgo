@@ -1,9 +1,15 @@
+import { ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { DataTable, Panel, SectionHeading, formatDate, formatNumber } from '../components/DataDisplay';
+import { LoadingBlock, SectionHeading, formatDate, formatNumber } from '../components/DataDisplay';
 import { StatusMessage } from '../components/StatusMessage';
 import { useApiResource } from '../components/useApiResource';
 import { Badge } from '../components/ui/badge';
-import { characterLevel, characterTitle, isClientTitle } from '../lib/game';
+import {
+  MaximumLevel,
+  characterLevelProgress,
+  characterTitle,
+  isClientTitle,
+} from '../lib/game';
 
 /**
  * One of the caller's own characters, as the game would draw it.
@@ -35,6 +41,14 @@ type OwnedCharacter = {
  * storage identifier; an Owl is what the client shows, and a dashboard that
  * printed the number would be reporting the format rather than the rank.
  *
+ * The characters are cards rather than a table, on the same reasoning as the
+ * Survival teams and the tournament's fixtures: a character is a handful of figures
+ * that belong together and are read one at a time, and a table of them asks a
+ * reader to hold seven columns in their head to answer "how far along is this one".
+ * Each card is the character's own page, so the whole card is the link — a
+ * character is something a player pastes, and a card whose link is its name is a
+ * card that can only be shared from one small part of itself.
+ *
  * Nothing here writes. A character is created, renamed and levelled in the client,
  * and a page that could do any of it would be a second place for the client and
  * the dashboard to disagree about who somebody is.
@@ -55,59 +69,90 @@ export function MyCharactersPage() {
 
       {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
 
-      <Panel
-        title="Your characters"
-        description={
-          loading
-            ? 'Reading your characters…'
-            : `${formatNumber(characters.length)} ${characters.length === 1 ? 'character' : 'characters'} on this account`
-        }
-      >
-        <DataTable
-          rows={characters}
-          rowKey={(row) => row.id}
-          empty="This account has no characters yet. Create one in the client."
-          loading={loading}
-          loadingLabel="Reading the characters…"
-          columns={[
-            {
-              header: 'Character',
-              cell: (row) => (
-                <Link
-                  to={`/dashboard/characters/${row.id}`}
-                  className="font-medium text-primary hover:underline"
-                >
-                  {row.name}
-                </Link>
-              ),
-            },
-            {
-              header: 'Title',
-              cell: (row) => <CharacterTitleCell rank={row.rank} />,
-            },
-            {
-              header: 'Level',
-              cell: (row) => formatNumber(characterLevel(row.experience)),
-              className: 'text-right tabular-nums',
-            },
-            {
-              header: 'Experience',
-              cell: (row) => formatNumber(row.experience),
-              className: 'text-right tabular-nums',
-            },
-            {
-              header: 'Rewards',
-              cell: (row) => formatNumber(row.totalRewards),
-              className: 'text-right tabular-nums',
-            },
-            {
-              header: 'Clan',
-              cell: (row) => (row.clan === null ? null : row.clan.name),
-            },
-            { header: 'Last seen', cell: (row) => formatDate(row.lastSeenAt) },
-          ]}
-        />
-      </Panel>
+      {characters.length === 0 ? (
+        loading ? (
+          <LoadingBlock label="Reading the characters…" />
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            This account has no characters yet. Create one in the client.
+          </p>
+        )
+      ) : (
+        <ul className="grid gap-3 sm:grid-cols-2">
+          {characters.map((character) => (
+            <li key={character.id}>
+              <Link
+                to={`/dashboard/characters/${character.id}`}
+                className="group flex h-full flex-col gap-3 rounded-xl border border-border bg-card/50 px-4 py-4 transition hover:border-primary/40 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="text-base font-extrabold tracking-tight text-foreground">
+                    {character.name}
+                  </h2>
+                  {character.clan === null ? null : (
+                    <Badge variant="secondary">{character.clan.name}</Badge>
+                  )}
+                </div>
+
+                <div className="flex items-baseline gap-2">
+                  <p className="text-2xl font-extrabold tracking-tight text-foreground">
+                    Level {formatNumber(characterLevelProgress(character.experience).level)}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {formatNumber(character.experience)} exp
+                  </p>
+                </div>
+
+                <LevelBar experience={character.experience} />
+
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+                  <CharacterTitleCell rank={character.rank} />
+                  <span className="text-muted-foreground tabular-nums">
+                    {formatNumber(character.totalRewards)} rewards
+                  </span>
+                </div>
+
+                <p className="text-xs text-muted-foreground">
+                  Last seen {formatDate(character.lastSeenAt)}
+                </p>
+
+                <span className="mt-auto inline-flex items-center gap-1.5 text-sm font-medium text-primary">
+                  See the character
+                  <ChevronRight className="size-4 transition group-hover:translate-x-0.5" />
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/**
+ * The level bar, without the figures under it.
+ *
+ * It is the gauge the client draws under a character, at the height a card can
+ * carry: the list has six figures per character and the bar is the one of them
+ * that cannot be read as a number. The detail page is where the two experience
+ * totals are written out.
+ */
+function LevelBar({ experience }: { experience: number }) {
+  const { level, ratio } = characterLevelProgress(experience);
+
+  return (
+    <div
+      role="meter"
+      aria-valuenow={level}
+      aria-valuemin={0}
+      aria-valuemax={MaximumLevel}
+      aria-label="Level"
+      className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
+    >
+      <div
+        className="h-full rounded-full bg-primary transition-[width] duration-300"
+        style={{ width: `${Math.round(ratio * 100)}%` }}
+      />
     </div>
   );
 }
