@@ -148,19 +148,42 @@ export function StatTile({
  * They are blocks rather than cards for the same reason. A card with a border and
  * no content is an empty box, and an empty box repeated across the top of a page
  * looks like something failed.
+ *
+ * They are the shape of the row they stand in for, which is the part that is easy
+ * to get wrong. A skeleton in a different grid from the real thing does not save
+ * anybody time: the page is laid out twice and reflows the moment the figures
+ * land, so the reader watches the content jump under them after a wait that was
+ * supposed to be still. `tallIndex` is for the one tile in a row that carries a
+ * control as well as a figure, which makes it taller than the rest — the grid
+ * stretches its neighbours to match it, here as it does there, so only that one
+ * block is given a height.
  */
 export function FigureSkeletons({
   count = 4,
+  tallIndex,
   className,
 }: {
   count?: number;
+  /**
+   * Which block stands in for a tile that carries a control as well as a figure,
+   * and so is taller than the ones beside it. The rest are left without a height
+   * so the grid stretches them to the tall one, the way it stretches the real
+   * tiles to each other.
+   */
+  tallIndex?: number;
   /** The grid the tiles will be drawn in, so the blocks do not reflow on arrival. */
   className?: string;
 }) {
   return (
     <div className={cn('grid grid-cols-1 gap-4 sm:grid-cols-2', className)}>
       {Array.from({ length: count }, (_, index) => (
-        <div key={index} className="h-20 animate-pulse rounded-xl bg-muted/30" />
+        <div
+          key={index}
+          className={cn(
+            'animate-pulse rounded-xl bg-muted/30',
+            index === tallIndex ? 'h-44' : null,
+          )}
+        />
       ))}
     </div>
   );

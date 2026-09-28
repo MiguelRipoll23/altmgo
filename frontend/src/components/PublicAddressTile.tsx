@@ -28,33 +28,6 @@ type PublishResponse = {
 const DiscoverableSeconds = 15;
 
 /**
- * What a publish the reader asked for has to say.
- *
- * Three answers, and not two, because "nothing was published" means two opposite
- * things depending on whether the account has a character for the game to be
- * reached on. With an address already up, nothing published means the stored one
- * was already right and there is nothing to do. With none, it means no character
- * of this account has ever registered an endpoint, so the press could not
- * possibly have written anything — and the reader's next step is to open a game
- * and press it again, which is the opposite of "nothing to do".
- *
- * The count is in the sentence because an account can have several characters
- * with several stored addresses, and "published" without a number does not say
- * which of them the friends are about to be sent to.
- */
-function publishedReport(answer: PublishResponse, address: string | null): string {
-  const count = answer.published.length;
-
-  if (count > 0) {
-    return `Published for ${count} character${count === 1 ? '' : 's'}.`;
-  }
-
-  return address === null
-    ? 'No character of this account has connected yet, so there was nothing to publish. Open a game, then press Update again.'
-    : 'Already up to date.';
-}
-
-/**
  * The address the caller's own last character publishes, with the button that
  * corrects it inside the same tile.
  *
@@ -96,7 +69,7 @@ export function PublicAddressTile({
   onPublished: () => void;
 }) {
   const [publishing, setPublishing] = useState(false);
-  const [report, setReport] = useState<{ kind: 'success' | 'error'; message: string } | null>(null);
+  const [failure, setFailure] = useState<string | null>(null);
 
   /**
    * When the Discoverable window runs out, as a wall-clock moment.
@@ -139,7 +112,7 @@ export function PublicAddressTile({
 
   async function publish() {
     setPublishing(true);
-    setReport(null);
+    setFailure(null);
 
     try {
       const answer = await apiRequest<PublishResponse>('/api/addresses', {
@@ -147,14 +120,19 @@ export function PublicAddressTile({
         token: readSessionToken(),
       });
 
+      // The state is the whole report: the button becoming "Discoverable" says the
+      // address was written, and a line of text under the tile saying so as well
+      // is the same fact twice. Nothing is said when nothing was written either —
+      // an address that was already correct needs no sentence, and an account with
+      // no character to publish for is already carrying the standing note below
+      // that tells the reader what to do about it.
       if (answer.published.length > 0) {
         setUntil(Date.now() + DiscoverableSeconds * 1000);
       }
 
-      setReport({ kind: 'success', message: publishedReport(answer, address) });
       onPublished();
     } catch (caught) {
-      setReport({ kind: 'error', message: describeError(caught) });
+      setFailure(describeError(caught));
     } finally {
       setPublishing(false);
     }
@@ -188,16 +166,8 @@ export function PublicAddressTile({
             {publishing ? 'Publishing…' : discoverable ? 'Discoverable' : 'Update'}
           </Button>
 
-          {report === null ? null : (
-            <p
-              className={
-                report.kind === 'success'
-                  ? 'text-base text-muted-foreground'
-                  : 'text-base text-destructive'
-              }
-            >
-              {report.message}
-            </p>
+          {failure === null ? null : (
+            <p className="text-base text-destructive">{failure}</p>
           )}
 
           {address === null ? (

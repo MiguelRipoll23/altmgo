@@ -53,8 +53,12 @@ export function OverviewPage() {
 
       {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
 
+      {/* While the figures are in flight the row is drawn in the same grid, with
+          the fourth block at the address tile's height: that tile is the one
+          carrying a button, so it is the tall one, and the grid stretches the
+          others to it exactly as it does once the figures are there. */}
       {data === null ? (
-        <FigureSkeletons />
+        <FigureSkeletons className="lg:grid-cols-4" tallIndex={3} />
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatTile label="Total players" value={formatNumber(data.totals.totalPlayers)} />
