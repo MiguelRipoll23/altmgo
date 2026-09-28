@@ -8,9 +8,16 @@ import {
   formatNumber,
 } from '../components/DataDisplay';
 import { PageTabs } from '../components/PageTabs';
+import { ScheduleList, type Schedule } from '../components/ScheduleForm';
 import { StatusMessage } from '../components/StatusMessage';
+import { TeamCard, type Team } from '../components/TeamCard';
+import { CreateTeamPanel } from '../components/TeamForm';
 import { useApiResource } from '../components/useApiResource';
+import { useEventWrite, useMayModerate } from '../components/useEventWrite';
 import { Badge } from '../components/ui/badge';
+
+/** Lobby selector of Tournament, as the event subsystem numbers them. */
+const TournamentMode = 3;
 
 type Entry = {
   character_id: number;
@@ -81,6 +88,15 @@ const areas: Record<TournamentArea, { label: string; summary: string }> = {
  * them is a row of columns, and a table of them asks a reader to match up headers
  * to work out who beat whom. As cards, a fixture says "Team A beat Team B" in the
  * order it was played.
+ *
+ * A moderator is also offered, on every one of the three, the event's own record —
+ * its window, its field size, whether it is published — and the teams of the
+ * Tournament lobby beneath it, which is where a bracket is built from. The three
+ * sections are three views of one event, so the controls are on all three rather
+ * than on whichever one happens to be the default: a moderator correcting a window
+ * is as likely to arrive from the fixtures as from the registrations, and a control
+ * that is only on one of three tabs of the same event is a control that is missing
+ * two times out of three.
  */
 export function TournamentEventPage({
   basePath = '/dashboard',
@@ -91,9 +107,29 @@ export function TournamentEventPage({
   area?: TournamentArea;
 }) {
   const { identifier } = useParams();
-  const { data, error, loading } = useApiResource<Tournament>(
+  const mayModerate = useMayModerate();
+
+  const tournament = useApiResource<Tournament>(
     `/api/tournament?event=${encodeURIComponent(identifier ?? '')}`,
   );
+  const schedules = useApiResource<{ schedules: Schedule[] }>(
+    `/api/events/${TournamentMode}/schedules`,
+  );
+  const teams = useApiResource<{ teams: Team[] }>(`/api/events/${TournamentMode}/teams`);
+
+  const { status, setStatus, write } = useEventWrite(
+    tournament.reload,
+    schedules.reload,
+    teams.reload,
+  );
+
+  const { data, error, loading } = tournament;
+
+  // The event page is reached by name from a card, and the schedule is found by
+  // reading the mode's list rather than by a read of its own — the same thing the
+  // Survival event page does, and for the same reason: there is one small list of
+  // them per mode and no read that would answer for one id.
+  const schedule = schedules.data?.schedules.find((entry) => entry.id === Number(identifier));
 
   const eventPath = `${basePath}/tournament/${identifier}`;
 
@@ -113,6 +149,39 @@ export function TournamentEventPage({
       />
 
       {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
+      {status === null ? null : <StatusMessage kind={status.kind}>{status.message}</StatusMessage>}
+
+      {mayModerate ? (
+        <Panel title="This event">
+          {schedule === undefined ? (
+            schedules.loading ? (
+              <LoadingBlock label="Reading the event…" />
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                This event is not one of the published Tournament events, so there is nothing
+                here to correct or withdraw. It may have been withdrawn already — the
+                registrations and the bracket below are still readable either way, because a
+                bracket does not stop naming teams because its event is closed.
+              </p>
+            )
+          ) : (
+            <>
+              <p className="mb-4 text-sm text-muted-foreground">
+                Its window, its field size, and whether it is open for registration.
+              </p>
+              <ScheduleList
+                schedules={[schedule]}
+                mayWrite
+                onWrite={write}
+                onChanged={schedules.reload}
+                empty=""
+                showRecord={false}
+                loading={false}
+              />
+            </>
+          )}
+        </Panel>
+      ) : null}
 
       <PageTabs
         label="Sections of this event"
@@ -134,6 +203,46 @@ export function TournamentEventPage({
       {area === 'registrations' ? <Registrations data={data} loading={loading} /> : null}
       {area === 'bracket' ? <BracketPanel data={data} loading={loading} /> : null}
       {area === 'fixtures' ? <Fixtures data={data} loading={loading} /> : null}
+
+      {mayModerate ? (
+        <>
+          <SectionHeading
+            title="Tournament teams"
+            subtitle="The teams a bracket is drawn from. They are the mode's, not this event's — a drawn bracket keeps naming them."
+          />
+
+          {teams.data?.teams.length === 0 ? (
+            teams.loading ? (
+              <LoadingBlock label="Reading the teams…" />
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No team has been formed for Tournament.
+              </p>
+            )
+          ) : (
+            <div className="grid gap-4 lg:grid-cols-2">
+              {(teams.data?.teams ?? []).map((team) => (
+                <TeamCard
+                  key={team.id}
+                  team={team}
+                  mayWrite
+                  onWrite={write}
+                  onChanged={teams.reload}
+                />
+              ))}
+            </div>
+          )}
+
+          <CreateTeamPanel
+            mode={TournamentMode}
+            onCreated={(message) => {
+              setStatus({ kind: 'success', message });
+              teams.reload();
+            }}
+            onFailed={(message) => setStatus({ kind: 'error', message })}
+          />
+        </>
+      ) : null}
     </div>
   );
 }

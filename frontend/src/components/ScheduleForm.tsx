@@ -62,10 +62,23 @@ export function formatEpoch(seconds: number): string {
  * because an operator scheduling an event is thinking in the hour it starts, and
  * the conversion to the epoch second the column holds happens here rather than
  * being asked of them.
+ *
+ * The lobby is a selector only when the caller has not named one. A page that is
+ * already about Survival is offering to publish a Tournament event, and the
+ * operator who does it has then published something they cannot see on the page
+ * they did it from.
  */
-export function CreateSchedulePanel({ onChanged }: { onChanged: () => void }) {
+export function CreateSchedulePanel({
+  onChanged,
+  mode: fixedMode,
+}: {
+  onChanged: () => void;
+  /** The lobby to publish into, when the caller is already about one of them. */
+  mode?: number;
+}) {
   const [name, setName] = useState('');
-  const [mode, setMode] = useState('3');
+  const [chosen, setChosen] = useState('3');
+  const mode = fixedMode === undefined ? chosen : String(fixedMode);
   const [capacity, setCapacity] = useState('8');
   const [opensAt, setOpensAt] = useState('');
   const [closesAt, setClosesAt] = useState('');
@@ -119,21 +132,30 @@ export function CreateSchedulePanel({ onChanged }: { onChanged: () => void }) {
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="schedule-mode">Lobby</Label>
-            <Select value={mode} onValueChange={setMode}>
-              <SelectTrigger id="schedule-mode">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {modes.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {fixedMode === undefined ? (
+            <div className="space-y-2">
+              <Label htmlFor="schedule-mode">Lobby</Label>
+              <Select value={chosen} onValueChange={setChosen}>
+                <SelectTrigger id="schedule-mode">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {modes.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label htmlFor="schedule-lobby">Lobby</Label>
+              <p id="schedule-lobby" className="flex h-9 items-center text-sm text-foreground/90">
+                {modes.find((option) => option.value === String(fixedMode))?.label ?? 'This lobby'}
+              </p>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="schedule-capacity">Teams in the field</Label>
@@ -197,15 +219,24 @@ function fromEpoch(seconds: number): string {
  * Editing an event is not a form that opens on another page: the values being
  * changed are the ones already on the row, so the row expands to hold them and
  * the operator is editing the event they meant rather than a copy of it.
+ *
+ * `describe={false}` drops the line of figures above the controls, for a page that
+ * has already drawn them. An event page states its window and its field size as
+ * the content of the page, so a row repeating the same four values directly
+ * underneath is the same sentence said twice in two styles, and a reader cannot
+ * tell which one the controls are about to change.
  */
 function ScheduleRow({
   schedule,
   mayWrite,
+  showRecord = true,
   onWrite,
   onChanged,
 }: {
   schedule: Schedule;
   mayWrite: boolean;
+  /** Whether the row states the event's window, size and state above its controls. */
+  showRecord?: boolean;
   onWrite: Write;
   onChanged: () => void;
 }) {
@@ -221,11 +252,13 @@ function ScheduleRow({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-sm font-medium text-foreground">{schedule.name}</p>
-          <p className="text-xs text-muted-foreground">
-            {schedule.enabled ? 'Published' : 'Withdrawn'} · {schedule.team_capacity} teams · opens{' '}
-            {schedule.publish_start === 0 ? 'now' : formatEpoch(schedule.publish_start)} · closes{' '}
-            {schedule.publish_end === 0 ? 'never' : formatEpoch(schedule.publish_end)}
-          </p>
+          {showRecord ? (
+            <p className="text-xs text-muted-foreground">
+              {schedule.enabled ? 'Published' : 'Withdrawn'} · {schedule.team_capacity} teams ·
+              opens {schedule.publish_start === 0 ? 'now' : formatEpoch(schedule.publish_start)} ·
+              closes {schedule.publish_end === 0 ? 'never' : formatEpoch(schedule.publish_end)}
+            </p>
+          ) : null}
         </div>
 
         {mayWrite ? (
@@ -354,6 +387,7 @@ export function ScheduleList({
   onWrite,
   onChanged,
   empty,
+  showRecord = true,
   loading = false,
   loadingLabel = 'Loading…',
 }: {
@@ -362,6 +396,8 @@ export function ScheduleList({
   onWrite: Write;
   onChanged: () => void;
   empty: string;
+  /** Whether each row states the event's window, size and state above its controls. */
+  showRecord?: boolean;
   /** Whether the schedules are still being read. */
   loading?: boolean;
   /** What the reading is, for the case where there is nothing to keep on screen. */
@@ -382,6 +418,7 @@ export function ScheduleList({
           key={schedule.id}
           schedule={schedule}
           mayWrite={mayWrite}
+          showRecord={showRecord}
           onWrite={onWrite}
           onChanged={onChanged}
         />

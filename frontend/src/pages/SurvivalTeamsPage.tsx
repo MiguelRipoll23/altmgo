@@ -1,7 +1,9 @@
 import { LoadingBlock, SectionHeading } from '../components/DataDisplay';
 import { StatusMessage } from '../components/StatusMessage';
 import { TeamCard, type Team } from '../components/TeamCard';
+import { CreateTeamPanel } from '../components/TeamForm';
 import { useApiResource } from '../components/useApiResource';
+import { useEventWrite, useMayModerate } from '../components/useEventWrite';
 
 /** Lobby selector of Survival, as the event subsystem numbers them. */
 const SurvivalMode = 4;
@@ -22,12 +24,14 @@ const SurvivalMode = 4;
  * the dashboard while showing it in the client would be a strange thing to have
  * done.
  *
- * Nothing here writes. Forming a team, changing a state and filling one with
- * server characters are a moderator's work and live in the event operations
- * section. The reason is reach rather than tidiness: this page is reached by
- * players who came to read the ladder, and a "create team" form and a roster
- * editor sitting on it put a delete-shaped control within a click of a refresh
- * button for no benefit to the reader.
+ * A moderator is offered the whole set here: form a team, rename one, change a
+ * state, add a character, take one off, and remove the team. It used to be told
+ * that these belonged on a separate console, on the grounds that a player reading
+ * the ladder should not have a delete-shaped control near a refresh button. That is
+ * true, and it is a reason to draw the controls for the role rather than a reason
+ * to put them on another page: a player reading this ladder still sees a ladder,
+ * and a moderator forming a team is looking at the ladder they are about to put it
+ * on. Drawing by role is the server's own rule, so the two cannot drift.
  *
  * The teams are drawn as cards in a grid, and their rosters as cards inside them,
  * for the reason the tournament pages draw their registrations and fixtures as
@@ -37,11 +41,12 @@ const SurvivalMode = 4;
  * same thing, and the outermost one was only there to hold the list.
  */
 export function SurvivalTeamsPage() {
-  const { data, error, loading } = useApiResource<{ teams: Team[] }>(
-    `/api/events/${SurvivalMode}/teams`,
-  );
+  const mayModerate = useMayModerate();
 
-  const teams = data?.teams ?? [];
+  const ladder = useApiResource<{ teams: Team[] }>(`/api/events/${SurvivalMode}/teams`);
+  const { status, setStatus, write } = useEventWrite(ladder.reload);
+
+  const teams = ladder.data?.teams ?? [];
 
   return (
     <div className="space-y-6">
@@ -50,10 +55,13 @@ export function SurvivalTeamsPage() {
         subtitle="The teams on the Survival ladder, and who is on them."
       />
 
-      {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
+      {ladder.error === null ? null : (
+        <StatusMessage kind="error">{ladder.error}</StatusMessage>
+      )}
+      {status === null ? null : <StatusMessage kind={status.kind}>{status.message}</StatusMessage>}
 
       {teams.length === 0 ? (
-        loading ? (
+        ladder.loading ? (
           <LoadingBlock label="Reading the teams…" />
         ) : (
           <p className="text-sm text-muted-foreground">No team has been formed on Survival.</p>
@@ -61,13 +69,27 @@ export function SurvivalTeamsPage() {
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           {teams.map((team) => (
-            <TeamCard key={team.id} team={team} mayWrite={false} onWrite={noop} onChanged={noop} />
+            <TeamCard
+              key={team.id}
+              team={team}
+              mayWrite={mayModerate}
+              onWrite={write}
+              onChanged={ladder.reload}
+            />
           ))}
         </div>
       )}
+
+      {mayModerate ? (
+        <CreateTeamPanel
+          mode={SurvivalMode}
+          onCreated={(message) => {
+            setStatus({ kind: 'success', message });
+            ladder.reload();
+          }}
+          onFailed={(message) => setStatus({ kind: 'error', message })}
+        />
+      ) : null}
     </div>
   );
 }
-
-/** A write this page never makes, because the controls that make one live elsewhere. */
-function noop(): void {}

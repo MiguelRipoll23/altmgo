@@ -3,8 +3,10 @@ import { Link, useParams } from 'react-router-dom';
 import { LoadingBlock, Panel, SectionHeading } from '../components/DataDisplay';
 import { StatusMessage } from '../components/StatusMessage';
 import { TeamCard, type Team } from '../components/TeamCard';
+import { CreateTeamPanel } from '../components/TeamForm';
 import { useApiResource } from '../components/useApiResource';
-import { formatEpoch, type Schedule } from '../components/ScheduleForm';
+import { useEventWrite, useMayModerate } from '../components/useEventWrite';
+import { ScheduleList, formatEpoch, type Schedule } from '../components/ScheduleForm';
 import { Badge } from '../components/ui/badge';
 
 /** Lobby selector of Survival, as the event subsystem numbers them. */
@@ -29,14 +31,25 @@ const SurvivalMode = 4;
  * one Survival event: the ladder is the ladder, and an event decides when it is
  * played and how many teams it takes. The page is open to any signed-in account,
  * because the ladder and the events are public in the game.
+ *
+ * A moderator is offered the controls for both halves, here rather than on a
+ * console elsewhere. This is the page an event is managed from: its window and
+ * field size are corrected while someone is looking at whether it is the right
+ * size for the ladder underneath, and the teams below are the ones the correction
+ * is for. Both sets are drawn for the role rather than for the frame, so a
+ * moderator who followed a link to this event from the player dashboard finds the
+ * same controls there; the server refuses the write either way.
  */
 export function SurvivalEventPage({ basePath = '/dashboard' }: { basePath?: string }) {
   const { identifier } = useParams();
+  const mayModerate = useMayModerate();
 
   const schedules = useApiResource<{ schedules: Schedule[] }>(
     `/api/events/${SurvivalMode}/schedules`,
   );
   const teams = useApiResource<{ teams: Team[] }>(`/api/events/${SurvivalMode}/teams`);
+
+  const { status, setStatus, write } = useEventWrite(schedules.reload, teams.reload);
 
   const schedule = schedules.data?.schedules.find((entry) => entry.id === Number(identifier));
 
@@ -56,6 +69,7 @@ export function SurvivalEventPage({ basePath = '/dashboard' }: { basePath?: stri
       />
 
       {schedules.error === null ? null : <StatusMessage kind="error">{schedules.error}</StatusMessage>}
+      {status === null ? null : <StatusMessage kind={status.kind}>{status.message}</StatusMessage>}
 
       {schedule === undefined ? (
         schedules.loading ? (
@@ -100,6 +114,20 @@ export function SurvivalEventPage({ basePath = '/dashboard' }: { basePath?: stri
               </div>
             </div>
           </dl>
+
+          {mayModerate ? (
+            <div className="mt-6 border-t border-border pt-5">
+              <ScheduleList
+                schedules={[schedule]}
+                mayWrite
+                onWrite={write}
+                onChanged={schedules.reload}
+                empty=""
+                showRecord={false}
+                loading={false}
+              />
+            </div>
+          ) : null}
         </Panel>
       )}
 
@@ -116,13 +144,27 @@ export function SurvivalEventPage({ basePath = '/dashboard' }: { basePath?: stri
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           {(teams.data?.teams ?? []).map((team) => (
-            <TeamCard key={team.id} team={team} mayWrite={false} onWrite={noop} onChanged={noop} />
+            <TeamCard
+              key={team.id}
+              team={team}
+              mayWrite={mayModerate}
+              onWrite={write}
+              onChanged={teams.reload}
+            />
           ))}
         </div>
       )}
+
+      {mayModerate ? (
+        <CreateTeamPanel
+          mode={SurvivalMode}
+          onCreated={(message) => {
+            setStatus({ kind: 'success', message });
+            teams.reload();
+          }}
+          onFailed={(message) => setStatus({ kind: 'error', message })}
+        />
+      ) : null}
     </div>
   );
 }
-
-/** A write this page never makes, because the controls that make one live elsewhere. */
-function noop(): void {}

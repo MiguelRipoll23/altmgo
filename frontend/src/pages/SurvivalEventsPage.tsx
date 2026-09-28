@@ -1,8 +1,9 @@
 import { EventCards } from '../components/EventCards';
 import { SectionHeading } from '../components/DataDisplay';
+import { CreateSchedulePanel, type Schedule } from '../components/ScheduleForm';
 import { StatusMessage } from '../components/StatusMessage';
 import { useApiResource } from '../components/useApiResource';
-import type { Schedule } from '../components/ScheduleForm';
+import { useMayModerate } from '../components/useEventWrite';
 
 /** Lobby selector of Survival, as the event subsystem numbers them. */
 const SurvivalMode = 4;
@@ -22,12 +23,18 @@ const SurvivalMode = 4;
  * game: a player can see what is published and when, and hiding that from the
  * dashboard while showing it in the client would be a strange thing to have done.
  *
- * Nothing here writes. Scheduling an event is a moderator's work and lives in the
- * event operations section; this page is reached by players who came to read what
- * is on.
+ * A moderator is also offered the form that publishes one, on this page rather than
+ * on a console elsewhere. Scheduling an event is done while looking at what is
+ * already published — to see what is on, to avoid overlapping it, to close the one
+ * that finished — and a moderator sent to another page to do it is a moderator
+ * holding two pages open to answer one question. It is drawn for the role and not
+ * for the frame, so a moderator reading the ladder from the player dashboard has
+ * the same controls there; the server refuses the write either way, and a page
+ * hiding them from a moderator only teaches them where else to look.
  */
 export function SurvivalEventsPage({ basePath = '/dashboard' }: { basePath?: string }) {
-  const { data, error, loading } = useApiResource<{ schedules: Schedule[] }>(
+  const mayModerate = useMayModerate();
+  const schedules = useApiResource<{ schedules: Schedule[] }>(
     `/api/events/${SurvivalMode}/schedules`,
   );
 
@@ -38,15 +45,21 @@ export function SurvivalEventsPage({ basePath = '/dashboard' }: { basePath?: str
         subtitle="What is published on the Survival ladder. Open one to see its details."
       />
 
-      {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
+      {schedules.error === null ? null : (
+        <StatusMessage kind="error">{schedules.error}</StatusMessage>
+      )}
 
       <EventCards
-        schedules={data?.schedules ?? []}
+        schedules={schedules.data?.schedules ?? []}
         basePath={`${basePath}/survival/events`}
         empty="No Survival event is scheduled."
-        loading={loading}
+        loading={schedules.loading}
         loadingLabel="Reading the events…"
       />
+
+      {mayModerate ? (
+        <CreateSchedulePanel mode={SurvivalMode} onChanged={schedules.reload} />
+      ) : null}
     </div>
   );
 }

@@ -1,8 +1,9 @@
 import { EventCards } from '../components/EventCards';
 import { SectionHeading } from '../components/DataDisplay';
+import { CreateSchedulePanel, type Schedule } from '../components/ScheduleForm';
 import { StatusMessage } from '../components/StatusMessage';
 import { useApiResource } from '../components/useApiResource';
-import type { Schedule } from '../components/ScheduleForm';
+import { useMayModerate } from '../components/useEventWrite';
 
 /** Lobby selector of Tournament. */
 const TournamentMode = 3;
@@ -20,13 +21,17 @@ const TournamentMode = 3;
  * bracket behind them are what the client announces, so a player may read them
  * here.
  *
- * Nothing here writes. Publishing an event, editing its window, withdrawing it and
- * placing the dedicated match characters on a seeded team all moved to the event
- * operations section, for the same reason as Survival: a reader who came to see who
- * is in the bracket should not have a scheduling form within reach of it.
+ * A moderator is offered the form that publishes an event, on this page rather than
+ * on a console elsewhere, for the reason Survival offers it: publishing is done while
+ * looking at what is already published, and the event is drawn in the lobby that
+ * selector names rather than in whichever one happened to be selected. Only the
+ * publish form lives here; correcting an event's window is done on the event's own
+ * page, next to its registrations, because that is where somebody asking about it
+ * already is.
  */
 export function TournamentPage({ basePath = '/dashboard' }: { basePath?: string }) {
-  const { data, error, loading } = useApiResource<{ schedules: Schedule[] }>(
+  const mayModerate = useMayModerate();
+  const schedules = useApiResource<{ schedules: Schedule[] }>(
     `/api/events/${TournamentMode}/schedules`,
   );
 
@@ -37,15 +42,21 @@ export function TournamentPage({ basePath = '/dashboard' }: { basePath?: string 
         subtitle="The published events. Open one to see who is in it and how it has gone."
       />
 
-      {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
+      {schedules.error === null ? null : (
+        <StatusMessage kind="error">{schedules.error}</StatusMessage>
+      )}
 
       <EventCards
-        schedules={data?.schedules ?? []}
+        schedules={schedules.data?.schedules ?? []}
         basePath={`${basePath}/tournament`}
         empty="No Tournament event is scheduled."
-        loading={loading}
+        loading={schedules.loading}
         loadingLabel="Reading the events…"
       />
+
+      {mayModerate ? (
+        <CreateSchedulePanel mode={TournamentMode} onChanged={schedules.reload} />
+      ) : null}
     </div>
   );
 }
