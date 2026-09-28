@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
-import { ChevronRight, Flag } from 'lucide-react';
+import { useState } from 'react';
+import { ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { apiBlob } from '../api';
+import { ClanEmblem } from '../components/ClanEmblem';
 import { LoadingBlock, Panel, SectionHeading, formatNumber } from '../components/DataDisplay';
 import { StatusMessage } from '../components/StatusMessage';
 import { useApiResource } from '../components/useApiResource';
@@ -16,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../components/ui/select';
-import { readSessionToken } from '../session';
 
 /**
  * One clan as the directory lists it.
@@ -291,11 +290,7 @@ export function ClansPage({ basePath = '/dashboard' }: { basePath?: string }) {
  * only be shared from that corner of itself.
  *
  * The band is square rather than the rooms' wide one, and that is the emblem's own
- * shape: the game draws these 32x32, so a band of any other ratio would either crop
- * the picture or letterbox it in a space that is pretending to be something it is
- * not. The emblem is held to its pixels rather than scaled smoothly, because at four
- * times its own size a 32x32 image interpolated is a blur, and the drawing is the
- * point of it.
+ * shape — see {@link ClanEmblem}, which is shared with the clan's own page.
  */
 function ClanCard({ clan, basePath }: { clan: Clan; basePath: string }) {
   return (
@@ -303,7 +298,13 @@ function ClanCard({ clan, basePath }: { clan: Clan; basePath: string }) {
       to={`${basePath}/clans/${clan.id}`}
       className="group flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card/50 transition hover:border-primary/40 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
-      <ClanEmblem hasEmblem={clan.hasEmblem} clanId={clan.id} name={clan.name} />
+      <ClanEmblem
+        clanId={clan.id}
+        name={clan.name}
+        hasEmblem={clan.hasEmblem}
+        size="aspect-square w-full"
+        className="rounded-none border-x-0 border-t-0"
+      />
 
       <div className="flex flex-1 flex-col gap-3 px-4 py-4">
         <div className="flex flex-wrap items-center gap-2">
@@ -353,79 +354,5 @@ function ClanCard({ clan, basePath }: { clan: Clan; basePath: string }) {
         </span>
       </div>
     </Link>
-  );
-}
-
-/**
- * The emblem a clan drew in the game, or a flag in its place.
- *
- * The game stores an emblem as 768 bytes of packed palette indices, which the
- * backend decodes into a 32x32 PNG and serves from its own route. It cannot be
- * pointed at with a plain `src`, because the image the browser fetches by URL would
- * not carry the session token — so it is fetched here as a blob and shown from an
- * object URL, and the object URL is revoked when the card goes away.
- *
- * A clan that has drawn nothing shows the flag rather than an empty square, and a
- * clan whose emblem fails to load falls back to the same flag: the card's job is to
- * identify a clan, and a broken image icon would say less about it than the icon
- * that stands in for every clan the game has no emblem for.
- */
-function ClanEmblem({
-  hasEmblem,
-  clanId,
-  name,
-}: {
-  hasEmblem: boolean;
-  clanId: number;
-  name: string;
-}) {
-  const [source, setSource] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!hasEmblem) {
-      return;
-    }
-
-    let cancelled = false;
-    let objectUrl: string | null = null;
-
-    void apiBlob(`/api/clans/${clanId}/emblem`, { token: readSessionToken() })
-      .then((blob) => {
-        if (cancelled) {
-          return;
-        }
-
-        objectUrl = URL.createObjectURL(blob);
-        setSource(objectUrl);
-      })
-      .catch(() => {
-        // The placeholder is already on screen and stays there. An emblem that
-        // will not load is not worth a line of text over the clan's own name.
-      });
-
-    return () => {
-      cancelled = true;
-
-      // Revoked rather than left to the collector: a directory that is paged
-      // through and paged back would otherwise hold one blob per clan it had
-      // shown, for as long as the tab was open.
-      if (objectUrl !== null) {
-        URL.revokeObjectURL(objectUrl);
-      }
-    };
-  }, [clanId, hasEmblem]);
-
-  return (
-    <div className="flex aspect-square w-full items-center justify-center border-b border-border bg-muted/20">
-      {source === null ? (
-        <Flag className="size-8 text-muted-foreground/50" aria-hidden="true" />
-      ) : (
-        <img
-          src={source}
-          alt={`${name}'s emblem`}
-          className="size-full object-contain [image-rendering:pixelated]"
-        />
-      )}
-    </div>
   );
 }

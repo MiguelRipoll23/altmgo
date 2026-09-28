@@ -1,5 +1,6 @@
 import { ArrowLeft } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
+import { ClanEmblem } from '../components/ClanEmblem';
 import {
   DataTable,
   LoadingBlock,
@@ -73,7 +74,19 @@ export function ClanDetailPage() {
             <p className="text-base text-muted-foreground">That clan could not be read.</p>
           ) : null
         ) : (
-          <ClanFacts clan={clan} />
+          /* The emblem stands beside the clan's own figures rather than in a band of
+             its own above them. On the directory card it is a full-width band because
+             the card is mostly the emblem; here the record is mostly figures, and a
+             square the width of the panel would push the roster a long way down the
+             page for a 32px drawing. It is the same emblem, drawn by the same
+             component, at the size this page has room for. */
+          <div className="flex items-start gap-4">
+            <ClanEmblem clanId={clan.id} name={clan.name} hasEmblem={clan.hasEmblem} size="size-24" />
+
+            <div className="min-w-0 flex-1">
+              <ClanFacts clan={clan} />
+            </div>
+          </div>
         )}
       </Panel>
 
