@@ -33,7 +33,12 @@ function SelectTrigger({
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
       className={cn(
-        "flex h-9 w-full items-center justify-between gap-2 rounded-md border border-input bg-background/60 px-3 py-2 text-sm shadow-sm transition-colors data-[placeholder]:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
+        // `py-1` is the `Input`'s padding, not a larger one of its own. The two are
+        // used side by side in every filter row, and a trigger that pads
+        // differently puts its text a few pixels above or below the field next to
+        // it — a drift small enough to look like nothing and large enough to read
+        // as the dropdown not belonging to the form it is part of.
+        "flex h-9 w-full items-center justify-between gap-2 rounded-md border border-input bg-background/60 px-3 py-1 text-sm shadow-sm transition-colors data-[placeholder]:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
         className,
       )}
       {...props}

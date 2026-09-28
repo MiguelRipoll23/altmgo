@@ -160,53 +160,61 @@ export function ClansPage({ basePath = '/dashboard' }: { basePath?: string }) {
 
       <Panel>
         <form
-          className="flex flex-wrap items-end gap-3"
+          // The three fields share a row and the buttons get one of their own,
+          // rather than all four competing for the same line. A field that grows to
+          // fill what is left beside two fixed-width dropdowns ends up a different
+          // width on every window, and the buttons land wherever the remaining space
+          // ran out — which on a wide screen is the far edge of the panel, so
+          // "Search" is a long way from the field it searches.
+          className="space-y-4"
           onSubmit={(event) => {
             event.preventDefault();
             setSubmitted(term.trim());
           }}
         >
-          <div className="min-w-48 flex-1 space-y-2">
-            <Label htmlFor="clan-term">Search</Label>
-            <Input
-              id="clan-term"
-              type="text"
-              value={term}
-              onChange={(event) => setTerm(event.target.value)}
-              placeholder="Clan name"
-            />
-          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="space-y-2 lg:col-span-2">
+              <Label htmlFor="clan-term">Search</Label>
+              <Input
+                id="clan-term"
+                type="text"
+                value={term}
+                onChange={(event) => setTerm(event.target.value)}
+                placeholder="Clan name"
+              />
+            </div>
 
-          <div className="w-full space-y-2 sm:w-48">
-            <Label htmlFor="clan-status">Applications</Label>
-            <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger id="clan-status">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {statuses.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="clan-status">Applications</Label>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger id="clan-status">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {statuses.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div className="w-full space-y-2 sm:w-48">
-            <Label htmlFor="clan-sort">Order by</Label>
-            <Select value={sort} onValueChange={setSort}>
-              <SelectTrigger id="clan-sort">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {sorts.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="space-y-2">
+              <Label htmlFor="clan-sort">Order by</Label>
+              <Select value={sort} onValueChange={setSort}>
+                <SelectTrigger id="clan-sort">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {sorts.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="flex gap-2">
