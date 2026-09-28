@@ -53,3 +53,55 @@ export async function publishAddress(
 
   return rows.length > 0;
 }
+
+/** The address one of the account's characters publishes, as the overview shows it. */
+export type PublishedAddress = {
+  characterId: number;
+  characterName: string;
+  publicAddress: string | null;
+};
+
+/**
+ * The address the account's most recently active character publishes.
+ *
+ * One figure rather than one per character, because the answer to "is my game
+ * joinable from outside" is a single address: the connection row is written for
+ * every character the account has, so the last one to have been active is the
+ * one a player is currently playing, and that is the row anybody will read.
+ *
+ * The most recent activity is the character's own `last_seen_at` rather than the
+ * connection row's `updated_at`: the connection row is written when a game
+ * starts, so a character that played yesterday and is idle today would otherwise
+ * be passed over for one that merely opened a lobby more recently.
+ */
+export async function readAccountPublicAddress(
+  accountIdentifier: number,
+): Promise<PublishedAddress | undefined> {
+  const rows = await database()`
+    select
+      character.id as character_id,
+      character.name as character_name,
+      connection.public_ip,
+      connection.public_port
+    from characters character
+    join character_connections connection on connection.character_id = character.id
+    where character.account_id = ${accountIdentifier}
+      and character.active
+    order by character.last_seen_at desc nulls last, character.id desc
+    limit 1
+  `;
+
+  const row = rows[0] as
+    | { character_id: number; character_name: string; public_ip: string; public_port: number }
+    | undefined;
+
+  if (!row) {
+    return undefined;
+  }
+
+  return {
+    characterId: row.character_id,
+    characterName: row.character_name,
+    publicAddress: `${row.public_ip}:${row.public_port}`,
+  };
+}

@@ -1,6 +1,17 @@
 import { database } from './database.js';
 
 /**
+ * The lobby type that is a gameplay lobby.
+ *
+ * The `lobbies` table holds three kinds of row — the gate, the account server
+ * and the gameplay lobbies — and only the last of them is a place players are
+ * on. Listing all three put a row on the overview for a service nobody is
+ * playing on, and two of those rows are permanent: they would never leave the
+ * list however long the deployment has been up.
+ */
+const GameLobbyType = 2;
+
+/**
  * How long a presence row is trusted. A row is a live connection rather than
  * durable state, and a client that vanishes without disconnecting leaves one
  * behind — so a reader has to decide when a row has gone stale, and the daily
@@ -52,16 +63,18 @@ export async function readPresenceTotals(): Promise<PresenceTotalsRow> {
       count(distinct presence.character_id)::int as players,
       count(distinct presence.lobby_id)::int as lobbies
     from character_presence presence
+    join lobbies lobby on lobby.id = presence.lobby_id
     where presence.last_seen >= now() - ${PresenceFreshSeconds} * interval '1 second'
+      and lobby.type_id = ${GameLobbyType}
   `;
 
   return rows[0] as PresenceTotalsRow;
 }
 
 /**
- * Every lobby with a count of what is connected to it, including the lobbies
- * that currently hold nobody: a lobby that is up and empty is a fact the
- * overview should show rather than hide by omission.
+ * Every gameplay lobby with a count of what is connected to it, including the
+ * lobbies that currently hold nobody: a lobby that is up and empty is a fact
+ * the overview should show rather than hide by omission.
  */
 export async function listLobbyPresence(): Promise<LobbyPresenceRow[]> {
   const rows = await database()`
@@ -79,7 +92,8 @@ export async function listLobbyPresence(): Promise<LobbyPresenceRow[]> {
           and presence.last_seen >= now() - ${PresenceFreshSeconds} * interval '1 second'
       ) as players
     from lobbies lobby
-    where lobby.updated_at >= now() - interval '2 hours'
+    where lobby.type_id = ${GameLobbyType}
+      and lobby.updated_at >= now() - interval '2 hours'
     order by players desc, lobby.name
   `;
 
@@ -99,6 +113,7 @@ export async function listConnectedCharacters(): Promise<ConnectedCharacterRow[]
     join characters character on character.id = presence.character_id
     join lobbies lobby on lobby.id = presence.lobby_id
     where presence.last_seen >= now() - ${PresenceFreshSeconds} * interval '1 second'
+      and lobby.type_id = ${GameLobbyType}
     order by lobby.name, character.name
   `;
 

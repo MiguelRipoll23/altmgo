@@ -14,7 +14,8 @@ import {
   isEventMode,
   SurvivalMode,
 } from '../dashboardQueries.js';
-import { listConnectedCharacters, listLobbyPresence, readPresenceTotals } from '../presence.js';
+import { listLobbyPresence, readPresenceTotals } from '../presence.js';
+import { readAccountPublicAddress } from '../publicAddresses.js';
 import { isClanBoard, isPlayerBoard, readClanBoard, readPlayerBoard } from '../rankingsQueries.js';
 
 export const dashboardRoutes = new Hono<AppBindings>();
@@ -42,33 +43,36 @@ function readFlag(value: string | undefined): boolean {
 }
 
 /**
- * The overview: who is connected, and which lobby each of them is in.
+ * The overview: how many players are on the server, the gameplay lobbies they
+ * are spread across, and the address the caller's own last character publishes.
  *
- * The count leads because it is the one figure an operator opens the page for,
- * and the lobby breakdown is what makes it actionable — a server with forty
+ * The lobby breakdown is what makes the count actionable — a server with forty
  * players spread over one lobby and a server with forty spread over eight are
- * the same number and a very different afternoon.
+ * the same number and a very different afternoon — and the published address is
+ * the one thing on this page that is about the person reading it rather than
+ * about the server: it is what another player would connect to in order to join
+ * their game, and it is the figure that goes stale when their network changes.
  */
 dashboardRoutes.get('/overview', requireAccount, async (context) => {
   const totals = await readPresenceTotals();
   const lobbies = await listLobbyPresence();
-  const connected = await listConnectedCharacters();
+  const published = await readAccountPublicAddress(context.get('accountIdentifier'));
 
   return context.json({
-    totals: { connectedPlayers: totals.players, lobbiesWithPlayers: totals.lobbies },
+    totals: { connectedPlayers: totals.players },
     lobbies: lobbies.map((lobby) => ({
       id: lobby.id,
       name: lobby.name,
       address: `${lobby.address}:${lobby.port}`,
       players: lobby.players,
     })),
-    connected: connected.map((player) => ({
-      characterId: player.id,
-      name: player.name,
-      lobbyId: player.lobby_id,
-      lobbyName: player.lobby_name,
-      lastSeen: player.last_seen,
-    })),
+    publishedAddress: published === undefined
+      ? null
+      : {
+          characterId: published.characterId,
+          characterName: published.characterName,
+          address: published.publicAddress,
+        },
   });
 });
 

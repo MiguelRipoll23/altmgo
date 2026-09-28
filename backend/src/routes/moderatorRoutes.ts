@@ -15,6 +15,14 @@ import {
   withdrawEventSchedule,
   type ModerationRefusal,
 } from '../moderationWrites.js';
+import { editEventSchedule, removeEventTeam, renameEventTeam, type EditRefusal } from '../teamEdits.js';
+import {
+  assignServerCharacter,
+  ensureServerCharacters,
+  listServerCharacters,
+  type ServerCharacterOutcome,
+  type ServerCharacterRefusal,
+} from '../serverCharacters.js';
 
 export const moderatorRoutes = new Hono<AppBindings>();
 
@@ -57,6 +65,47 @@ const refusalMessages: Record<ModerationRefusal['reason'], string> = {
   'invalid-window': 'The publication window does not make sense. It has to open before it closes.',
   'invalid-mode': 'That lobby mode does not hold events.',
 };
+
+/**
+ * The sentences the team and character writes answer a refusal with. They are
+ * separate from the event writes' because the two sets of reasons are separate:
+ * a caller of this module never sees a reason the other one owns.
+ */
+const editRefusalMessages: Record<EditRefusal['reason'], string> = {
+  name: 'That name cannot be used. Check it is not empty and not too long.',
+  'unknown-team': 'That team or event no longer exists.',
+  'duplicate-event-name': 'Another team or event already has that name.',
+  'invalid-window': 'The publication window does not make sense. It has to open before it closes.',
+  'in-use': 'That team is already in a drawn bracket, so it cannot be removed.',
+};
+
+const serverCharacterRefusalMessages: Record<ServerCharacterRefusal, string> = {
+  'pool-full': 'The server character pool is full.',
+  'unknown-account': 'This deployment has no "server" account for the server characters to belong to.',
+  'name-taken': 'A character already has that name.',
+  'unknown-team': 'That team no longer exists, or it has no room left.',
+};
+
+/** Answers a team or event write with either its result or the sentence for why it failed. */
+function answerEdit<T>(context: Context<AppBindings>, outcome: { ok: true; value: T } | { ok: false; refusal: EditRefusal }) {
+  if (outcome.ok) {
+    return context.json(outcome.value, 200);
+  }
+
+  return context.json({ error: editRefusalMessages[outcome.refusal.reason] }, 400);
+}
+
+/** Answers a server character write with either its result or the sentence for why it failed. */
+function answerCharacters<T>(
+  context: Context<AppBindings>,
+  outcome: ServerCharacterOutcome<T>,
+) {
+  if (outcome.ok) {
+    return context.json(outcome.value, 200);
+  }
+
+  return context.json({ error: serverCharacterRefusalMessages[outcome.refusal] }, 400);
+}
 
 /** Answers a write with either its result or the sentence for why it failed. */
 function answer<T>(context: Context<AppBindings>, outcome: { ok: true; value: T } | { ok: false; refusal: ModerationRefusal }) {
@@ -165,6 +214,94 @@ moderatorRoutes.post('/moderator/schedules', requireModerator, async (context) =
 moderatorRoutes.delete('/moderator/schedules/:identifier', requireModerator, async (context) =>
   answer(context, await withdrawEventSchedule(Number(context.req.param('identifier')))),
 );
+
+/**
+ * Renames a team and rewrites its comment. The state is not editable here: the
+ * event subsystem owns it, and a value written by hand is one it is about to
+ * overwrite.
+ */
+moderatorRoutes.put('/moderator/teams/:identifier', requireModerator, async (context) => {
+  const body = await readBody(context);
+  const name = readText(body, 'name');
+  const comment = readText(body, 'comment');
+
+  if (name === undefined || comment === undefined) {
+    return context.json({ error: 'A team needs a name and a comment.' }, 400);
+  }
+
+  return answerEdit(context, await renameEventTeam(Number(context.req.param('identifier')), name, comment));
+});
+
+/** Removes a team, refusing one a bracket has already drawn. */
+moderatorRoutes.delete('/moderator/teams/:identifier', requireModerator, async (context) =>
+  answerEdit(context, await removeEventTeam(Number(context.req.param('identifier')))),
+);
+
+/** Edits a published event's name, window, field size and whether it is published. */
+moderatorRoutes.put('/moderator/schedules/:identifier', requireModerator, async (context) => {
+  const body = await readBody(context);
+  const name = readText(body, 'name');
+  const teamCapacity = readInteger(body, 'teamCapacity');
+  const publishStart = readInteger(body, 'publishStart');
+  const publishEnd = readInteger(body, 'publishEnd');
+
+  if (name === undefined || teamCapacity === undefined || publishStart === undefined || publishEnd === undefined) {
+    return context.json({ error: 'An event needs a name, a capacity and a window.' }, 400);
+  }
+
+  return answerEdit(
+    context,
+    await editEventSchedule(Number(context.req.param('identifier')), {
+      name,
+      teamCapacity,
+      publishStart,
+      publishEnd,
+      enabled: readBoolean(body, 'enabled') ?? true,
+    }),
+  );
+});
+
+/**
+ * Every server character there is, with the team each is on.
+ *
+ * The list is what a moderator fills a team from, so it is a moderator route:
+ * a player has no business reading the characters the dedicated match rooms are
+ * named after.
+ */
+moderatorRoutes.get('/moderator/server-characters', requireModerator, async (context) =>
+  context.json({ characters: await listServerCharacters() }),
+);
+
+/**
+ * Creates the server characters that are missing, up to the number asked for.
+ *
+ * This is the on-demand half of the pool: a moderator asking for six gets six,
+ * and the rest are made when they are next asked for. Asking for a number the
+ * pool already holds is not a failure — it names the pool.
+ */
+moderatorRoutes.post('/moderator/server-characters', requireModerator, async (context) => {
+  const body = await readBody(context);
+  const wanted = readInteger(body, 'count') ?? 0;
+
+  return answerCharacters(context, await ensureServerCharacters(wanted));
+});
+
+/**
+ * Moves a server character onto a team, or off every team when none is named.
+ *
+ * Moving rather than adding is the whole point: a server character fills one
+ * slot on one team at a time, so putting it on a second team has to take it off
+ * the first.
+ */
+moderatorRoutes.put('/moderator/server-characters/:identifier', requireModerator, async (context) => {
+  const body = await readBody(context);
+  const team = readInteger(body, 'teamId');
+
+  return answerCharacters(
+    context,
+    await assignServerCharacter(Number(context.req.param('identifier')), team === undefined ? undefined : team),
+  );
+});
 
 /**
  * Writes a message from the bot into a channel of the guild.
