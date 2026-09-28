@@ -34,11 +34,11 @@ type OwnedCharacter = {
  * character that does not exist does, and there is nothing to find by guessing ids.
  *
  * The progress is drawn rather than tabulated. The client's level is the count of
- * thresholds its experience has cleared, which means the useful question is not
- * "what is the level" but "how far into it" — so the gauge is the figure and the
- * two experience totals are written on it, the same way the client draws the
- * number under the bar. A character at the ceiling is drawn full and says so,
- * because the client clamps there too and there is no next level to be short of.
+ * thresholds the character's experience has cleared, and the gauge is drawn at the
+ * width that puts it that far into the level, so the bar is the figure and the
+ * level is the one number written on it. The experience behind it is not written
+ * out: a character at the ceiling is drawn full and says so, because the client
+ * clamps there too and there is no next level to be short of.
  */
 export function CharacterDetailPage() {
   const { identifier } = useParams();
@@ -92,7 +92,6 @@ export function CharacterDetailPage() {
       {character === null ? null : (
         <Panel title="Record">
           <dl className="grid gap-4 sm:grid-cols-2">
-            <Detail label="Experience" value={formatNumber(character.experience)} />
             <Detail label="Total rewards" value={formatNumber(character.totalRewards)} />
             <Detail label="Clan" value={character.clan?.name ?? null} />
             <Detail
@@ -123,33 +122,42 @@ export function CharacterDetailPage() {
 }
 
 /**
- * The level bar, with the two totals written on it.
+ * The level bar, reading as the client reads it: the level, out of the levels there
+ * are.
  *
- * The bar is a `div` rather than a progress element because the figure being
- * drawn is a position within a band rather than progress towards an end, and a
- * native progress bar would say "22 of 22" for a character at the ceiling, which
- * is not what the client's gauge says at all.
+ * No experience is printed, and that is the whole change from how it was drawn. The
+ * experience total is a real figure about the character, but every character on a
+ * level shares the same bar and differs in that number, so a page showing "1,240
+ * experience" beside a bar the same length as everybody else's says something true
+ * and something unhelpful at once. The level is the part two characters can be
+ * compared on, and it is the part the client itself shows. The thresholds stay in
+ * `lib/game.ts`, where the width of the bar is computed from them; they are not put
+ * in front of the reader.
+ *
+ * The bar is a `div` with a meter role rather than a progress element because the
+ * figure being drawn is a position within a band rather than progress towards an
+ * end: a native progress bar would say "22 of 22" for a character at the ceiling,
+ * which is not what the client's gauge says at all.
  */
 export function LevelGauge({ experience }: { experience: number }) {
-  const { level, from, to, ratio, atCeiling } = characterLevelProgress(experience);
+  const { level, ratio, atCeiling } = characterLevelProgress(experience);
   const percent = Math.round(ratio * 100);
 
   return (
     <div>
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <p className="text-2xl font-extrabold tracking-tight text-foreground">
-          Level {formatNumber(level)}
-        </p>
-        <p className="text-sm text-muted-foreground">
-          {formatNumber(experience)} experience
-        </p>
-      </div>
+      <p className="text-2xl font-extrabold tracking-tight text-foreground">
+        Level {formatNumber(level)}{' '}
+        <span className="text-base font-semibold text-muted-foreground">
+          of {formatNumber(MaximumLevel)}
+        </span>
+      </p>
 
       <div
         role="meter"
         aria-valuenow={level}
         aria-valuemin={0}
         aria-valuemax={MaximumLevel}
+        aria-valuetext={`Level ${level} of ${MaximumLevel}`}
         aria-label="Level"
         className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted"
       >
@@ -159,19 +167,10 @@ export function LevelGauge({ experience }: { experience: number }) {
         />
       </div>
 
-      <p className="mt-2 text-xs text-muted-foreground">
-        {atCeiling ? (
-          <>Level {MaximumLevel} is the highest the table defines; this character is past its last threshold.</>
-        ) : (
-          <>
-            Level {formatNumber(level + 1)} at {formatNumber(to)} experience —{' '}
-            {formatNumber(to - experience)} to go.
-          </>
-        )}
-      </p>
-      {!atCeiling ? (
-        <p className="mt-1 text-xs text-muted-foreground">
-          This level began at {formatNumber(from)} experience.
+      {atCeiling ? (
+        <p className="mt-2 text-xs text-muted-foreground">
+          Level {MaximumLevel} is the highest the table defines; this character is past its
+          last threshold, and the bar is drawn full because the client draws it full there.
         </p>
       ) : null}
     </div>
