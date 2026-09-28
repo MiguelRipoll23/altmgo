@@ -1,15 +1,12 @@
 import { Search } from 'lucide-react';
 import { useState } from 'react';
-import { DataTable, Panel, SectionHeading, formatDate } from '../components/DataDisplay';
-import { CreateSchedulePanel, ScheduleList, type Schedule } from '../components/ScheduleForm';
-import { ServerCharacterPool, type ServerCharacter } from '../components/ServerCharacterPool';
-import { StatusMessage } from '../components/StatusMessage';
-import { useApiResource } from '../components/useApiResource';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
-import { isModerator, readSessionRoles } from '../session';
-import { apiRequest, describeError } from '../api';
+import { DataTable, Panel, SectionHeading, formatDate } from '../../components/DataDisplay';
+import { ScheduleList, type Schedule } from '../../components/ScheduleForm';
+import { StatusMessage } from '../../components/StatusMessage';
+import { useApiResource } from '../../components/useApiResource';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
 
 type Entry = {
   event_id: number;
@@ -47,36 +44,22 @@ type Tournament = { event: number; entries: Entry[]; bracket: Bracket | null; fi
  *
  * Like Survival, the page is open to any signed-in account: the events and the
  * bracket behind them are what the client announces, so a player may read them
- * here. Publishing one, editing its window or withdrawing it is a moderator
- * action, and those controls are the only thing on this page a player does not
- * get.
+ * here.
+ *
+ * Nothing here writes. Publishing an event, editing its window, withdrawing it and
+ * placing the dedicated match characters on a seeded team all moved to the event
+ * operations section, for the same reason as Survival: a reader who came to see who
+ * is in the bracket should not have a scheduling form within reach of the button
+ * that submits the event id they are reading.
  */
 export function TournamentPage() {
-  const mayWrite = isModerator(readSessionRoles());
   const [event, setEvent] = useState('');
   const [submitted, setSubmitted] = useState('');
-  const [status, setStatus] = useState<{ kind: 'success' | 'error'; message: string } | null>(null);
 
   const schedules = useApiResource<{ schedules: Schedule[] }>('/api/events/3/schedules');
-  const pool = useApiResource<{ characters: ServerCharacter[] }>(
-    mayWrite ? '/api/moderator/server-characters' : null,
-  );
   const detail = useApiResource<Tournament>(
     submitted === '' ? null : `/api/tournament?event=${encodeURIComponent(submitted)}`,
   );
-
-  async function write(action: () => Promise<unknown>, done: string) {
-    setStatus(null);
-
-    try {
-      await action();
-      setStatus({ kind: 'success', message: done });
-      schedules.reload();
-      pool.reload();
-    } catch (caught) {
-      setStatus({ kind: 'error', message: describeError(caught) });
-    }
-  }
 
   return (
     <div className="space-y-6">
@@ -86,35 +69,16 @@ export function TournamentPage() {
       />
 
       {schedules.error === null ? null : <StatusMessage kind="error">{schedules.error}</StatusMessage>}
-      {status === null ? null : <StatusMessage kind={status.kind}>{status.message}</StatusMessage>}
-
-      {mayWrite ? <CreateSchedulePanel onChanged={schedules.reload} /> : null}
 
       <Panel title="Scheduled Tournament events">
         <ScheduleList
           schedules={schedules.data?.schedules ?? []}
-          mayWrite={mayWrite}
-          onWrite={write}
-          onChanged={schedules.reload}
+          mayWrite={false}
+          onWrite={noop}
+          onChanged={noop}
           empty={schedules.loading ? 'Reading the schedule…' : 'No Tournament event is scheduled.'}
         />
       </Panel>
-
-      {mayWrite ? (
-        <Panel
-          title="Server characters"
-          description="The dedicated match rooms, placed on a team by hand."
-        >
-          <ServerCharacterPool
-            characters={pool.data?.characters ?? []}
-            teams={teamsOfBracket(detail.data)}
-            onChanged={() => {
-              schedules.reload();
-              pool.reload();
-            }}
-          />
-        </Panel>
-      ) : null}
 
       <Panel>
         <form
@@ -228,9 +192,5 @@ export function TournamentPage() {
   );
 }
 
-/** The teams of the selected bracket, which is what the pool can be pointed at. */
-function teamsOfBracket(tournament: Tournament | null): { id: number; name: string }[] {
-  return (tournament?.bracket?.seeds ?? [])
-    .filter((seed) => seed.team_id !== null && seed.team_name !== null)
-    .map((seed) => ({ id: seed.team_id as number, name: seed.team_name as string }));
-}
+/** A write this page never makes, because the controls that make one live elsewhere. */
+function noop(): void {}

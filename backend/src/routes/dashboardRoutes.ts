@@ -188,6 +188,24 @@ dashboardRoutes.get('/tournament', requireAccount, async (context) => {
   });
 });
 
+/**
+ * The teams of any event mode.
+ *
+ * Survival has a section of its own that reads the same rows, but the event
+ * operations page works across all three modes from one selector, and a moderator
+ * forming a Tournament team should not have to leave the page to see what is
+ * already there.
+ */
+dashboardRoutes.get('/events/:mode/teams', requireAccount, async (context) => {
+  const mode = Number(context.req.param('mode'));
+
+  if (!isEventMode(mode)) {
+    return context.json({ error: 'That lobby mode does not hold events.' }, 400);
+  }
+
+  return context.json({ teams: await listEventTeams(mode) });
+});
+
 /** The schedules of any event mode, for the sections that list them. */
 dashboardRoutes.get('/events/:mode/schedules', requireAccount, async (context) => {
   const mode = Number(context.req.param('mode'));

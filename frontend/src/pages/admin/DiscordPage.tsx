@@ -1,14 +1,14 @@
 import { Send } from 'lucide-react';
 import { useState } from 'react';
-import { apiRequest, describeError } from '../api';
-import { Panel, SectionHeading } from '../components/DataDisplay';
-import { StatusMessage } from '../components/StatusMessage';
-import { useApiResource } from '../components/useApiResource';
-import { readSessionToken } from '../session';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
-import { Textarea } from '../components/ui/textarea';
+import { apiRequest, describeError } from '../../api';
+import { Panel, SectionHeading } from '../../components/DataDisplay';
+import { StatusMessage } from '../../components/StatusMessage';
+import { useApiResource } from '../../components/useApiResource';
+import { readSessionToken } from '../../session';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
+import { Textarea } from '../../components/ui/textarea';
 
 /**
  * The Discord tools, which is where writing to the guild lives.
@@ -18,9 +18,10 @@ import { Textarea } from '../components/ui/textarea';
  * operator who came to look at the player count should not have a send button
  * from that page within reach of the click that dismisses a refresh.
  *
- * The composer is manager-only on the server, and this page is reached by
- * moderators too — a moderator is told the message needs the manager role
- * rather than being shown a form that would be refused.
+ * The whole page is manager-gated at the route rather than just the write, because
+ * every call it makes is a manager call: there is nothing here a moderator can read
+ * either, so a moderator reaching the section is sent to the overview rather than
+ * shown a form that would be refused on submit.
  */
 export function DiscordPage() {
   const configured = useApiResource<{ configured: boolean }>('/api/manager/discord');

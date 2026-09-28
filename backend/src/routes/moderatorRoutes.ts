@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
 import type { Context } from 'hono';
 import type { AppBindings } from '../authentication.js';
-import { requireModerator, requireManager } from '../authentication.js';
+import { requireModerator } from '../authentication.js';
 import { isEventMode } from '../dashboardQueries.js';
-import { isDiscordConfigured, sendChannelMessage } from '../discord.js';
+import { readBody, readBoolean, readInteger, readText } from '../requestBody.js';
 import {
   addTeamMember,
   createEventSchedule,
@@ -24,29 +24,13 @@ import {
   type ServerCharacterRefusal,
 } from '../serverCharacters.js';
 
+/**
+ * The moderator routes: the work of running the events — forming a team, filling
+ * one, changing a state, scheduling an event, and placing the dedicated match
+ * characters on a roster. Each route checks the moderator role itself, so a route
+ * added to the wrong group is refused rather than opened.
+ */
 export const moderatorRoutes = new Hono<AppBindings>();
-
-/** Reads a JSON body, or nothing when the request does not carry one. */
-async function readBody(context: Context<AppBindings>): Promise<Record<string, unknown>> {
-  return ((await context.req.json().catch(() => undefined)) ?? {}) as Record<string, unknown>;
-}
-
-/** Reads a string field, or nothing when it is absent or not a string. */
-function readText(body: Record<string, unknown>, name: string): string | undefined {
-  return typeof body[name] === 'string' ? (body[name] as string) : undefined;
-}
-
-/** Reads a whole-number field, or nothing when it is absent or not one. */
-function readInteger(body: Record<string, unknown>, name: string): number | undefined {
-  const value = body[name];
-
-  return typeof value === 'number' && Number.isInteger(value) ? value : undefined;
-}
-
-/** Reads a boolean field, or nothing when it is absent or not one. */
-function readBoolean(body: Record<string, unknown>, name: string): boolean | undefined {
-  return typeof body[name] === 'boolean' ? (body[name] as boolean) : undefined;
-}
 
 /**
  * What each refusal means to the person who pressed the button. The reasons are
@@ -301,38 +285,4 @@ moderatorRoutes.put('/moderator/server-characters/:identifier', requireModerator
     context,
     await assignServerCharacter(Number(context.req.param('identifier')), team === undefined ? undefined : team),
   );
-});
-
-/**
- * Writes a message from the bot into a channel of the guild.
- *
- * This is the one write that reaches outside the game, which is why it needs the
- * manager role and not the moderator one: a moderator runs the events, and a
- * manager speaks for the server.
- */
-export const managerRoutes = new Hono<AppBindings>();
-
-managerRoutes.get('/manager/discord', requireManager, (context) =>
-  context.json({ configured: isDiscordConfigured() }),
-);
-
-managerRoutes.post('/manager/discord/messages', requireManager, async (context) => {
-  const body = await readBody(context);
-  const channelIdentifier = readText(body, 'channelId');
-  const content = readText(body, 'content');
-
-  if (channelIdentifier === undefined || content === undefined) {
-    return context.json({ error: 'A message needs a channel and some text.' }, 400);
-  }
-
-  const outcome = await sendChannelMessage(channelIdentifier, content);
-
-  if (outcome.ok) {
-    return context.json({ sent: true });
-  }
-
-  // Discord answering a refusal is a bad gateway rather than a bad request: the
-  // request was well formed and the upstream that could not carry it out is
-  // what said no.
-  return context.json({ error: 'Discord did not accept that message.' }, outcome.refusal.reason === 'invalid-channel' ? 400 : 502);
 });

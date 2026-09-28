@@ -1,17 +1,17 @@
 import { useState } from 'react';
-import { DataTable, Panel, SectionHeading, formatDate, formatNumber } from '../components/DataDisplay';
-import { StatusMessage } from '../components/StatusMessage';
-import { useApiResource } from '../components/useApiResource';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
+import { DataTable, Panel, SectionHeading, formatDate, formatNumber } from '../../components/DataDisplay';
+import { StatusMessage } from '../../components/StatusMessage';
+import { useApiResource } from '../../components/useApiResource';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../components/ui/select';
+} from '../../components/ui/select';
 
 type Character = {
   id: number;

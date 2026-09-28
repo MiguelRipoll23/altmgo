@@ -5,8 +5,10 @@ import type { AppBindings } from './authentication.js';
 import { authenticationRoutes } from './routes/authenticationRoutes.js';
 import { characterRoutes } from './routes/characterRoutes.js';
 import { addressRoutes } from './routes/addressRoutes.js';
+import { clanRoutes } from './routes/clanRoutes.js';
 import { dashboardRoutes } from './routes/dashboardRoutes.js';
-import { managerRoutes, moderatorRoutes } from './routes/moderatorRoutes.js';
+import { managerRoutes } from './routes/managerRoutes.js';
+import { moderatorRoutes } from './routes/moderatorRoutes.js';
 
 /**
  * Vercel finds the backend by this default export — from `app`, `index` or
@@ -42,6 +44,7 @@ app.get('/', (context) => context.json({ service: 'altmgo-backend', status: 'ok'
 app.route('/api', authenticationRoutes);
 app.route('/api', characterRoutes);
 app.route('/api', addressRoutes);
+app.route('/api', clanRoutes);
 app.route('/api', dashboardRoutes);
 
 // The staff routes are grouped by what they may do rather than by what they act

@@ -1,65 +1,32 @@
-import {
-  Gamepad2,
-  LayoutDashboard,
-  Medal,
-  MessageSquare,
-  Swords,
-  Trophy,
-  UserSearch,
-  type LucideIcon,
-} from 'lucide-react';
+import { LayoutDashboard, Medal, Shield, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { NavLink } from 'react-router-dom';
-import { isModerator, type StaffRole } from '../session';
+import { type StaffRole } from '../session';
 import { AccountMenu } from './AccountMenu';
 
-/**
- * One section of the dashboard. The role is what decides whether the section is
- * offered at all, and it is named rather than implied: a section nobody can
- * open is not a section, and showing it greyed out would only invite the click
- * that is then refused.
- */
-type Section = {
-  path: string;
-  label: string;
-  icon: LucideIcon;
-  /** The role a caller needs, or nothing when any signed-in account may open it. */
-  role?: StaffRole;
-};
+/** One section of the player dashboard. */
+type Section = { path: string; label: string; icon: LucideIcon };
 
 /**
  * The sections, in the order they are offered.
  *
- * Overview is first because it is what an operator opens the dashboard for, and
- * the rest follow the shape of the game: who you are, what you are playing, what
- * you are ranked by, and then the event modes and the Discord tools the staff
- * act through. Survival and Tournament carry no role because a player may read
- * them — the ladder is public in the game — and the pages themselves decide
- * which of their controls to draw.
+ * There are only two, and that is the point of the split rather than a shortfall:
+ * everything an operator administers moved to the admin frame, which is reached from
+ * the account card at the foot of this column. What is left is what a player comes
+ * for — how many people are on, and where they stand on the boards.
+ *
+ * The admin frame is offered on the account card rather than as a section here
+ * because a signed-in player has no use for it. A moderator who has not opened the
+ * admin frame yet should not find a section implying there is more of the dashboard
+ * than there is; the card is where somebody who *is* staff already looking for it
+ * will go, and it carries the same switch back.
  */
 const sections: Section[] = [
   { path: '/dashboard', label: 'Overview', icon: LayoutDashboard },
-  { path: '/dashboard/characters', label: 'Characters', icon: UserSearch },
-  { path: '/dashboard/games', label: 'Games', icon: Gamepad2 },
-  { path: '/dashboard/survival', label: 'Survival', icon: Swords },
-  { path: '/dashboard/tournament', label: 'Tournament', icon: Trophy },
   { path: '/dashboard/rankings', label: 'Rankings', icon: Medal },
-  { path: '/dashboard/discord', label: 'Discord', icon: MessageSquare, role: 'moderator' },
 ];
 
-/**
- * The dashboard itself: a fixed column of sections down the left, the page
- * beside them.
- *
- * The sidebar is fixed rather than sticky for the same reason the layout is a
- * full-height frame: a dashboard is read beside something else, and a list of
- * sections that scrolls away up a long page cannot be used without scrolling
- * back to reach it. Fixing it means the way to the next section is always in
- * the same place, whatever height the page has grown to.
- *
- * The margin on the content is the sidebar's width, because a fixed element is
- * out of the flow and the page would otherwise start underneath it.
- */
+/** The player dashboard: a fixed column of sections down the left, the page beside them. */
 export function DashboardLayout({
   accountName,
   roles,
@@ -69,10 +36,6 @@ export function DashboardLayout({
   roles: StaffRole[];
   children: ReactNode;
 }) {
-  const visible = sections.filter(
-    (section) => section.role === undefined || roles.includes(section.role) || isModerator(roles),
-  );
-
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
       <aside className="fixed inset-y-0 left-0 z-40 flex w-64 flex-col gap-6 overflow-y-auto border-r border-border bg-card/60 p-5">
@@ -81,7 +44,7 @@ export function DashboardLayout({
         </p>
 
         <nav className="flex flex-1 flex-col gap-1">
-          {visible.map((section) => (
+          {sections.map((section) => (
             <NavLink
               key={section.path}
               to={section.path}
@@ -101,7 +64,11 @@ export function DashboardLayout({
           ))}
         </nav>
 
-        <AccountMenu accountName={accountName} roles={roles} />
+        <AccountMenu
+          accountName={accountName}
+          roles={roles}
+          frame={{ to: '/admin', label: 'Admin dashboard', icon: Shield }}
+        />
       </aside>
 
       <main className="min-w-0 pl-64">

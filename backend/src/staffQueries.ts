@@ -1,0 +1,120 @@
+import { database } from './database.js';
+
+/**
+ * What a manager reads: the accounts and the roles they hold, and the two tables
+ * that speak for the server — the news the client shows on login and the game master
+ * mail a player receives in their inbox.
+ *
+ * None of it is derived. A role is a row in `account_roles` and a news item is a row
+ * in `news`, both written by the game and readable here; the dashboard only draws
+ * them and, for roles, changes them.
+ */
+
+/** One role an account holds, with when it was granted. */
+export type HeldRole = {
+  role: string;
+  granted_at: Date;
+};
+
+/** One account, as the accounts and roles section lists it. */
+export type StaffAccountRow = {
+  id: number;
+  display_name: string;
+  banned_until: Date | null;
+  ban_reason: string | null;
+  main_character_name: string | null;
+  current_character_name: string | null;
+  character_count: number;
+  roles: HeldRole[];
+};
+
+/** One news item, as the client shows it on the login screen. */
+export type NewsRow = {
+  id: number;
+  title: string;
+  body: string;
+  important: boolean;
+  time: Date;
+};
+
+/** One game master mail message, as it sits in a player's inbox. */
+export type GameMasterMailRow = {
+  id: number;
+  subject: string;
+  body: string;
+  sender_name: string;
+  sent_at: Date;
+};
+
+/**
+ * Runs a query and types its rows.
+ *
+ * The driver answers `Record<string, any>[]`, which describes no shape at all and
+ * so would let a renamed column arrive as a silently `undefined` value.
+ */
+async function readRows<T>(rows: Promise<Record<string, unknown>[]>): Promise<T[]> {
+  return (await rows) as unknown as T[];
+}
+
+/**
+ * Lists every account with the roles it holds.
+ *
+ * The roles are gathered in a correlated subquery rather than joined and grouped,
+ * because the join that would produce them in one pass is the same one that has to
+ * be counted twice over: an account with two characters and two roles arrives from
+ * a grouped join as four rows, and the character count would double with it. The
+ * coalesce is what makes an account with no roles come back as an empty list rather
+ * than as nothing at all, which the page would otherwise have to tell apart from a
+ * query that failed.
+ */
+export async function listStaffAccounts(): Promise<StaffAccountRow[]> {
+  return readRows<StaffAccountRow>(database()`
+    select
+      account.id,
+      account.display_name,
+      account.banned_until,
+      account.ban_reason,
+      main_character.name as main_character_name,
+      current_character.name as current_character_name,
+      (
+        select count(*)::bigint
+        from characters character
+        where character.account_id = account.id
+      ) as character_count,
+      coalesce(
+        (
+          select json_agg(
+            json_build_object('role', held.role, 'granted_at', held.granted_at)
+            order by held.role
+          )
+          from account_roles held
+          where held.account_id = account.id
+        ),
+        '[]'::json
+      ) as roles
+    from accounts account
+    left join characters main_character on main_character.id = account.main_character_id
+    left join characters current_character on current_character.id = account.current_character_id
+    order by account.display_name, account.id
+  `);
+}
+
+/** The most recent news items, newest first. */
+export async function listNews(limit: number): Promise<NewsRow[]> {
+  return readRows<NewsRow>(database()`
+    select news.id, news.title, news.body, news.important, news.time
+    from news
+    order by news.time desc nulls last, news.id desc
+    limit ${limit}
+  `);
+}
+
+/** The most recent game master mail, newest first. */
+export async function listGameMasterMail(limit: number): Promise<GameMasterMailRow[]> {
+  return readRows<GameMasterMailRow>(database()`
+    select mail.id, mail.subject, mail.body, mail.sender_name, mail.sent_at
+    from game_master_mail mail
+    order by mail.sent_at desc nulls last, mail.id desc
+    limit ${limit}
+  `);
+}

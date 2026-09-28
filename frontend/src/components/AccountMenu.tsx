@@ -1,4 +1,4 @@
-import { LogOut, ShieldCheck } from 'lucide-react';
+import { LogOut, ShieldCheck, type LucideIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { clearSessionToken, type StaffRole } from '../session';
 import { Badge } from './ui/badge';
@@ -25,7 +25,24 @@ import {
  * question "why is that button not there" is answered, and answering it takes
  * the two facts together.
  */
-export function AccountMenu({ accountName, roles }: { accountName: string; roles: StaffRole[] }) {
+export function AccountMenu({
+  accountName,
+  roles,
+  frame,
+}: {
+  accountName: string;
+  roles: StaffRole[];
+  /**
+   * The way out of the frame this menu is drawn in, when there is one.
+   *
+   * The dashboard and the admin dashboard are two frames over one account, so the
+   * card that says who is signed in is also where the switch between them belongs:
+   * it is the one control that is present on every page of both, and the reason to
+   * make it a menu rather than a fixed link is that a player has no use for the
+   * admin frame at all — the item is drawn only where it leads somewhere.
+   */
+  frame?: { to: string; label: string; icon: LucideIcon };
+}) {
   const navigate = useNavigate();
 
   return (
@@ -34,10 +51,6 @@ export function AccountMenu({ accountName, roles }: { accountName: string; roles
         className="flex w-full items-center gap-3 rounded-lg border border-border bg-card/60 px-3 py-2.5 text-left transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label="Account and roles"
       >
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-bold uppercase text-primary">
-          {initials(accountName)}
-        </span>
-
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-medium text-foreground">{accountName}</span>
           <span className="block text-xs text-muted-foreground">
@@ -73,6 +86,21 @@ export function AccountMenu({ accountName, roles }: { accountName: string; roles
           </>
         )}
 
+        {frame === undefined ? null : (
+          <>
+            <DropdownMenuSeparator />
+
+            <DropdownMenuItem
+              onSelect={() => {
+                navigate(frame.to);
+              }}
+            >
+              <frame.icon />
+              {frame.label}
+            </DropdownMenuItem>
+          </>
+        )}
+
         <DropdownMenuSeparator />
 
         <DropdownMenuItem
@@ -87,19 +115,4 @@ export function AccountMenu({ accountName, roles }: { accountName: string; roles
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}
-
-/**
- * The one or two letters shown in the circle.
- *
- * One letter rather than two, because a two-letter initial of a name like
- * "phildunphy23" is "PH", which is a word-shaped nothing; the first letter is at
- * least the start of the name. An account with no name yet gets a question mark
- * rather than an empty circle, so the control is never mistaken for a button
- * that failed to load.
- */
-function initials(accountName: string): string {
-  const first = accountName.trim().charAt(0);
-
-  return first === '' ? '?' : first.toUpperCase();
 }
