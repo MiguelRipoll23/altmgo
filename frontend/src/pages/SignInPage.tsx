@@ -67,10 +67,10 @@ export function SignInPage() {
 
       <Card>
         <CardContent className="pt-5 sm:pt-6">
-          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+          <form onSubmit={handleSubmit} className="space-y-8" noValidate>
             {status === null ? null : <StatusMessage kind={status.kind}>{status.message}</StatusMessage>}
 
-            <div className="space-y-3">
+            <div className="space-y-4">
               <Label htmlFor="username">Username</Label>
               <Input
                 id="username"
@@ -83,7 +83,7 @@ export function SignInPage() {
               />
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
