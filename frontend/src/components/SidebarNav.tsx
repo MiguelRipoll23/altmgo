@@ -116,7 +116,11 @@ export function SidebarNav({ sections }: { sections: SidebarSection[] }) {
   const [opened, setOpened] = useState<Record<string, boolean>>({});
 
   return (
-    <nav className="flex flex-1 flex-col gap-1">
+    // The list is the part of the column that grows: `min-h-0` lets it shrink
+    // inside the flex column rather than pushing the account card off the foot of
+    // the window, and the scrolling is confined to it so the wordmark above and the
+    // account card below stay where they are.
+    <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain pb-1">
       {sections.map((section) => {
         if (section.children === undefined) {
           return (

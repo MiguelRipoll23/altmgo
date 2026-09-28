@@ -200,9 +200,14 @@ export function RankingsBoard({ subject }: { subject: BoardSubject }) {
           loadingLabel="Reading the board…"
           columns={[
             {
+              // The rank column is given a width rather than being left to the
+              // table's own layout. There are three columns on a full-width card, so
+              // an unconstrained first column takes a third of the card and a
+              // right-aligned rank floats in the middle of it, a long way from the
+              // name it belongs to and from the edge of the card.
               header: '#',
               cell: (row) => row.rank,
-              className: 'text-right tabular-nums text-muted-foreground',
+              className: 'w-14 text-right tabular-nums text-muted-foreground',
             },
             { header: 'Name', cell: (row) => row.name },
             {

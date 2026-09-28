@@ -1,12 +1,6 @@
 import { useState } from 'react';
-import {
-  DataTable,
-  LoadingBlock,
-  Panel,
-  SectionHeading,
-  formatDate,
-  formatNumber,
-} from '../components/DataDisplay';
+import { Link } from 'react-router-dom';
+import { DataTable, Panel, SectionHeading, formatNumber } from '../components/DataDisplay';
 import { StatusMessage } from '../components/StatusMessage';
 import { useApiResource } from '../components/useApiResource';
 import { Badge } from '../components/ui/badge';
@@ -21,8 +15,14 @@ import {
   SelectValue,
 } from '../components/ui/select';
 
-/** One clan as the directory lists it. */
-type Clan = {
+/**
+ * One clan as the directory lists it.
+ *
+ * Exported rather than kept here because the clan's own page reads the same row out
+ * of a different query: the directory and the record are two reads of one clan, and
+ * the fields below are the fields both of them answer for.
+ */
+export type Clan = {
   id: number;
   name: string;
   comment: string;
@@ -37,7 +37,7 @@ type Clan = {
 };
 
 /** One member of a clan. */
-type ClanMember = {
+export type ClanMember = {
   characterId: number;
   name: string;
   rank: number;
@@ -45,14 +45,15 @@ type ClanMember = {
 };
 
 /** One character waiting to be let into a clan. */
-type ClanApplication = {
+export type ClanApplication = {
   id: number;
   characterId: number;
   characterName: string;
   appliedAt: string;
 };
 
-type ClanProfile = { clan: Clan; members: ClanMember[]; applications: ClanApplication[] };
+/** A clan in full: its record, its roster and the applications waiting on it. */
+export type ClanProfile = { clan: Clan; members: ClanMember[]; applications: ClanApplication[] };
 
 /** The orderings the backend accepts, kept in step with the query it runs. */
 const sorts = [
@@ -107,7 +108,7 @@ function describeSearch(
 }
 
 /**
- * Every clan on the server, and the record of whichever one is selected.
+ * Every clan on the server, as a directory of them.
  *
  * The page draws what the game already stores and writes nothing: a roster, a
  * notice, an emblem timestamp and the queue of characters waiting to join are all
@@ -115,22 +116,25 @@ function describeSearch(
  * legible to somebody who is not holding the clan screen open. Accepting an
  * application is the clan leader's action in the game, not one this page performs.
  *
- * The applications are shown here rather than hidden behind a staff role because
- * they are a public queue in the client too — the joinable-clan list reads the same
- * rows — and a leader answering them does it in the game.
+ * The applications are shown rather than hidden behind a staff role because they are
+ * a public queue in the client too — the joinable-clan list reads the same rows —
+ * and a leader answering them does it in the game.
+ *
+ * A clan's name leads to the clan rather than opening it underneath this list. The
+ * record is three things long — its figures, its roster, its queue — and it used to
+ * arrive as a panel at the foot of a directory the reader was still scrolling
+ * through, on a page that grew with every clan that was opened, and it had no
+ * address of its own to be sent to anybody. It is a page now, and this is the
+ * directory it is reached from.
  */
-export function ClansPage() {
+export function ClansPage({ basePath = '/dashboard' }: { basePath?: string }) {
   const [term, setTerm] = useState('');
   const [sort, setSort] = useState<string>('name');
   const [status, setStatus] = useState<string>('all');
   const [submitted, setSubmitted] = useState('');
-  const [selected, setSelected] = useState<number | null>(null);
 
   const list = useApiResource<{ clans: Clan[] }>(
     `/api/clans?term=${encodeURIComponent(submitted)}&sort=${sort}&status=${status}`,
-  );
-  const profile = useApiResource<ClanProfile>(
-    selected === null ? null : `/api/clans/${selected}`,
   );
 
   // The name is searched on submit rather than on every keystroke, so a reader who
@@ -151,7 +155,7 @@ export function ClansPage() {
     <div className="space-y-6">
       <SectionHeading
         title="Clans"
-        subtitle="Every clan on the server, and the record of the one you select."
+        subtitle="Every clan on the server. A clan's name opens its record."
       />
 
       <Panel>
@@ -246,13 +250,12 @@ export function ClansPage() {
               header: 'Name',
               cell: (row) => (
                 <span className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setSelected(row.id)}
+                  <Link
+                    to={`${basePath}/clans/${row.id}`}
                     className="font-medium text-primary hover:underline"
                   >
                     {row.name}
-                  </button>
+                  </Link>
                   {row.open ? null : <Badge variant="secondary">closed</Badge>}
                 </span>
               ),
@@ -272,119 +275,6 @@ export function ClansPage() {
           ]}
         />
       </Panel>
-
-      {selected === null ? null : (
-        <Panel title={profile.data?.clan.name ?? 'Clan'}>
-          {profile.error === null ? null : (
-            <StatusMessage kind="error">{profile.error}</StatusMessage>
-          )}
-
-          {profile.loading && profile.data === null ? (
-            <LoadingBlock label="Loading the clan…" />
-          ) : null}
-
-          {profile.data === null ? null : (
-            <div className="space-y-6">
-              <ClanFacts clan={profile.data.clan} />
-
-              <div>
-                <h2 className="mb-3 text-sm font-semibold uppercase tracking-widest text-muted-foreground">
-                  Roster, by rank
-                </h2>
-
-                <DataTable
-                  rows={[...profile.data.members].sort((left, right) => left.rank - right.rank)}
-                  rowKey={(row) => row.characterId}
-                  empty="This clan has no members."
-                  columns={[
-                    {
-                      header: 'Character',
-                      cell: (row) => (
-                        <span className="flex items-center gap-2">
-                          <span className="font-medium text-foreground">{row.name}</span>
-                          {row.isLeader ? <Badge>leader</Badge> : null}
-                        </span>
-                      ),
-                    },
-                    {
-                      header: 'Rank',
-                      cell: (row) => row.rank,
-                      className: 'text-right tabular-nums',
-                    },
-                  ]}
-                />
-              </div>
-
-              <div>
-                <h2 className="mb-3 text-sm font-semibold uppercase tracking-widest text-muted-foreground">
-                  Waiting to join, oldest first
-                </h2>
-
-                <DataTable
-                  rows={[...profile.data.applications].sort(
-                    (left, right) =>
-                      new Date(left.appliedAt).getTime() - new Date(right.appliedAt).getTime(),
-                  )}
-                  rowKey={(row) => row.id}
-                  empty="Nobody is waiting to join this clan."
-                  columns={[
-                    { header: 'Character', cell: (row) => row.characterName },
-                    { header: 'Applied', cell: (row) => formatDate(row.appliedAt) },
-                  ]}
-                />
-              </div>
-            </div>
-          )}
-        </Panel>
-      )}
-    </div>
-  );
-}
-
-/**
- * The figures of one clan, above its roster.
- *
- * The notice is given a line of its own rather than a column, because it is the one
- * field on this page written by a player for other players and the only one that
- * runs to more than a few words. It is shown even when it is empty rather than
- * hidden, so a clan with no notice reads as having none rather than as having no
- * field at all.
- */
-function ClanFacts({ clan }: { clan: Clan }) {
-  return (
-    <div className="space-y-4">
-      <dl className="grid gap-4 sm:grid-cols-2">
-        <Detail label="Leader" value={clan.leaderName} />
-        <Detail label="Members" value={formatNumber(clan.memberCount)} />
-        <Detail label="Applications" value={formatNumber(clan.applicationCount)} />
-        <Detail label="Taking applications" value={clan.open ? 'Yes' : 'No'} />
-        <Detail label="Created" value={formatDate(clan.createdAt)} />
-        <Detail label="Notice published" value={formatDate(clan.noticeAt)} />
-      </dl>
-
-      <div>
-        <p className="text-xs uppercase tracking-widest text-muted-foreground">Notice</p>
-        <p className="mt-1 text-sm text-foreground/90">
-          {clan.notice.trim().length === 0 ? 'This clan has published no notice.' : clan.notice}
-        </p>
-      </div>
-
-      {clan.comment.trim().length === 0 ? null : (
-        <div>
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">Comment</p>
-          <p className="mt-1 text-sm text-foreground/90">{clan.comment}</p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/** One labelled figure of a clan. */
-function Detail({ label, value }: { label: string; value: string | null }) {
-  return (
-    <div>
-      <dt className="text-xs uppercase tracking-widest text-muted-foreground">{label}</dt>
-      <dd className="mt-1 text-sm text-foreground/90">{value ?? '—'}</dd>
     </div>
   );
 }

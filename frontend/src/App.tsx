@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AdminRoute, AdminStaffSection } from './components/AdminRoute';
 import { DashboardRoute, OverviewSection } from './components/DashboardRoute';
 import { ClansPage } from './pages/ClansPage';
+import { ClanDetailPage } from './pages/ClanDetailPage';
 import { GamesPage } from './pages/GamesPage';
 import { HomePage } from './pages/HomePage';
 import { MailAllPage } from './pages/MailAllPage';
@@ -67,6 +68,11 @@ import { EventOperationsPage } from './pages/admin/EventOperationsPage';
  * address per list rather than one address and a parameter that says which list
  * was meant, and no id ever shares a route with the name of a list it is not in.
  *
+ * A record reached from a list of records is a page under the list, rather than a
+ * panel that opened underneath it: a clan used to expand at the foot of the
+ * directory, which grew the page every time one was opened and gave the record no
+ * address of its own to be sent to anybody.
+ *
  * The same holds for the sections of a record rather than a list of them: one
  * tournament event is read in three places — its registrations, its bracket and
  * its fixtures — and each is a segment under the event rather than a switch
@@ -110,6 +116,7 @@ export function App() {
             element={<MailDetailPage scope="inbox" back="/dashboard/mail/all" label="All mail" />}
           />
           <Route path="clans" element={<ClansPage />} />
+          <Route path="clans/:identifier" element={<ClanDetailPage />} />
           <Route path="games" element={<GamesPage />} />
           <Route path="survival" element={<Navigate to="survival/events" replace />} />
           <Route path="survival/events" element={<SurvivalEventsPage />} />
@@ -140,7 +147,8 @@ export function App() {
             path="news/:identifier"
             element={<NewsDetailPage scope="manager" listPath="/admin/news" />}
           />
-          <Route path="clans" element={<ClansPage />} />
+          <Route path="clans" element={<ClansPage basePath="/admin" />} />
+          <Route path="clans/:identifier" element={<ClanDetailPage basePath="/admin" />} />
           <Route path="games" element={<GamesPage />} />
           <Route path="survival" element={<Navigate to="survival/events" replace />} />
           <Route path="survival/events" element={<SurvivalEventsPage basePath="/admin" />} />

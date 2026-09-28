@@ -38,6 +38,13 @@ function isWideWindow(): boolean {
  * button that put it away is still on screen to put it back. The one thing that
  * is not the same is the backdrop, which is hidden on a wide window — a dimmed
  * page behind a column that is not covering anything is a page that looks broken.
+ *
+ * Only the list of sections scrolls, not the column. A column that scrolls as one
+ * piece takes the wordmark and the account card away with it, so a long list
+ * leaves a reader who wants the way out unable to reach the way out, and a reader
+ * who has been handed to another account has to scroll back up to do it. The three
+ * parts are pinned instead: the wordmark, the list, and the account card at the
+ * foot, which is the one control on every page of both frames.
  */
 export function DashboardShell({
   sections,
@@ -127,7 +134,7 @@ export function DashboardShell({
       <aside
         id="frame-navigation"
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col gap-6 overflow-y-auto border-r border-border bg-card/60 px-5 pb-6 pt-5 transition-transform duration-200 ease-out lg:w-64 lg:max-w-none',
+          'fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col gap-6 border-r border-border bg-card/60 px-5 pb-6 pt-5 transition-transform duration-200 ease-out lg:w-64 lg:max-w-none',
           open ? 'translate-x-0' : '-translate-x-full',
         )}
       >
