@@ -38,7 +38,12 @@ function SelectTrigger({
         // differently puts its text a few pixels above or below the field next to
         // it — a drift small enough to look like nothing and large enough to read
         // as the dropdown not belonging to the form it is part of.
-        "flex h-9 w-full items-center justify-between gap-2 rounded-md border border-input bg-background/60 px-3 py-1 text-sm shadow-sm transition-colors data-[placeholder]:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
+        //
+        // `text-base sm:text-sm` is the `Input`'s font size for the same reason:
+        // a trigger is a button and Safari does not zoom one, but it stands in a
+        // row with fields that do zoom, and 16px beside 14px is a worse fault
+        // than the 14px was.
+        "flex h-9 w-full items-center justify-between gap-2 rounded-md border border-input bg-background/60 px-3 py-1 text-base sm:text-sm shadow-sm transition-colors data-[placeholder]:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
         className,
       )}
       {...props}
