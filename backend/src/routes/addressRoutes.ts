@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import type { AppBindings } from '../authentication.js';
 import { requireAccount } from '../authentication.js';
 import { readClientAddress } from '../clientAddress.js';
-import { listConnectedCharactersOfAccount, publishAddress } from '../publicAddresses.js';
+import { publishAccountAddress } from '../publicAddresses.js';
 
 export const addressRoutes = new Hono<AppBindings>();
 
@@ -31,14 +31,7 @@ addressRoutes.post('/addresses', requireAccount, async (context) => {
     );
   }
 
-  const connected = await listConnectedCharactersOfAccount(context.get('accountIdentifier'));
-  const published: { id: number; name: string }[] = [];
+  const outcome = await publishAccountAddress(context.get('accountIdentifier'), address);
 
-  for (const character of connected) {
-    if (await publishAddress(character.id, address)) {
-      published.push({ id: character.id, name: character.name });
-    }
-  }
-
-  return context.json({ address, published });
+  return context.json({ address, published: outcome.published });
 });

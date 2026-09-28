@@ -6,7 +6,7 @@ import { apiRequest, describeError } from '../api';
 import { PageHeading, PageLayout } from '../components/PageLayout';
 import { StatusMessage } from '../components/StatusMessage';
 import type { StatusKind } from '../components/StatusMessage';
-import { writeSessionToken } from '../session';
+import { rememberSignIn, writeSessionToken } from '../session';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { Input } from '../components/ui/input';
@@ -14,6 +14,14 @@ import { Label } from '../components/ui/label';
 
 type LoginResponse = {
   token: string;
+  /**
+   * Whether the account has a character with a connection row, and so a game
+   * other players can be sent to. The sign-in is where the address is written,
+   * so this is the server's answer to whether that write had somewhere to go —
+   * and it is what the overview's address tile shows as a state rather than a
+   * button for the first few seconds after signing in.
+   */
+  discoverable: boolean;
 };
 
 /** Signs in with the credentials the game uses, and keeps the token it answers with. */
@@ -39,6 +47,7 @@ export function SignInPage() {
       });
 
       writeSessionToken(payload.token);
+      rememberSignIn(payload.discoverable);
 
       // Signing in returns the browser to the section it asked for, which the
       // dashboard remembered on the way out. Anything else — a mistyped path, or

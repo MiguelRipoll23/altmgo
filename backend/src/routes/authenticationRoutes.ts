@@ -3,7 +3,9 @@ import type { Context } from 'hono';
 import type { AppBindings } from '../authentication.js';
 import { hashPassword, issueSessionToken } from '../authentication.js';
 import { createAccount, findAccountByName } from '../accounts.js';
+import { readClientAddress } from '../clientAddress.js';
 import { isUniqueViolation } from '../database.js';
+import { publishAccountAddress } from '../publicAddresses.js';
 
 export const authenticationRoutes = new Hono<AppBindings>();
 
@@ -100,8 +102,38 @@ authenticationRoutes.post('/auth/login', async (context) => {
     return context.json({ error: 'That username and password do not match an account.' }, 401);
   }
 
-  // The token is the whole answer. Nothing else about the session is worth
-  // carrying: the dashboard asks the server who it is whenever it needs to know,
-  // and a second copy of anything here would be one that can go stale.
-  return context.json({ token: await issueSessionToken(account.id, account.display_name) });
+  /*
+   * Signing in is what makes a game joinable, so this is where the caller's
+   * address is written: the host is already on the page, the request already
+   * carries the address they are at, and a host who has to remember a button to
+   * host for other people is a host whose game stays unreachable.
+   *
+   * The address is the one the request arrived from and the characters are the
+   * account's own, so the token is the whole permission. An IPv6 visitor has
+   * nowhere to publish — the game stores the address in a sixteen-byte field — and
+   * that is not worth refusing a sign-in over: they are signed in either way, and
+   * the tile will offer them the button rather than claim a game is discoverable
+   * when it is not.
+   */
+  const token = await issueSessionToken(account.id, account.display_name);
+  const address = readClientAddress(context);
+
+  if (!address) {
+    return context.json({ token, discoverable: false });
+  }
+
+  const outcome = await publishAccountAddress(account.id, address);
+
+  return context.json({
+    token,
+    /*
+     * True when the account has a character for a game to be reached on at all.
+     * That is the question the page is really asking when it offers the tile a
+     * "Discoverable" state rather than a button: not "did a write happen" — a
+     * second sign-in in the same day writes nothing and is still perfectly
+     * discoverable — but "is there an endpoint here", which is the thing a
+     * player whose friends cannot connect cares about.
+     */
+    discoverable: outcome.connections > 0,
+  });
 });

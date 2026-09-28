@@ -57,14 +57,18 @@ npm run typecheck
   claim, but that is a snapshot from whenever it was issued, so a renamed account would be greeted by
   the old one until the session expired. `GET /api/account` reads the row instead, and the sidebar
   waits for it rather than printing the name it happened to be given.
-- **The dashboard publishes on arrival, and by refresh.** Signing in is what makes a game joinable,
-  so the address is written when the overview loads; the button is the same work by hand, for a player
-  who opened a game afterwards. Nothing publishes without a session token, so no prefetcher or
-  scanner can act on a player's behalf.
-- **"Discoverable" is a state, not a button.** When the write corrected an address, the button says
-  so for fifteen seconds with a countdown rather than offering an action that would do nothing, and
-  then goes back to offering itself. "Nothing was published" is reported as one of two sentences,
-  because it means either that the stored address was already right — nothing to do — or that no
-  character of the account has ever connected, in which case the reader's next step is to open a game
-  and press the button again. The button stays pressable in both cases, because a disabled control
-  tells the player to reload the page instead.
+- **Signing in publishes the address, and says whether it could.** `POST /api/auth/login` writes the
+  caller's address for every character that has a connection row and answers with a `discoverable`
+  boolean — true when the account has such a character at all. Nothing publishes without a session
+  token, so no prefetcher or scanner can act on a player's behalf.
+- **"Discoverable" is a state, not a button.** For fifteen seconds after a discoverable sign-in the
+  overview's address tile shows that state with a countdown rather than offering an action that would
+  do nothing, and then goes back to offering itself. The answer is held in a module variable, not in
+  `localStorage`, so a reload drops it — a reader who reloads is saying they are no longer looking at
+  the moment they arrived at. The window is counted from a wall-clock deadline rather than by
+  decrementing a number, so a browser throttling timers in a background tab cannot stretch it.
+- **An account with no connection row still gets the button.** That is the only case where it is
+  worth anything: the fix is to open a game and press it, and a disabled control cannot deliver that.
+  A publish that corrected nothing reports one of two sentences, because it means either that the
+  stored address was already right — nothing to do — or that no character has ever connected, which
+  needs the opposite of doing nothing.

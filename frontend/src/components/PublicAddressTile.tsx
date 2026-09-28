@@ -1,7 +1,7 @@
 import { Check, Globe, RefreshCw } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { apiRequest, describeError } from '../api';
-import { readSessionToken } from '../session';
+import { discoverableSecondsLeft, readSessionToken } from '../session';
 import { StatTile } from './DataDisplay';
 import { Button } from './ui/button';
 
@@ -13,8 +13,8 @@ type PublishResponse = {
 };
 
 /**
- * How long the button reports the address is published instead of offering the
- * action again.
+ * How long the button reports that the game is discoverable instead of offering
+ * the action again.
  *
  * It is long enough to read and to be seen by somebody who looked away when the
  * page drew, and short enough that a player who opened a game in the meantime is
@@ -56,23 +56,31 @@ function publishedReport(answer: PublishResponse, address: string | null): strin
  *
  * This is the one figure on the overview that is about the person reading rather
  * than the server, and it is the one that goes stale: a host whose network
- * changed still sees the address they had yesterday until the page corrects it.
- * The button therefore sits inside the tile, under the value it acts on, rather
- * than in a row of its own below the figures — a control that belongs to one
- * number and is drawn apart from it is a control somebody presses for the wrong
- * number.
+ * changed still sees the address they had yesterday. The button therefore sits
+ * inside the tile, under the value it acts on, rather than in a row of its own
+ * below the figures — a control that belongs to one number and is drawn apart
+ * from it is a control somebody presses for the wrong number.
  *
- * The page draws it once the figure has arrived. A reload after publishing is not
- * a page that has lost its address, and a tile that emptied itself each time the
- * button was pressed would be a worse answer than the one it is there to give.
+ * Signing in is what writes it, not this page, and the sign-in says so in its
+ * answer: an account with a character that has a connection row is discoverable,
+ * and the tile shows that as a state for the length of the window rather than
+ * offering a button that would do nothing. An account without one is not
+ * discoverable, and gets the button — because the fix for that is to open a game
+ * and press it, and a control that refuses to be pressed is the one thing that
+ * cannot deliver that fix.
  *
- * Arriving is also what publishes. Signing in is what makes a game joinable, so
- * the address is written on the way in rather than being left as a task the
- * player has to remember — the button is for the host who opened a game after
- * this page drew, and the tile saying so is the whole difference between the two
- * cases. The port is not printed beside it: it is a client setting, the same
- * figure on every host of a deployment, so showing it spends the width of the
- * tile on a number that says nothing and pushes the address itself smaller.
+ * The button is the same work by hand for a host who opened a game after signing
+ * in, which is the only case the arrival write cannot have covered.
+ *
+ * The port is not printed beside it. It is a client setting, the same figure on
+ * every host of a deployment, so showing it spends the width of the tile on a
+ * number that says nothing and pushes the address itself into a smaller size so
+ * the pair fits.
+ *
+ * This draws only once the figure has arrived. The page decides that, and keeps
+ * every tile back until it has: a reload after publishing is not a page that has
+ * lost its address, and a tile that emptied itself each time the button was
+ * pressed would be a worse answer than the one it is there to give.
  */
 export function PublicAddressTile({
   address,
@@ -85,32 +93,48 @@ export function PublicAddressTile({
 }) {
   const [publishing, setPublishing] = useState(false);
   const [report, setReport] = useState<{ kind: 'success' | 'error'; message: string } | null>(null);
-  /** Seconds during which the button shows the result rather than offering itself. */
-  const [discoverable, setDiscoverable] = useState(0);
-
-  // StrictMode mounts every effect twice in development, and publishing twice on
-  // arrival would be two requests for one visit. A ref rather than the state it
-  // would set, because the guard is about having run, not about what it did.
-  const publishedOnArrival = useRef(false);
 
   /**
-   * Writes the address, and arms the countdown when it actually corrected one.
+   * When the Discoverable window runs out, as a wall-clock moment.
    *
-   * The server answers with the characters whose stored address differed, so an
-   * arrival where nothing changed — the second visit of the day, or a second
-   * mount of this tile — does not claim a correction that did not happen. That
-   * is what lets the button mean "your game was just made joinable" rather than
-   * "a request was made", which is not the same sentence to somebody whose
-   * friends are trying to connect.
-   *
-   * `onRequest` is true only for the button. Arriving says so itself in the
-   * countdown; a line of text under a tile nobody pressed anything on is noise.
+   * A moment rather than a number of seconds left, because a number would have to
+   * be decremented by a timer and a timer a browser throttles in a background
+   * tab would run slow — so fifteen seconds would be thirty, and a reader who
+   * came back to the tab would find a state that had been lying for a minute.
+   * Reading the clock instead means the window is fifteen seconds long however
+   * little attention the page was getting.
    */
-  async function publish(onRequest: boolean) {
-    setPublishing(true);
-    if (onRequest) {
-      setReport(null);
+  const [until, setUntil] = useState<number | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+
+  // The sign-in's answer, taken once on arrival. It is already aged by the time
+  // this mounts, so what comes back is the window that is left rather than the
+  // whole of it — a reader who spent a minute on the clans page before opening
+  // the overview is not met by a countdown that restarted.
+  useEffect(() => {
+    const left = discoverableSecondsLeft(DiscoverableSeconds);
+
+    if (left !== null) {
+      setUntil(Date.now() + left * 1000);
     }
+  }, []);
+
+  // Ticking only while the window is open, and only re-reading the clock: the
+  // countdown is a reading of the time, not a tally of the ticks.
+  useEffect(() => {
+    if (until === null) {
+      return;
+    }
+
+    setNow(Date.now());
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+
+    return () => window.clearInterval(timer);
+  }, [until]);
+
+  async function publish() {
+    setPublishing(true);
+    setReport(null);
 
     try {
       const answer = await apiRequest<PublishResponse>('/api/addresses', {
@@ -119,56 +143,19 @@ export function PublicAddressTile({
       });
 
       if (answer.published.length > 0) {
-        setDiscoverable(DiscoverableSeconds);
+        setUntil(Date.now() + DiscoverableSeconds * 1000);
       }
 
-      if (onRequest) {
-        setReport({ kind: 'success', message: publishedReport(answer, address) });
-      }
-
+      setReport({ kind: 'success', message: publishedReport(answer, address) });
       onPublished();
     } catch (caught) {
-      // A publish that failed on arrival is not shown: the reader did nothing and
-      // has nothing to do about it, and the button is still there when they want
-      // to try. A publish they asked for is their own action, so it is reported.
-      if (onRequest) {
-        setReport({ kind: 'error', message: describeError(caught) });
-      }
+      setReport({ kind: 'error', message: describeError(caught) });
     } finally {
       setPublishing(false);
     }
   }
 
-  useEffect(() => {
-    if (publishedOnArrival.current) {
-      return;
-    }
-
-    publishedOnArrival.current = true;
-    void publish(false);
-    // Once per mount, which is once per visit to the page. `publish` closes over
-    // props that do not change the fact that it has run, so the empty dependency
-    // list is the whole of what has to be said about it.
-  }, []);
-
-  // Keyed on whether the countdown is running rather than on its value: depending
-  // on the number would tear the interval down and build a new one every second
-  // to do the work the existing one is already doing.
-  const counting = discoverable > 0;
-
-  useEffect(() => {
-    if (!counting) {
-      return;
-    }
-
-    const timer = window.setInterval(() => {
-      setDiscoverable((left) => (left <= 1 ? 0 : left - 1));
-    }, 1000);
-
-    return () => window.clearInterval(timer);
-  }, [counting]);
-
-  const correcting = publishing || discoverable > 0;
+  const left = until === null ? 0 : Math.max(0, Math.ceil((until - now) / 1000));
 
   return (
     <StatTile
@@ -180,22 +167,12 @@ export function PublicAddressTile({
           <Button
             size="sm"
             className="w-full"
-            variant={discoverable > 0 ? 'secondary' : 'default'}
-            onClick={() => void publish(true)}
-            disabled={correcting}
+            variant={left > 0 ? 'secondary' : 'default'}
+            onClick={() => void publish()}
+            disabled={publishing || left > 0}
           >
-            {publishing ? (
-              <RefreshCw className="animate-spin" />
-            ) : discoverable > 0 ? (
-              <Check />
-            ) : (
-              <Globe />
-            )}
-            {publishing
-              ? 'Publishing…'
-              : discoverable > 0
-                ? `Discoverable · ${discoverable}s`
-                : 'Update'}
+            {publishing ? <RefreshCw className="animate-spin" /> : left > 0 ? <Check /> : <Globe />}
+            {publishing ? 'Publishing…' : left > 0 ? `Discoverable · ${left}s` : 'Update'}
           </Button>
 
           {report === null ? null : (

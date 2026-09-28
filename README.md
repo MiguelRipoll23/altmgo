@@ -108,10 +108,12 @@ A host's game is reachable at the address the game server saw their client at �
 the tailnet address, reachable by the players and by nobody else. Signing in corrects it: the site
 reads the address the request arrived from and writes it where the game server hands it out.
 
-The write covers every character of the account that signed in and holds a row in
-`character_connections` — that is, every character the game server has seen. **The connection table
-is the only thing consulted.** A row there means there is an address to correct; no row means there is
-no endpoint anyone will read, so nothing is written for it.
+The write happens at `POST /api/auth/login`, and the response carries a `discoverable` boolean so the
+page knows whether it had anywhere to write. It covers every character of the account that signed in
+and holds a row in `character_connections` — that is, every character the game server has seen.
+**The connection table is the only thing consulted.** A row there means there is an address to
+correct; no row means there is no endpoint anyone will read, so nothing is written for it, and the
+sign-in says so rather than treating it as a failure the player did nothing to cause.
 
 The write is a no-op for a row that already holds the address, and the server says so by leaving that
 character out of the list it answers with. That list is what tells the dashboard whether anything

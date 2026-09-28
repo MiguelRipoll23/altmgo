@@ -59,6 +59,48 @@ export async function publishAddress(
   return rows.length > 0;
 }
 
+/**
+ * What one publish found, so the caller can tell the two apart.
+ *
+ * `connections` is how many of the account's characters have a row to write to at
+ * all, and `published` is how many of those were holding a different address.
+ * They are the same number on a first visit and never the same number again, and
+ * the difference is the whole reason this is an object rather than a boolean: a
+ * page that says "your game is discoverable" is making a claim about the account
+ * having somewhere to be reached, not about a write having happened.
+ */
+export type PublishOutcome = {
+  /** The characters that have a connection row, and so something to publish to. */
+  connections: number;
+  /** How many of those were holding an address other than this one. */
+  published: { id: number; name: string }[];
+};
+
+/**
+ * Publishes the address for every character of an account that has one to publish
+ * to, and reports what it found.
+ *
+ * An account with no connection row is not an error and not a refusal: there is
+ * no endpoint anybody would read, so there is nothing to write. It is the answer
+ * "this account is not discoverable", which the sign-in reports rather than
+ * turning into a failure the player did nothing to cause.
+ */
+export async function publishAccountAddress(
+  accountIdentifier: number,
+  address: string,
+): Promise<PublishOutcome> {
+  const connected = await listConnectedCharactersOfAccount(accountIdentifier);
+  const published: { id: number; name: string }[] = [];
+
+  for (const character of connected) {
+    if (await publishAddress(character.id, address)) {
+      published.push({ id: character.id, name: character.name });
+    }
+  }
+
+  return { connections: connected.length, published };
+}
+
 /** The address one of the account's characters publishes, as the overview shows it. */
 export type PublishedAddress = {
   characterId: number;
