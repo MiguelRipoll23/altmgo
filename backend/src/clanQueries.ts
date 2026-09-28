@@ -45,6 +45,16 @@ export type ClanSummaryRow = {
   member_count: number;
   application_count: number;
   created_at: Date | null;
+  /**
+   * Whether the clan has drawn an emblem.
+   *
+   * A boolean rather than the emblem itself: the bytes are 768 per clan, and a
+   * directory capped at 200 clans that inlined them all would carry 150KB of
+   * base64 to draw a 32px square on the cards that have one. The boolean is enough
+   * to decide whether to ask for the picture, and the picture is fetched only for
+   * the clans that have one.
+   */
+  has_emblem: boolean;
 };
 
 /** One member of a clan, as the roster shows it. */
@@ -145,7 +155,8 @@ export async function searchClans(
         select count(*)::bigint
         from clan_applications application
         where application.clan_id = clan.id
-      ) as application_count
+      ) as application_count,
+      (clan.emblem is not null) as has_emblem
     from clans clan
     left join clans_members leader on leader.id = clan.leader_id
     left join characters leader_character on leader_character.id = leader.character_id
@@ -181,7 +192,8 @@ export async function findClanDetail(clanIdentifier: number): Promise<ClanDetail
         select count(*)::bigint
         from clan_applications application
         where application.clan_id = clan.id
-      ) as application_count
+      ) as application_count,
+      (clan.emblem is not null) as has_emblem
     from clans clan
     left join clans_members leader on leader.id = clan.leader_id
     left join characters leader_character on leader_character.id = leader.character_id
@@ -236,4 +248,22 @@ export async function findClanDetail(clanIdentifier: number): Promise<ClanDetail
   `);
 
   return { clan, members, applications };
+}
+
+/**
+ * Reads one clan's stored emblem, or nothing when it has not drawn one.
+ *
+ * Read on its own rather than as part of the clan record above, because the bytes
+ * are only wanted by the page that is going to draw them. A clan with no emblem is
+ * `undefined` here for the same reason its `emblem` column is null: there is no
+ * picture, and the caller draws a placeholder rather than an empty one.
+ */
+export async function findClanEmblem(clanIdentifier: number): Promise<Uint8Array | undefined> {
+  const rows = await readRows<{ emblem: Uint8Array | null }>(database()`
+    select clan.emblem
+    from clans clan
+    where clan.id = ${clanIdentifier}
+  `);
+
+  return rows[0]?.emblem ?? undefined;
 }

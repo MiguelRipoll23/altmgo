@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { ChevronRight, Flag } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { DataTable, Panel, SectionHeading, formatNumber } from '../components/DataDisplay';
+import { apiBlob } from '../api';
+import { LoadingBlock, Panel, SectionHeading, formatNumber } from '../components/DataDisplay';
 import { StatusMessage } from '../components/StatusMessage';
 import { useApiResource } from '../components/useApiResource';
 import { Badge } from '../components/ui/badge';
@@ -14,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../components/ui/select';
+import { readSessionToken } from '../session';
 
 /**
  * One clan as the directory lists it.
@@ -34,6 +37,8 @@ export type Clan = {
   memberCount: number;
   applicationCount: number;
   createdAt: string | null;
+  /** Whether the clan has drawn an emblem the server can serve as a picture. */
+  hasEmblem: boolean;
 };
 
 /** One member of a clan. */
@@ -143,6 +148,7 @@ export function ClansPage({ basePath = '/dashboard' }: { basePath?: string }) {
   // chosen has been chosen.
   const filtered = submitted.length > 0 || status !== 'all';
   const order = sorts.find((option) => option.value === sort)?.label ?? 'Name';
+  const clans = list.data?.clans ?? [];
 
   function clearFilters() {
     setTerm('');
@@ -252,42 +258,174 @@ export function ClansPage({ basePath = '/dashboard' }: { basePath?: string }) {
           list.loading,
         )}
       >
-        <DataTable
-          rows={list.data?.clans ?? []}
-          rowKey={(row) => row.id}
-          empty="No clan matched that search."
-          loading={list.loading}
-          loadingLabel="Searching…"
-          columns={[
-            {
-              header: 'Name',
-              cell: (row) => (
-                <span className="flex items-center gap-2">
-                  <Link
-                    to={`${basePath}/clans/${row.id}`}
-                    className="font-medium text-primary hover:underline"
-                  >
-                    {row.name}
-                  </Link>
-                  {row.open ? null : <Badge variant="secondary">closed</Badge>}
-                </span>
-              ),
-            },
-            { header: 'Leader', cell: (row) => row.leaderName },
-            {
-              header: 'Members',
-              cell: (row) => formatNumber(row.memberCount),
-              className: 'text-right tabular-nums',
-            },
-            {
-              header: 'Waiting',
-              cell: (row) => formatNumber(row.applicationCount),
-              className: 'text-right tabular-nums',
-            },
-            { header: 'Comment', cell: (row) => row.comment },
-          ]}
-        />
+        {clans.length === 0 ? (
+          list.loading ? (
+            <LoadingBlock label="Searching…" />
+          ) : (
+            <p className="text-base text-muted-foreground">No clan matched that search.</p>
+          )
+        ) : (
+          <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {clans.map((clan) => (
+              <li key={clan.id} className="min-w-0">
+                <ClanCard clan={clan} basePath={basePath} />
+              </li>
+            ))}
+          </ul>
+        )}
       </Panel>
+    </div>
+  );
+}
+
+/**
+ * One clan, as a card.
+ *
+ * A card and not a row for the same reason the rooms are cards: a clan is something
+ * a player recognises rather than a line of figures to scan, and the emblem is the
+ * thing they recognise it by. A table has nowhere to put a picture, so the one piece
+ * of a clan that is not a number had no place on the page at all.
+ *
+ * The whole card is the link, as on the characters page, because a clan is a page of
+ * its own and a card whose link is a few characters of its name is a card that can
+ * only be shared from that corner of itself.
+ *
+ * The band is square rather than the rooms' wide one, and that is the emblem's own
+ * shape: the game draws these 32x32, so a band of any other ratio would either crop
+ * the picture or letterbox it in a space that is pretending to be something it is
+ * not. The emblem is held to its pixels rather than scaled smoothly, because at four
+ * times its own size a 32x32 image interpolated is a blur, and the drawing is the
+ * point of it.
+ */
+function ClanCard({ clan, basePath }: { clan: Clan; basePath: string }) {
+  return (
+    <Link
+      to={`${basePath}/clans/${clan.id}`}
+      className="group flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card/50 transition hover:border-primary/40 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      <ClanEmblem hasEmblem={clan.hasEmblem} clanId={clan.id} name={clan.name} />
+
+      <div className="flex flex-1 flex-col gap-3 px-4 py-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="min-w-0 truncate text-base font-extrabold tracking-tight text-foreground">
+            {clan.name}
+          </h2>
+          {clan.open ? null : <Badge variant="secondary">closed</Badge>}
+        </div>
+
+        <div className="flex items-baseline gap-2">
+          <p className="text-2xl font-extrabold tracking-tight text-foreground tabular-nums">
+            {formatNumber(clan.memberCount)}
+          </p>
+          <p className="text-base text-muted-foreground tabular-nums">
+            {clan.memberCount === 1 ? 'member' : 'members'}
+          </p>
+        </div>
+
+        <dl className="space-y-1 text-base">
+          <div className="flex gap-2">
+            <dt className="w-20 shrink-0 text-muted-foreground">Leader</dt>
+            <dd className="min-w-0 flex-1 truncate text-foreground">
+              {clan.leaderName ?? 'unknown'}
+            </dd>
+          </div>
+
+          <div className="flex gap-2">
+            <dt className="w-20 shrink-0 text-muted-foreground">Waiting</dt>
+            <dd className="min-w-0 flex-1 truncate text-foreground tabular-nums">
+              {formatNumber(clan.applicationCount)}{' '}
+              {clan.applicationCount === 1 ? 'character' : 'characters'}
+            </dd>
+          </div>
+        </dl>
+
+        {/* The comment is the clan's own sentence about itself, and it is the part
+            a reader reads to choose between two otherwise identical cards, so it
+            is given the card's width and its remaining height rather than one
+            line in a column. */}
+        <p className="min-h-10 text-base text-muted-foreground">
+          {clan.comment === '' ? 'No comment' : clan.comment}
+        </p>
+
+        <span className="mt-auto inline-flex items-center gap-1.5 text-base font-medium text-primary">
+          See the clan
+          <ChevronRight className="size-4 transition group-hover:translate-x-0.5" />
+        </span>
+      </div>
+    </Link>
+  );
+}
+
+/**
+ * The emblem a clan drew in the game, or a flag in its place.
+ *
+ * The game stores an emblem as 768 bytes of packed palette indices, which the
+ * backend decodes into a 32x32 PNG and serves from its own route. It cannot be
+ * pointed at with a plain `src`, because the image the browser fetches by URL would
+ * not carry the session token — so it is fetched here as a blob and shown from an
+ * object URL, and the object URL is revoked when the card goes away.
+ *
+ * A clan that has drawn nothing shows the flag rather than an empty square, and a
+ * clan whose emblem fails to load falls back to the same flag: the card's job is to
+ * identify a clan, and a broken image icon would say less about it than the icon
+ * that stands in for every clan the game has no emblem for.
+ */
+function ClanEmblem({
+  hasEmblem,
+  clanId,
+  name,
+}: {
+  hasEmblem: boolean;
+  clanId: number;
+  name: string;
+}) {
+  const [source, setSource] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!hasEmblem) {
+      return;
+    }
+
+    let cancelled = false;
+    let objectUrl: string | null = null;
+
+    void apiBlob(`/api/clans/${clanId}/emblem`, { token: readSessionToken() })
+      .then((blob) => {
+        if (cancelled) {
+          return;
+        }
+
+        objectUrl = URL.createObjectURL(blob);
+        setSource(objectUrl);
+      })
+      .catch(() => {
+        // The placeholder is already on screen and stays there. An emblem that
+        // will not load is not worth a line of text over the clan's own name.
+      });
+
+    return () => {
+      cancelled = true;
+
+      // Revoked rather than left to the collector: a directory that is paged
+      // through and paged back would otherwise hold one blob per clan it had
+      // shown, for as long as the tab was open.
+      if (objectUrl !== null) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [clanId, hasEmblem]);
+
+  return (
+    <div className="flex aspect-square w-full items-center justify-center border-b border-border bg-muted/20">
+      {source === null ? (
+        <Flag className="size-8 text-muted-foreground/50" aria-hidden="true" />
+      ) : (
+        <img
+          src={source}
+          alt={`${name}'s emblem`}
+          className="size-full object-contain [image-rendering:pixelated]"
+        />
+      )}
     </div>
   );
 }

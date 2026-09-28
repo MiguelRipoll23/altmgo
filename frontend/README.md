@@ -14,9 +14,9 @@ browser. There is deliberately no `vercel.json` here: this app is not deployed o
 | `/dashboard` | the server's figures and the caller's published address, whose tile carries the update button |
 | `/dashboard/characters`, `/dashboard/characters/:id` | the caller's own characters, and one of them in full |
 | `/dashboard/news`, `/dashboard/news/:id` | the published news, and one item on a page of its own so it can be linked to |
-| `/dashboard/mail` | redirects to the inbox; the other mailboxes are `/dashboard/mail/outbox` and `/dashboard/mail/all` |
-| `/dashboard/mail/inbox/:id`, `/dashboard/mail/outbox/:id`, `/dashboard/mail/all/:id` | one message, under the mailbox it was opened from |
-| `/dashboard/clans`, `/dashboard/clans/:id` | the clan directory, and one clan with its roster |
+| `/dashboard/mail` | redirects to the inbox; the other mailbox is `/dashboard/mail/outbox` |
+| `/dashboard/mail/inbox/:id`, `/dashboard/mail/outbox/:id` | one message, under the mailbox it was opened from |
+| `/dashboard/clans`, `/dashboard/clans/:id` | the clan directory as cards carrying each clan's own emblem, and one clan with its roster |
 | `/dashboard/games` | the game rooms that are up right now |
 | `/dashboard/survival/events`, `/dashboard/survival/events/:id`, `/dashboard/survival/teams` | the Survival schedule, one event, and the ladder |
 | `/dashboard/tournament`, `/dashboard/tournament/:id{,/bracket,/fixtures}` | the tournament list, and one event's registrations, bracket and fixtures |
@@ -73,3 +73,15 @@ npm run typecheck
   A publish that corrected nothing reports one of two sentences, because it means either that the
   stored address was already right — nothing to do — or that no character has ever connected, which
   needs the opposite of doing nothing.
+- **The clans are cards because a clan is recognised, not scanned.** The emblem the clan drew in the
+  game is the one part of it that is not a figure, and a table has nowhere to put a picture — so the
+  emblem had no place on the page at all until the directory became a grid. The band is square
+  because the emblem is 32×32, and the emblem is held to its own pixels rather than scaled smoothly,
+  since a 32×32 drawing interpolated to four times its size is a blur. A clan that drew nothing, and
+  one whose emblem fails to load, both show a flag: a broken-image icon would say less about the clan
+  than the icon that stands in for every clan the game has no emblem for.
+- **The emblem is fetched as a blob, not pointed at.** An `<img src>` cannot send the session token,
+  so the card calls `apiBlob` — the one response the API serves that is not JSON — and shows the
+  result from an object URL, which is revoked when the card goes away rather than left to the
+  collector. The directory carries only a `hasEmblem` boolean and the picture is asked for just for
+  the clans that have one.

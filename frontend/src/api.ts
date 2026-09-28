@@ -74,3 +74,42 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 
   return payload as T;
 }
+
+/**
+ * Calls the backend and returns the body as it arrived, for a response that is not
+ * JSON.
+ *
+ * The companion to {@link apiRequest} for the one thing the API serves as an image
+ * rather than as data. A 32x32 PNG is a few hundred bytes, which is nothing to hold
+ * in memory and awkward to hand to an `<img>` any other way: the request has to be
+ * made by hand here precisely because the browser fetching an image by URL cannot
+ * send the session token along with it.
+ *
+ * A refusal is still answered as JSON by every route, including this one, so the
+ * reason is read out of it the same way rather than reported as a bare status.
+ */
+export async function apiBlob(path: string, options: RequestOptions = {}): Promise<Blob> {
+  const headers: Record<string, string> = {};
+
+  if (options.token) {
+    headers.Authorization = `Bearer ${options.token}`;
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(`${apiBaseUrl}${path}`, {
+      method: options.method ?? 'GET',
+      headers,
+    });
+  } catch {
+    throw new ApiError('Could not reach the server. Is it running?', 0);
+  }
+
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => undefined)) as { error?: string } | undefined;
+
+    throw new ApiError(payload?.error ?? `The server answered ${response.status}.`, response.status);
+  }
+
+  return response.blob();
+}
