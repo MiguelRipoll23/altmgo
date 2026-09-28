@@ -58,6 +58,13 @@ npm run typecheck
   the old one until the session expired. `GET /api/account` reads the row instead, and the sidebar
   waits for it rather than printing the name it happened to be given.
 - **The dashboard publishes on arrival, and by refresh.** Signing in is what makes a game joinable,
-  so the address is written when the page loads; the refresh button is the same work by hand, for a
-  player who opened a game afterwards. Nothing publishes without a session token, so no prefetcher or
+  so the address is written when the overview loads; the button is the same work by hand, for a player
+  who opened a game afterwards. Nothing publishes without a session token, so no prefetcher or
   scanner can act on a player's behalf.
+- **"Discoverable" is a state, not a button.** When the write corrected an address, the button says
+  so for fifteen seconds with a countdown rather than offering an action that would do nothing, and
+  then goes back to offering itself. "Nothing was published" is reported as one of two sentences,
+  because it means either that the stored address was already right — nothing to do — or that no
+  character of the account has ever connected, in which case the reader's next step is to open a game
+  and press the button again. The button stays pressable in both cases, because a disabled control
+  tells the player to reload the page instead.

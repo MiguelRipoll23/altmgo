@@ -113,6 +113,12 @@ The write covers every character of the account that signed in and holds a row i
 is the only thing consulted.** A row there means there is an address to correct; no row means there is
 no endpoint anyone will read, so nothing is written for it.
 
+The write is a no-op for a row that already holds the address, and the server says so by leaving that
+character out of the list it answers with. That list is what tells the dashboard whether anything
+actually happened, which is the difference between "your game is now discoverable" and a request that
+was merely made: publishing happens on arrival, so without it every visit would claim a correction
+that never occurred.
+
 Whether the character is in a room is deliberately **not** asked. The row outlives the room, the game
 server overwrites the address when a client registers its endpoint and again when a host's own game
 server starts, and a game opened after signing in is a reason to press refresh rather than a reason

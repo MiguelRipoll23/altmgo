@@ -37,8 +37,12 @@ export async function listConnectedCharactersOfAccount(
  * address is corrected: the port the client listens on is already right, because
  * the client reports that itself and only the address it was seen at was wrong.
  *
- * Answers whether a row was there to correct, which is false for a character that
- * has never registered a peer endpoint.
+ * Answers whether the row was there *and* held something else, which is what makes
+ * the answer worth having. Publishing is done on arrival rather than on request,
+ * so it runs again on every visit; a caller that was told "corrected" for a row
+ * that already held this address would be telling a player their game became
+ * joinable when it already was, and the page would show it as a thing that had
+ * just happened every single time they opened the dashboard.
  */
 export async function publishAddress(
   characterIdentifier: number,
@@ -48,6 +52,7 @@ export async function publishAddress(
     update character_connections
     set public_ip = ${address}, updated_at = now()
     where character_id = ${characterIdentifier}
+      and public_ip is distinct from ${address}
     returning character_id
   `;
 
