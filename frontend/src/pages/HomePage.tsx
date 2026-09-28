@@ -11,7 +11,7 @@ export function HomePage() {
       <PageHeading subtitle="Create your account to start playing on this server" />
 
       <Card>
-        <CardContent className="space-y-3 pt-6">
+        <CardContent className="space-y-3 pt-5 sm:pt-6">
           <Link
             to="/signin"
             className={`${buttonVariants({ size: 'lg' })} w-full justify-center`}

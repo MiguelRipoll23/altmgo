@@ -41,7 +41,19 @@ function CardDescription({ className, ...props }: ComponentProps<'p'>) {
   return <p className={cn('text-base text-muted-foreground', className)} {...props} />;
 }
 
-/** The body of a card. */
+/**
+ * The body of a card, directly under a `CardHeader`.
+ *
+ * The top padding is zero because the header band has already given the card its
+ * space, and a card that pads once at the top and again below the heading has a
+ * gap in it that nobody chose.
+ *
+ * The consequence is that a caller whose card has *no* header has to put the
+ * padding back itself, and it has to put back both halves of it: `pt-6` alone
+ * loses to the `sm:pt-0` below, which sits later in the stylesheet and wins on
+ * every screen from 640px up. `pt-5 sm:pt-6` is the pair that works at both
+ * widths, and it is what a caller without a header should pass.
+ */
 function CardContent({ className, ...props }: ComponentProps<'div'>) {
   return <div className={cn('p-5 pt-0 sm:p-6 sm:pt-0', className)} {...props} />;
 }

@@ -62,8 +62,9 @@ npm run typecheck
   boolean — true when the account has such a character at all. Nothing publishes without a session
   token, so no prefetcher or scanner can act on a player's behalf.
 - **"Discoverable" is a state, not a button.** For fifteen seconds after a discoverable sign-in the
-  overview's address tile shows that state with a countdown rather than offering an action that would
-  do nothing, and then goes back to offering itself. The answer is held in a module variable, not in
+  overview's address tile says so rather than offering an action that would do nothing, and then goes
+  back to offering itself. It says only that — no counter, since a number to watch is a thing to wait
+  on rather than a thing to read. The answer is held in a module variable, not in
   `localStorage`, so a reload drops it — a reader who reloads is saying they are no longer looking at
   the moment they arrived at. The window is counted from a wall-clock deadline rather than by
   decrementing a number, so a browser throttling timers in a background tab cannot stretch it.

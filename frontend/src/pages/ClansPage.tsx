@@ -218,7 +218,12 @@ export function ClansPage({ basePath = '/dashboard' }: { basePath?: string }) {
           </div>
 
           <div className="flex gap-2">
-            <Button type="submit" variant="secondary">
+            {/* The accent, not the secondary weight: Search is the action this
+                form exists to perform, and it is the only submit button on any
+                page that was not already drawn that way. Clear keeps the ghost
+                weight beside it, which is the whole difference between the two —
+                one does the thing, the other undoes it. */}
+            <Button type="submit">
               Search
             </Button>
 

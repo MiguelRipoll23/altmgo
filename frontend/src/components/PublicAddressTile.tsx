@@ -16,10 +16,14 @@ type PublishResponse = {
  * How long the button reports that the game is discoverable instead of offering
  * the action again.
  *
- * It is long enough to read and to be seen by somebody who looked away when the
+ * The label says "Discoverable" and nothing else; the number of seconds is what
+ * ends the window, not something the label carries. A state on a control is a
+ * thing to read, and a control whose text is a clock is a thing to watch — which
+ * is how a label ends up describing when it will go away rather than what it is.
+ *
+ * Fifteen seconds is long enough to be seen by somebody who looked away when the
  * page drew, and short enough that a player who opened a game in the meantime is
- * not left with a control that refuses to work. Fifteen seconds is a page-load's
- * worth of attention rather than a minute the reader spends wondering why.
+ * not left with a control that refuses to work.
  */
 const DiscoverableSeconds = 15;
 
@@ -98,11 +102,11 @@ export function PublicAddressTile({
    * When the Discoverable window runs out, as a wall-clock moment.
    *
    * A moment rather than a number of seconds left, because a number would have to
-   * be decremented by a timer and a timer a browser throttles in a background
-   * tab would run slow — so fifteen seconds would be thirty, and a reader who
-   * came back to the tab would find a state that had been lying for a minute.
-   * Reading the clock instead means the window is fifteen seconds long however
-   * little attention the page was getting.
+   * be decremented by a timer and a timer a browser throttles in a background tab
+   * would run slow — so fifteen seconds would be thirty, and a reader who came
+   * back to the tab would find a state that had been lying for a minute. Reading
+   * the clock instead means the window is fifteen seconds long however little
+   * attention the page was getting.
    */
   const [until, setUntil] = useState<number | null>(null);
   const [now, setNow] = useState(() => Date.now());
@@ -110,7 +114,7 @@ export function PublicAddressTile({
   // The sign-in's answer, taken once on arrival. It is already aged by the time
   // this mounts, so what comes back is the window that is left rather than the
   // whole of it — a reader who spent a minute on the clans page before opening
-  // the overview is not met by a countdown that restarted.
+  // the overview is not met by a window that started again here.
   useEffect(() => {
     const left = discoverableSecondsLeft(DiscoverableSeconds);
 
@@ -120,7 +124,8 @@ export function PublicAddressTile({
   }, []);
 
   // Ticking only while the window is open, and only re-reading the clock: the
-  // countdown is a reading of the time, not a tally of the ticks.
+  // window is a reading of the time, not a tally of the ticks. Nothing is
+  // displayed per tick, but the tick is still what turns the state off.
   useEffect(() => {
     if (until === null) {
       return;
@@ -155,7 +160,9 @@ export function PublicAddressTile({
     }
   }
 
-  const left = until === null ? 0 : Math.max(0, Math.ceil((until - now) / 1000));
+  // Whether the window is still open. The only question the button asks, so it
+  // is a question with a yes or a no rather than a number to format.
+  const discoverable = until !== null && until > now;
 
   return (
     <StatTile
@@ -167,12 +174,18 @@ export function PublicAddressTile({
           <Button
             size="sm"
             className="w-full"
-            variant={left > 0 ? 'secondary' : 'default'}
+            variant={discoverable ? 'secondary' : 'default'}
             onClick={() => void publish()}
-            disabled={publishing || left > 0}
+            disabled={publishing || discoverable}
           >
-            {publishing ? <RefreshCw className="animate-spin" /> : left > 0 ? <Check /> : <Globe />}
-            {publishing ? 'Publishing…' : left > 0 ? `Discoverable · ${left}s` : 'Update'}
+            {publishing ? (
+              <RefreshCw className="animate-spin" />
+            ) : discoverable ? (
+              <Check />
+            ) : (
+              <Globe />
+            )}
+            {publishing ? 'Publishing…' : discoverable ? 'Discoverable' : 'Update'}
           </Button>
 
           {report === null ? null : (

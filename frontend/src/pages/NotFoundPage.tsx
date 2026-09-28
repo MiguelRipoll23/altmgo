@@ -11,7 +11,7 @@ export function NotFoundPage() {
       <PageHeading subtitle="That page does not exist" />
 
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="pt-5 sm:pt-6">
           <Link to="/" className={`${buttonVariants({ size: 'lg' })} w-full justify-center`}>
             <ArrowLeft />
             Back to the home page

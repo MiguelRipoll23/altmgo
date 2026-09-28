@@ -58,7 +58,7 @@ export function RegisterPage() {
       <PageHeading subtitle="Create your account to start playing on this server" />
 
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="pt-5 sm:pt-6">
           <form onSubmit={handleSubmit} className="space-y-5" noValidate>
             {status === null ? null : <StatusMessage kind={status.kind}>{status.message}</StatusMessage>}
 
