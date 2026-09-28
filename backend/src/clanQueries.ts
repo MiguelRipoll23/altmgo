@@ -121,14 +121,10 @@ export async function searchClans(
     recent: raw('clan.created_at desc nulls last, clan.name'),
   };
 
-  // The status is a bind parameter compared in ordinary SQL rather than a spliced
-  // expression, and that is not tidiness: `raw` is the escape hatch for an
-  // `order by`, which takes no parameter, and it composes as a query of its own. A
-  // raw predicate in a `where` therefore cannot see the `clan` alias of the
-  // statement it is being placed in, and Postgres refuses it with a missing
-  // from-clause entry for `clan`. The three sides are spelled out and the named one
-  // is bound to each, so the column stays in the statement it belongs to and
-  // nothing a request carried is ever spliced.
+  // The status is a bound parameter compared in ordinary SQL rather than a spliced
+  // expression, so the whole predicate is written in one place and nothing a request
+  // carried is ever pasted into the statement. `raw` is left to the ordering below,
+  // which is the one clause that genuinely cannot take a bind parameter.
 
   return readRows<ClanSummaryRow>(database()`
     select
@@ -203,6 +199,14 @@ export async function findClanDetail(clanIdentifier: number): Promise<ClanDetail
   // roster in an order its leader did not set. The leader is pinned to the top
   // regardless: `clans.leader_id` is authoritative, and a member row whose rank does
   // not agree with it should not move the clan leader out of first place.
+  //
+  // The `clans` row is joined in rather than its leader id passed in from the read
+  // above, because the ordering and the `is_leader` flag both name `clan.leader_id`
+  // and a statement can only name an alias it has brought into scope. Without the
+  // join the roster asked Postgres for a table the query did not have, and the whole
+  // clan page failed with a missing from-clause entry for `clan` — which read as a
+  // problem with the search above it, several hundred lines away and on a different
+  // request.
   const members = await readRows<ClanMemberRow>(database()`
     select
       character.id as character_id,
@@ -211,6 +215,7 @@ export async function findClanDetail(clanIdentifier: number): Promise<ClanDetail
       (member.id = clan.leader_id) as is_leader
     from clans_members member
     join characters character on character.id = member.character_id
+    join clans clan on clan.id = member.clan_id
     where member.clan_id = ${clanIdentifier}
     order by (member.id = clan.leader_id) desc, member.rank, character.name
   `);
