@@ -10,6 +10,8 @@ type MailMessage = {
   subject: string;
   body: string;
   senderName: string;
+  /** The character that wrote it, on a letter from the game masters' mailbox. */
+  senderCharacterName?: string | null;
   recipientName?: string;
   sentAt: string;
   /** Whether the recipient has opened it. Carried by the inbox read only. */
@@ -94,7 +96,13 @@ export function MailDetailPage({
             <div className="mb-4 flex flex-wrap items-center gap-3">
               <Mail className="size-4 shrink-0 text-muted-foreground" />
               <p className="text-xs uppercase tracking-widest text-muted-foreground">
-                From {message.senderName}
+                {/*
+                  A letter in the game masters' mailbox carries the name of the
+                  character that wrote it as well as the signature the writer chose,
+                  and the character is the one a manager is answering: two players
+                  may have signed themselves the same name.
+                */}
+                From {message.senderCharacterName ?? message.senderName}
                 {message.recipientName === undefined ? null : ` · To ${message.recipientName}`} · Sent{' '}
                 {formatDate(message.sentAt)}
               </p>

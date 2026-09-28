@@ -25,10 +25,11 @@ import { TournamentEventPage } from './pages/TournamentEventPage';
 import { TournamentPage } from './pages/TournamentPage';
 import { AccountsPage } from './pages/admin/AccountsPage';
 import { AdminOverviewPage } from './pages/admin/AdminOverviewPage';
-import { AnnouncementsPage } from './pages/admin/AnnouncementsPage';
 import { CharactersPage } from './pages/admin/CharactersPage';
 import { DiscordPage } from './pages/admin/DiscordPage';
 import { EventOperationsPage } from './pages/admin/EventOperationsPage';
+import { AdminMailPage } from './pages/admin/MailPage';
+import { AdminNewsPage } from './pages/admin/NewsPage';
 
 /**
  * Every page of the site, and the two frames the signed-in pages share.
@@ -154,10 +155,22 @@ export function App() {
 
         <Route path="/admin" element={<AdminRoute />}>
           <Route index element={<AdminOverviewPage />} />
-          <Route path="news" element={<NewsPage basePath="/admin" />} />
+          <Route path="news" element={<AdminNewsPage />} />
           <Route
             path="news/:identifier"
             element={<NewsDetailPage scope="manager" listPath="/admin/news" />}
+          />
+          <Route path="mail" element={<Navigate to="mail/inbox" replace />} />
+          <Route path="mail/inbox" element={<AdminMailPage box="inbox" />} />
+          <Route path="mail/outbox" element={<AdminMailPage box="outbox" />} />
+          <Route
+            path="mail/:identifier"
+            element={
+              <AdminStaffSection
+                role="manager"
+                page={<MailDetailPage scope="outbox" back="/admin/mail/inbox" label="Player mail" />}
+              />
+            }
           />
           <Route path="clans" element={<ClansPage basePath="/admin" />} />
           <Route path="clans/:identifier" element={<ClanDetailPage basePath="/admin" />} />
@@ -194,21 +207,6 @@ export function App() {
           <Route
             path="accounts"
             element={<AdminStaffSection role="manager" page={<AccountsPage />} />}
-          />
-          <Route
-            path="announcements"
-            element={<AdminStaffSection role="manager" page={<AnnouncementsPage />} />}
-          />
-          <Route
-            path="announcements/mail/:identifier"
-            element={
-              <AdminStaffSection
-                role="manager"
-                page={
-                  <MailDetailPage scope="outbox" back="/admin/announcements" label="Sent mail" />
-                }
-              />
-            }
           />
         </Route>
 

@@ -2,6 +2,7 @@ import {
   Flag,
   Gamepad2,
   LayoutDashboard,
+  Mail,
   MessageSquare,
   Newspaper,
   SlidersHorizontal,
@@ -51,7 +52,7 @@ type Section = SidebarSection & {
 const sections: Section[] = [
   { path: '/admin', label: 'Overview', icon: LayoutDashboard },
   { path: '/admin/characters', label: 'Characters', icon: Users },
-  { path: '/admin/news', label: 'News', icon: Newspaper },
+  { path: '/admin/news', label: 'News', icon: Newspaper, role: 'manager' },
   { path: '/admin/clans', label: 'Clans', icon: Flag },
   { path: '/admin/games', label: 'Games', icon: Gamepad2 },
   {
@@ -73,10 +74,14 @@ const sections: Section[] = [
   },
   { path: '/admin/accounts', label: 'Accounts and roles', icon: UserCog, role: 'manager' },
   {
-    path: '/admin/announcements',
-    label: 'Mail and news',
-    icon: Newspaper,
+    path: '/admin/mail',
+    label: 'Mail',
+    icon: Mail,
     role: 'manager',
+    children: [
+      { path: '/admin/mail/inbox', label: 'Player mail' },
+      { path: '/admin/mail/outbox', label: 'Console mail' },
+    ],
   },
 ];
 

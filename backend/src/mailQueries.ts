@@ -163,20 +163,32 @@ export async function findAccountMail(
   return rows[0] as AccountMailRow | undefined;
 }
 
-/** One message of the game master outbox, which is addressed to no character. */
+/** One message of the game masters' mailbox, which is addressed to no character. */
 export type OutboxMailRow = {
   id: number;
   subject: string;
   body: string;
   sender_name: string;
+  /** Who wrote it, or nothing for a letter the console wrote. */
+  sender_character_id: number | null;
+  /** The name of that character, where there is one. */
+  sender_character_name: string | null;
   sent_at: Date;
 };
 
-/** One message of the game master outbox, by id, for the manager's detail page. */
+/** One message of the game masters' mailbox, by id, for the manager's detail page. */
 export async function findOutboxMail(mailIdentifier: number): Promise<OutboxMailRow | undefined> {
   const rows = await database()`
-    select mail.id, mail.subject, mail.body, mail.sender_name, mail.sent_at
+    select
+      mail.id,
+      mail.subject,
+      mail.body,
+      mail.sender_name,
+      mail.sender_character_id,
+      character.name as sender_character_name,
+      mail.sent_at
     from game_master_mail mail
+    left join characters character on character.id = mail.sender_character_id
     where mail.id = ${mailIdentifier}
     limit 1
   `;

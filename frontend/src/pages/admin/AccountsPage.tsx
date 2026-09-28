@@ -56,10 +56,15 @@ export function AccountsPage() {
       return true;
     }
 
+    // Every field is read through a default rather than a null check on the way
+    // to `includes`, because a filter that throws takes the whole page with it:
+    // one account with a null display name or a role row without a role on it
+    // would leave the operator with no accounts page at all rather than with one
+    // account missing from a list they are searching.
     return (
-      account.displayName.toLowerCase().includes(needle) ||
+      (account.displayName ?? '').toLowerCase().includes(needle) ||
       (account.mainCharacterName ?? '').toLowerCase().includes(needle) ||
-      account.roles.some((held) => held.role.includes(needle))
+      (account.roles ?? []).some((held) => (held?.role ?? '').toLowerCase().includes(needle))
     );
   });
 

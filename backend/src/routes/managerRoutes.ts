@@ -6,10 +6,13 @@ import { isDiscordConfigured, sendChannelMessage } from '../discord.js';
 import { readBody, readBoolean, readInteger, readText } from '../requestBody.js';
 import { listNews, findNews } from '../newsQueries.js';
 import { findOutboxMail } from '../mailQueries.js';
-import { listGameMasterMail, listStaffAccounts } from '../staffQueries.js';
+import { isGameMasterMailBox, listGameMasterMail, listStaffAccounts } from '../staffQueries.js';
 import {
+  editGameMasterMail,
+  editNews,
   grantRole,
   publishNews,
+  removeGameMasterMail,
   removeNews,
   revokeRole,
   sendGameMasterMail,
@@ -51,6 +54,7 @@ const refusalMessages: Record<StaffRefusal['reason'], string> = {
   body: 'That message body cannot be used. Check it is not empty and not too long.',
   sender: 'That sender name cannot be used. Check it is not empty and not too long.',
   'unknown-news': 'That news item has already been withdrawn.',
+  'unknown-mail': 'That message has already been removed.',
 };
 
 /** Answers a manager write with either its result or the sentence for why it failed. */
@@ -203,21 +207,54 @@ managerRoutes.post('/manager/news', requireManager, async (context) => {
   );
 });
 
+/** Corrects a published news item in place. */
+managerRoutes.put('/manager/news/:identifier', requireManager, async (context) => {
+  const body = await readBody(context);
+  const identifier = Number(context.req.param('identifier'));
+
+  if (!Number.isInteger(identifier) || identifier <= 0) {
+    return context.json({ error: 'That news item has been withdrawn.' }, 404);
+  }
+
+  return answer(
+    context,
+    await editNews(identifier, {
+      title: readText(body, 'title'),
+      body: readText(body, 'body'),
+      important: readBoolean(body, 'important'),
+    }),
+  );
+});
+
 /** Withdraws a news item. */
 managerRoutes.delete('/manager/news/:identifier', requireManager, async (context) =>
   answer(context, await removeNews(Number(context.req.param('identifier')))),
 );
 
-/** The game master mail a player's inbox shows. */
+/**
+ * The game masters' mailbox, on one side of it or the other.
+ *
+ * The side is asked for rather than answered with everything, because the two are
+ * not the same list: a player writes a letter to the game masters and the game
+ * stores it here, and that letter has been read by nobody until somebody opens
+ * this page. The other side is what the console has written into the same mailbox
+ * with no sender on it. One table, two questions, and a manager answering a
+ * player should not have to read their own letters to find the letter.
+ */
 managerRoutes.get('/manager/mail', requireManager, async (context) => {
-  const mail = await listGameMasterMail(MaximumListedRows);
+  const asked = context.req.query('box') ?? 'inbox';
+  const box = isGameMasterMailBox(asked) ? asked : 'inbox';
+  const mail = await listGameMasterMail(box, MaximumListedRows);
 
   return context.json({
+    box,
     mail: mail.map((message) => ({
       id: message.id,
       subject: message.subject,
       body: message.body,
       senderName: message.sender_name,
+      senderCharacterId: message.sender_character_id,
+      senderCharacterName: message.sender_character_name,
       sentAt: message.sent_at,
     })),
   });
@@ -242,6 +279,8 @@ managerRoutes.get('/manager/mail/:identifier', requireManager, async (context) =
       subject: message.subject,
       body: message.body,
       senderName: message.sender_name,
+      senderCharacterId: message.sender_character_id,
+      senderCharacterName: message.sender_character_name,
       sentAt: message.sent_at,
     },
   });
@@ -259,4 +298,54 @@ managerRoutes.post('/manager/mail', requireManager, async (context) => {
   }
 
   return answer(context, await sendGameMasterMail({ subject, body: article, senderName }));
+});
+
+/** Corrects a game master letter in place. */
+managerRoutes.put('/manager/mail/:identifier', requireManager, async (context) => {
+  const body = await readBody(context);
+  const identifier = Number(context.req.param('identifier'));
+
+  if (!Number.isInteger(identifier) || identifier <= 0) {
+    return context.json({ error: 'No such message.' }, 404);
+  }
+
+  return answer(
+    context,
+    await editGameMasterMail(identifier, {
+      subject: readText(body, 'subject'),
+      body: readText(body, 'body'),
+      senderName: readText(body, 'senderName'),
+    }),
+  );
+});
+
+/**
+ * Removes a game master letter.
+ *
+ * The sentence it answers with names how many inboxes the letter was withdrawn
+ * from, because that is the part of the action the operator cannot see: the row
+ * leaving this table is one line in a list, and the copies leaving every player's
+ * inbox is the half that actually reaches people.
+ */
+managerRoutes.delete('/manager/mail/:identifier', requireManager, async (context) => {
+  const identifier = Number(context.req.param('identifier'));
+
+  if (!Number.isInteger(identifier) || identifier <= 0) {
+    return context.json({ error: 'No such message.' }, 404);
+  }
+
+  const outcome = await removeGameMasterMail(identifier);
+
+  if (!outcome.ok) {
+    return answer(context, outcome);
+  }
+
+  return context.json({
+    id: outcome.value.id,
+    withdrawn: outcome.value.withdrawn,
+    message:
+      outcome.value.withdrawn === 0
+        ? 'The letter was removed. It had not been delivered to any inbox.'
+        : `The letter was removed and withdrawn from ${outcome.value.withdrawn} inboxes.`,
+  });
 });
