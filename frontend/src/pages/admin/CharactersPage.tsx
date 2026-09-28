@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { DataTable, Panel, SectionHeading, formatDate, formatNumber } from '../../components/DataDisplay';
 import { StatusMessage } from '../../components/StatusMessage';
 import { useApiResource } from '../../components/useApiResource';
@@ -24,15 +25,6 @@ type Character = {
   lastSeen: string | null;
 };
 
-type CharacterProfile = {
-  character: Character & {
-    previousName: string | null;
-    comment: string;
-    createdAt: string;
-    lastSeenAt: string | null;
-  };
-};
-
 /** The orderings the backend accepts, kept in step with the query it runs. */
 const sorts = [
   { value: 'name', label: 'Name' },
@@ -42,8 +34,13 @@ const sorts = [
 ] as const;
 
 /**
- * Every character on the server, searchable by character or by account name, and
- * the profile of whichever one is selected.
+ * Every character on the server, searchable by character or by account name.
+ *
+ * A name opens that character's own page rather than expanding a profile under
+ * the directory. It used to expand here, which meant the page grew every time a
+ * character was opened, the record arrived below the list the reader was still
+ * working through, and it had no address — so a moderator looking at the same
+ * character twice, or sending one to a colleague, had nothing to link to.
  *
  * The search is submitted rather than run on each keystroke: the term is bound
  * into a query that counts and pages, and a request per letter would make the
@@ -53,20 +50,16 @@ export function CharactersPage() {
   const [term, setTerm] = useState('');
   const [sort, setSort] = useState<string>('name');
   const [submitted, setSubmitted] = useState('');
-  const [selected, setSelected] = useState<number | null>(null);
 
   const list = useApiResource<{ characters: Character[] }>(
     `/api/admin/characters?term=${encodeURIComponent(submitted)}&sort=${sort}`,
-  );
-  const profile = useApiResource<CharacterProfile>(
-    selected === null ? null : `/api/admin/characters/${selected}`,
   );
 
   return (
     <div className="space-y-6">
       <SectionHeading
         title="Characters"
-        subtitle="Every character on the server, and the profile of the one you select."
+        subtitle="Every character on the server. A name opens that character's profile."
       />
 
       <Panel>
@@ -122,13 +115,12 @@ export function CharactersPage() {
             {
               header: 'Name',
               cell: (row) => (
-                <button
-                  type="button"
-                  onClick={() => setSelected(row.id)}
+                <Link
+                  to={`/admin/characters/${row.id}`}
                   className="font-medium text-primary hover:underline"
                 >
                   {row.name}
-                </button>
+                </Link>
               ),
             },
             { header: 'Account', cell: (row) => row.accountName },
@@ -142,52 +134,6 @@ export function CharactersPage() {
           ]}
         />
       </Panel>
-
-      {selected === null ? null : (
-        <Panel title={profile.data?.character.name ?? 'Character'}>
-          {profile.error === null ? null : (
-            <StatusMessage kind="error">{profile.error}</StatusMessage>
-          )}
-
-          {profile.loading ? (
-            <p className="text-sm text-muted-foreground">Loading the profile…</p>
-          ) : null}
-
-          {profile.data === null ? null : (
-            <dl className="grid gap-4 sm:grid-cols-2">
-              <Detail label="Account" value={profile.data.character.accountName} />
-              <Detail label="Previous name" value={profile.data.character.previousName} />
-              <Detail label="Rank" value={formatNumber(profile.data.character.rank)} />
-              <Detail
-                label="Experience"
-                value={formatNumber(profile.data.character.experience)}
-              />
-              <Detail
-                label="Total rewards"
-                value={formatNumber(profile.data.character.totalRewards)}
-              />
-              <Detail label="Lobby" value={profile.data.character.lobbyName} />
-              <Detail label="Public address" value={profile.data.character.publicAddress} />
-              <Detail label="Created" value={formatDate(profile.data.character.createdAt)} />
-              <Detail
-                label="Last seen"
-                value={formatDate(profile.data.character.lastSeenAt)}
-              />
-              <Detail label="Comment" value={profile.data.character.comment} />
-            </dl>
-          )}
-        </Panel>
-      )}
-    </div>
-  );
-}
-
-/** One labelled figure of a profile. */
-function Detail({ label, value }: { label: string; value: string | null }) {
-  return (
-    <div>
-      <dt className="text-xs uppercase tracking-widest text-muted-foreground">{label}</dt>
-      <dd className="mt-1 text-sm text-foreground/90">{value ?? '—'}</dd>
     </div>
   );
 }

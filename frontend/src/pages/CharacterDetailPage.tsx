@@ -130,7 +130,7 @@ export function CharacterDetailPage() {
  * native progress bar would say "22 of 22" for a character at the ceiling, which
  * is not what the client's gauge says at all.
  */
-function LevelGauge({ experience }: { experience: number }) {
+export function LevelGauge({ experience }: { experience: number }) {
   const { level, from, to, ratio, atCeiling } = characterLevelProgress(experience);
   const percent = Math.round(ratio * 100);
 
@@ -179,7 +179,7 @@ function LevelGauge({ experience }: { experience: number }) {
 }
 
 /** One labelled figure of a character. */
-function Detail({ label, value }: { label: string; value: string | null }) {
+export function Detail({ label, value }: { label: string; value: string | null }) {
   return (
     <div>
       <dt className="text-xs uppercase tracking-widest text-muted-foreground">{label}</dt>

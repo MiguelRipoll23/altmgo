@@ -25,6 +25,7 @@ import { TournamentEventPage } from './pages/TournamentEventPage';
 import { TournamentPage } from './pages/TournamentPage';
 import { AccountsPage } from './pages/admin/AccountsPage';
 import { AdminOverviewPage } from './pages/admin/AdminOverviewPage';
+import { AdminCharacterDetailPage } from './pages/admin/CharacterDetailPage';
 import { CharactersPage } from './pages/admin/CharactersPage';
 import { DiscordPage } from './pages/admin/DiscordPage';
 import { EventOperationsPage } from './pages/admin/EventOperationsPage';
@@ -196,6 +197,7 @@ export function App() {
             element={<TournamentEventPage basePath="/admin" area="fixtures" />}
           />
           <Route path="characters" element={<CharactersPage />} />
+          <Route path="characters/:identifier" element={<AdminCharacterDetailPage />} />
           <Route
             path="discord"
             element={<AdminStaffSection role="manager" page={<DiscordPage />} />}
