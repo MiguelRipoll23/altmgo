@@ -81,6 +81,11 @@ function readFlag(value: string | undefined): boolean {
  * is what another player would connect to in order to join their game, and it
  * goes stale when their network changes.
  *
+ * It is sent on its own, without the port the client is listening on. The port is
+ * a client setting and is the same figure on every host of a deployment, so
+ * printing it beside every address spends the width of the tile on a number that
+ * says nothing and makes the address harder to read off the page.
+ *
  * The address is deliberately not in the lobby list. Every lobby shows the same
  * host in a deployment behind one address, so a column of identical values
  * spends width on saying nothing, and the one address that has to be correct is
@@ -118,7 +123,7 @@ dashboardRoutes.get('/overview', requireAccount, async (context) => {
       : {
           characterId: published.characterId,
           characterName: published.characterName,
-          address: published.publicAddress,
+          address: published.publicIp,
         },
   });
 });

@@ -73,6 +73,10 @@ function isSectionActive(section: SidebarSection, pathname: string): boolean {
  * appeared inside its section could not be reached from anywhere else, so arriving
  * at the teams would take a click through events and the sub-options would be
  * something a reader found by accident.
+ *
+ * A sub-option stays lit on the pages nested under it — an event opened from the
+ * Survival events, a message opened from the inbox — so the column says where the
+ * reader is at every depth rather than going dark one page down.
  */
 export function SidebarNav({ sections }: { sections: SidebarSection[] }) {
   const { pathname } = useLocation();
@@ -90,7 +94,9 @@ export function SidebarNav({ sections }: { sections: SidebarSection[] }) {
             <Link
               key={subSection.path}
               to={subSection.path}
-              className={subSectionClasses(pathname === subSection.path)}
+              className={subSectionClasses(
+                pathname === subSection.path || pathname.startsWith(`${subSection.path}/`),
+              )}
             >
               {subSection.label}
             </Link>

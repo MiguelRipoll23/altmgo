@@ -4,7 +4,6 @@ import { StatusMessage } from '../../components/StatusMessage';
 import { useApiResource } from '../../components/useApiResource';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
-import { Label } from '../../components/ui/label';
 import {
   Select,
   SelectContent,
@@ -79,20 +78,19 @@ export function CharactersPage() {
           }}
         >
           <div className="min-w-48 flex-1 space-y-2">
-            <Label htmlFor="term">Search</Label>
             <Input
               id="term"
               type="text"
               value={term}
               onChange={(event) => setTerm(event.target.value)}
-              placeholder="Character or account name"
+              placeholder="Search a character or account"
+              aria-label="Search a character or account"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="sort">Order by</Label>
             <Select value={sort} onValueChange={setSort}>
-              <SelectTrigger id="sort" className="w-48">
+              <SelectTrigger id="sort" className="w-48" aria-label="Order the characters by">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

@@ -5,7 +5,6 @@ import { useApiResource } from '../components/useApiResource';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
 import {
   Select,
   SelectContent,
@@ -96,20 +95,19 @@ export function ClansPage() {
           }}
         >
           <div className="min-w-48 flex-1 space-y-2">
-            <Label htmlFor="clan-term">Search</Label>
             <Input
               id="clan-term"
               type="text"
               value={term}
               onChange={(event) => setTerm(event.target.value)}
-              placeholder="Clan name"
+              placeholder="Search clans by name"
+              aria-label="Search clans by name"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="clan-sort">Order by</Label>
             <Select value={sort} onValueChange={setSort}>
-              <SelectTrigger id="clan-sort" className="w-48">
+              <SelectTrigger id="clan-sort" className="w-48" aria-label="Order the clans by">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

@@ -7,7 +7,6 @@ import { useApiResource } from '../../components/useApiResource';
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
-import { Label } from '../../components/ui/label';
 import { readSessionToken } from '../../session';
 
 /**
@@ -112,13 +111,13 @@ export function AccountsPage() {
           }}
         >
           <div className="min-w-48 flex-1 space-y-2">
-            <Label htmlFor="account-term">Search</Label>
             <Input
               id="account-term"
               type="text"
               value={term}
               onChange={(event) => setTerm(event.target.value)}
-              placeholder="Account name, character or role"
+              placeholder="Search an account, character or role"
+              aria-label="Search an account, character or role"
             />
           </div>
 

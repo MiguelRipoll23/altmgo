@@ -278,11 +278,19 @@ export type TournamentEntryRow = {
   character_id: number;
   character_name: string;
   team_id: number | null;
+  /** The name of the team the place belongs to, or nothing when it is unassigned. */
+  team_name: string | null;
   slot_index: number;
   reserved_at: Date;
 };
 
-/** Reads the places taken in one Tournament event, in the order they were taken. */
+/**
+ * Reads the places taken in one Tournament event, in the order they were taken.
+ *
+ * The team is joined for its name rather than left as the id the column holds: a
+ * registration list is read by people who are looking for their own character and
+ * the team it is in, and a number is neither of those things.
+ */
 export async function listTournamentEntries(eventIdentifier: number): Promise<TournamentEntryRow[]> {
   const rows = await database()`
     select
@@ -290,10 +298,12 @@ export async function listTournamentEntries(eventIdentifier: number): Promise<To
       registration.character_id,
       character.name as character_name,
       registration.team_id,
+      team.name as team_name,
       registration.slot_index,
       registration.reserved_at
     from tournament_registrations registration
     join characters character on character.id = registration.character_id
+    left join event_teams team on team.id = registration.team_id
     where registration.event_id = ${eventIdentifier}
     order by registration.reserved_at, registration.character_id
   `;

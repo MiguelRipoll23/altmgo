@@ -58,7 +58,10 @@ export async function publishAddress(
 export type PublishedAddress = {
   characterId: number;
   characterName: string;
-  publicAddress: string | null;
+  /** The address on its own. The port is a property of the client's listener, not of where the player is. */
+  publicIp: string;
+  /** The port the client reported it is listening on. */
+  publicPort: number;
 };
 
 /**
@@ -73,6 +76,12 @@ export type PublishedAddress = {
  * connection row's `updated_at`: the connection row is written when a game
  * starts, so a character that played yesterday and is idle today would otherwise
  * be passed over for one that merely opened a lobby more recently.
+ *
+ * The address and the port are returned apart rather than joined into one string.
+ * The port is fixed by the client's own listener and is the same for every host
+ * on a deployment, so printing it beside every address says nothing and makes the
+ * address itself harder to read off the page; a reader who needs the whole
+ * endpoint is joining a number this table already holds.
  */
 export async function readAccountPublicAddress(
   accountIdentifier: number,
@@ -102,6 +111,7 @@ export async function readAccountPublicAddress(
   return {
     characterId: row.character_id,
     characterName: row.character_name,
-    publicAddress: `${row.public_ip}:${row.public_port}`,
+    publicIp: row.public_ip,
+    publicPort: row.public_port,
   };
 }

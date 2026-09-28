@@ -31,6 +31,10 @@ export type NewsScope = 'player' | 'manager';
  * page that asked for the manager's read would be refused by a player. Which one
  * is asked for is therefore a prop rather than a guess, and the back link goes
  * to the list of the frame the page was opened from.
+ *
+ * The back link is the first thing on the page rather than something below the
+ * heading. A page reached from a list is read in that order — where am I, what is
+ * this — and a link under a title is a link the eye has already passed.
  */
 export function NewsDetailPage({
   scope,
@@ -48,13 +52,6 @@ export function NewsDetailPage({
 
   return (
     <div className="space-y-6">
-      <SectionHeading
-        title="News"
-        subtitle="One item, as it is drawn on the login screen."
-      />
-
-      {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
-
       <Link
         to={listPath}
         className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
@@ -62,6 +59,10 @@ export function NewsDetailPage({
         <ArrowLeft className="size-4" />
         All news
       </Link>
+
+      <SectionHeading title="News" subtitle="One item, as it is drawn on the login screen." />
+
+      {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
 
       {item === null ? (
         loading ? (

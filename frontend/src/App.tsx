@@ -16,7 +16,9 @@ import { RankingsPlayersPage } from './pages/RankingsPlayersPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { SignInPage } from './pages/SignInPage';
 import { SurvivalEventsPage } from './pages/SurvivalEventsPage';
+import { SurvivalEventPage } from './pages/SurvivalEventPage';
 import { SurvivalTeamsPage } from './pages/SurvivalTeamsPage';
+import { TournamentEventPage } from './pages/TournamentEventPage';
 import { TournamentPage } from './pages/TournamentPage';
 import { AccountsPage } from './pages/admin/AccountsPage';
 import { AdminOverviewPage } from './pages/admin/AdminOverviewPage';
@@ -105,8 +107,10 @@ export function App() {
           <Route path="games" element={<GamesPage />} />
           <Route path="survival" element={<Navigate to="survival/events" replace />} />
           <Route path="survival/events" element={<SurvivalEventsPage />} />
+          <Route path="survival/events/:identifier" element={<SurvivalEventPage />} />
           <Route path="survival/teams" element={<SurvivalTeamsPage />} />
           <Route path="tournament" element={<TournamentPage />} />
+          <Route path="tournament/:identifier" element={<TournamentEventPage />} />
           <Route path="rankings" element={<Navigate to="rankings/players" replace />} />
           <Route path="rankings/players" element={<RankingsPlayersPage />} />
           <Route path="rankings/clans" element={<RankingsClansPage />} />
@@ -122,9 +126,17 @@ export function App() {
           <Route path="clans" element={<ClansPage />} />
           <Route path="games" element={<GamesPage />} />
           <Route path="survival" element={<Navigate to="survival/events" replace />} />
-          <Route path="survival/events" element={<SurvivalEventsPage />} />
+          <Route path="survival/events" element={<SurvivalEventsPage basePath="/admin" />} />
+          <Route
+            path="survival/events/:identifier"
+            element={<SurvivalEventPage basePath="/admin" />}
+          />
           <Route path="survival/teams" element={<SurvivalTeamsPage />} />
-          <Route path="tournament" element={<TournamentPage />} />
+          <Route path="tournament" element={<TournamentPage basePath="/admin" />} />
+          <Route
+            path="tournament/:identifier"
+            element={<TournamentEventPage basePath="/admin" />}
+          />
           <Route path="characters" element={<CharactersPage />} />
           <Route
             path="discord"
