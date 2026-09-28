@@ -4,6 +4,7 @@ import { DashboardRoute, OverviewSection } from './components/DashboardRoute';
 import { ClansPage } from './pages/ClansPage';
 import { ClanDetailPage } from './pages/ClanDetailPage';
 import { GamesPage } from './pages/GamesPage';
+import { OverviewPage } from './pages/OverviewPage';
 import { HomePage } from './pages/HomePage';
 import { CharacterDetailPage } from './pages/CharacterDetailPage';
 import { MailAllPage } from './pages/MailAllPage';
@@ -25,7 +26,6 @@ import { TournamentEventPage } from './pages/TournamentEventPage';
 import { TournamentPage } from './pages/TournamentPage';
 import { AccountDetailPage } from './pages/admin/AccountDetailPage';
 import { AccountsPage } from './pages/admin/AccountsPage';
-import { AdminOverviewPage } from './pages/admin/AdminOverviewPage';
 import { AdminCharacterDetailPage } from './pages/admin/CharacterDetailPage';
 import { CharactersPage } from './pages/admin/CharactersPage';
 import { DiscordPage } from './pages/admin/DiscordPage';
@@ -44,6 +44,15 @@ import { AdminNewsPage } from './pages/admin/NewsPage';
  * dashboard is a set of reads any signed-in account may make; the admin frame is the
  * work of running the server. An account moves between them from the card at the
  * foot of the sidebar, which is the one control present on every page of both.
+ *
+ * The overview is the one page both frames open with, and it is the same component
+ * in both. It used to be a second one drawing the same figures and the same lobby
+ * table with three panels of staff work bolted underneath, which made it a second
+ * copy of the server's state that could disagree with the player's about how many
+ * people were online. An operator reading the admin overview and a player reading
+ * theirs were looking at the same server through two implementations; now they
+ * look at the same one. The staff sections those extra panels pointed at are in
+ * the sidebar, which is where an operator goes looking for them anyway.
  *
  * Each layout reads the token and the roles itself rather than taking them as props,
  * because every route needs them and passing them through each one would be four
@@ -156,7 +165,7 @@ export function App() {
         </Route>
 
         <Route path="/admin" element={<AdminRoute />}>
-          <Route index element={<AdminOverviewPage />} />
+          <Route index element={<OverviewPage />} />
           <Route path="news" element={<AdminNewsPage />} />
           <Route
             path="news/:identifier"
