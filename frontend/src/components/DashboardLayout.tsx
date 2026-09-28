@@ -5,13 +5,11 @@ import {
   Mail,
   Medal,
   Newspaper,
-  Shield,
   Swords,
   Trophy,
   UserRound,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
-import type { StaffRole } from '../session';
 import { DashboardShell } from './DashboardShell';
 import type { SidebarSection } from './SidebarNav';
 
@@ -20,7 +18,7 @@ import type { SidebarSection } from './SidebarNav';
  *
  * There is no role on any of them, and that is the definition of the frame: every
  * section here is a read, and every one of them is a read any signed-in account
- * may make.
+ * may make. Nothing below is hidden from anybody.
  *
  * The order is the shape of a session rather than the shape of the schema: who is
  * on, who the reader is playing as, what the server has said to them, who they
@@ -37,10 +35,10 @@ import type { SidebarSection } from './SidebarNav';
  * the first sub-option, and a row that goes there and bounces teaches a reader
  * that the column is not where they think it is.
  *
- * Nothing here writes. Everything that changes the server moved to the admin frame,
- * which is reached from the account card at the foot of this column: a signed-in
- * player has no use for it, so a section here implying there is more of the
- * dashboard than there is would be a link to nothing.
+ * Nothing here writes. Every section is a read of what the server already holds,
+ * because a read that is correct the moment it is made cannot disagree with the
+ * client about the same figure, and a write made here would be a second source
+ * of truth for something the game is already the source of.
  */
 const sections: SidebarSection[] = [
   { path: '/dashboard', label: 'Overview', icon: LayoutDashboard },
@@ -82,19 +80,15 @@ const sections: SidebarSection[] = [
 /** The player dashboard: the sections down the left, the page beside them. */
 export function DashboardLayout({
   accountName,
-  roles,
   children,
 }: {
   accountName: string | null;
-  roles: StaffRole[];
   children: ReactNode;
 }) {
   return (
     <DashboardShell
       sections={sections}
       accountName={accountName}
-      roles={roles}
-      frame={{ to: '/admin', label: 'Admin dashboard', icon: Shield }}
       brand={
         <p className="text-lg font-extrabold tracking-tight">
           <span className="text-primary">Alt</span>MGO

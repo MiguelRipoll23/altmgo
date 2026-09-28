@@ -3,11 +3,8 @@ import { Link, useParams } from 'react-router-dom';
 import { LoadingBlock, Panel, SectionHeading } from '../components/DataDisplay';
 import { StatusMessage } from '../components/StatusMessage';
 import { TeamCard, type Team } from '../components/TeamCard';
-import { CreateTeamPanel } from '../components/TeamForm';
 import { useApiResource } from '../components/useApiResource';
-import { useEventWrite } from '../components/useEventWrite';
-import { useMayModerate } from '../components/useStaffRole';
-import { ScheduleList, formatEpoch, type Schedule } from '../components/ScheduleForm';
+import { formatEpoch, type Schedule } from '../components/Schedule';
 import { Badge } from '../components/ui/badge';
 
 /** Lobby selector of Survival, as the event subsystem numbers them. */
@@ -33,31 +30,24 @@ const SurvivalMode = 4;
  * played and how many teams it takes. The page is open to any signed-in account,
  * because the ladder and the events are public in the game.
  *
- * A moderator is offered the controls for both halves, here rather than on a
- * console elsewhere. This is the page an event is managed from: its window and
- * field size are corrected while someone is looking at whether it is the right
- * size for the ladder underneath, and the teams below are the ones the correction
- * is for. Both sets are drawn for the role rather than for the frame, so a
- * moderator who followed a link to this event from the player dashboard finds the
- * same controls there; the server refuses the write either way.
+ * Nothing here writes. Scheduling an event, correcting its window, forming a team
+ * and filling one are a moderator's work, and the server is what performs them; this
+ * page shows the event and the ladder that would enter it.
  */
-export function SurvivalEventPage({ basePath = '/dashboard' }: { basePath?: string }) {
+export function SurvivalEventPage() {
   const { identifier } = useParams();
-  const mayModerate = useMayModerate();
 
   const schedules = useApiResource<{ schedules: Schedule[] }>(
     `/api/events/${SurvivalMode}/schedules`,
   );
   const teams = useApiResource<{ teams: Team[] }>(`/api/events/${SurvivalMode}/teams`);
 
-  const { status, setStatus, write } = useEventWrite(schedules.reload, teams.reload);
-
   const schedule = schedules.data?.schedules.find((entry) => entry.id === Number(identifier));
 
   return (
     <div className="space-y-6">
       <Link
-        to={`${basePath}/survival/events`}
+        to="/dashboard/survival/events"
         className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
       >
         <ArrowLeft className="size-4" />
@@ -70,7 +60,6 @@ export function SurvivalEventPage({ basePath = '/dashboard' }: { basePath?: stri
       />
 
       {schedules.error === null ? null : <StatusMessage kind="error">{schedules.error}</StatusMessage>}
-      {status === null ? null : <StatusMessage kind={status.kind}>{status.message}</StatusMessage>}
 
       {schedule === undefined ? (
         schedules.loading ? (
@@ -115,20 +104,6 @@ export function SurvivalEventPage({ basePath = '/dashboard' }: { basePath?: stri
               </div>
             </div>
           </dl>
-
-          {mayModerate ? (
-            <div className="mt-6 border-t border-border pt-5">
-              <ScheduleList
-                schedules={[schedule]}
-                mayWrite
-                onWrite={write}
-                onChanged={schedules.reload}
-                empty=""
-                showRecord={false}
-                loading={false}
-              />
-            </div>
-          ) : null}
         </Panel>
       )}
 
@@ -145,27 +120,10 @@ export function SurvivalEventPage({ basePath = '/dashboard' }: { basePath?: stri
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           {(teams.data?.teams ?? []).map((team) => (
-            <TeamCard
-              key={team.id}
-              team={team}
-              mayWrite={mayModerate}
-              onWrite={write}
-              onChanged={teams.reload}
-            />
+            <TeamCard key={team.id} team={team} />
           ))}
         </div>
       )}
-
-      {mayModerate ? (
-        <CreateTeamPanel
-          mode={SurvivalMode}
-          onCreated={(message) => {
-            setStatus({ kind: 'success', message });
-            teams.reload();
-          }}
-          onFailed={(message) => setStatus({ kind: 'error', message })}
-        />
-      ) : null}
     </div>
   );
 }

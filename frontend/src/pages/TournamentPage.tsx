@@ -1,9 +1,8 @@
 import { EventCards } from '../components/EventCards';
 import { SectionHeading } from '../components/DataDisplay';
-import { CreateSchedulePanel, type Schedule } from '../components/ScheduleForm';
+import type { Schedule } from '../components/Schedule';
 import { StatusMessage } from '../components/StatusMessage';
 import { useApiResource } from '../components/useApiResource';
-import { useMayModerate } from '../components/useStaffRole';
 
 /** Lobby selector of Tournament. */
 const TournamentMode = 3;
@@ -21,16 +20,11 @@ const TournamentMode = 3;
  * bracket behind them are what the client announces, so a player may read them
  * here.
  *
- * A moderator is offered the form that publishes an event, on this page rather than
- * on a console elsewhere, for the reason Survival offers it: publishing is done while
- * looking at what is already published, and the event is drawn in the lobby that
- * selector names rather than in whichever one happened to be selected. Only the
- * publish form lives here; correcting an event's window is done on the event's own
- * page, next to its registrations, because that is where somebody asking about it
- * already is.
+ * Nothing here writes. Publishing an event, correcting its window and withdrawing
+ * it are a moderator's work, and the server is what performs them; this page shows
+ * what has been published and leaves it at that.
  */
 export function TournamentPage({ basePath = '/dashboard' }: { basePath?: string }) {
-  const mayModerate = useMayModerate();
   const schedules = useApiResource<{ schedules: Schedule[] }>(
     `/api/events/${TournamentMode}/schedules`,
   );
@@ -53,10 +47,6 @@ export function TournamentPage({ basePath = '/dashboard' }: { basePath?: string 
         loading={schedules.loading}
         loadingLabel="Reading the events…"
       />
-
-      {mayModerate ? (
-        <CreateSchedulePanel mode={TournamentMode} onChanged={schedules.reload} />
-      ) : null}
     </div>
   );
 }

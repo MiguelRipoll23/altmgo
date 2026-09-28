@@ -29,8 +29,8 @@ const PreviewLength = 220;
  *
  * The page is read-only and open to any signed-in account, because it shows the same
  * rows the client draws on the login screen and there is nothing here a player could
- * do with it that they cannot do in game. Publishing an item is a manager action and
- * it lives in the admin frame, on the mail and news page.
+ * do with it that they cannot do in game. It is a copy of what the client already
+ * says, so a row here cannot disagree with the client's own view of it.
  *
  * It is a blog rather than a table because a news item is prose, not a row. A
  * table of titles says what has been said and when, which is what somebody

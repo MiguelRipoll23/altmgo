@@ -6,7 +6,7 @@ import { apiRequest, describeError } from '../api';
 import { PageHeading, PageLayout } from '../components/PageLayout';
 import { StatusMessage } from '../components/StatusMessage';
 import type { StatusKind } from '../components/StatusMessage';
-import { writeSessionRoles, writeSessionToken } from '../session';
+import { writeSessionToken } from '../session';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { Input } from '../components/ui/input';
@@ -14,7 +14,6 @@ import { Label } from '../components/ui/label';
 
 type LoginResponse = {
   token: string;
-  account: { id: number; displayName: string; roles: string[] };
 };
 
 /** Signs in with the credentials the game uses, and keeps the token it answers with. */
@@ -40,7 +39,6 @@ export function SignInPage() {
       });
 
       writeSessionToken(payload.token);
-      writeSessionRoles(payload.account.roles);
 
       // Signing in returns the browser to the section it asked for, which the
       // dashboard remembered on the way out. Anything else — a mistyped path, or

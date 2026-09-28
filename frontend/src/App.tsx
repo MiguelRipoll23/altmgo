@@ -1,5 +1,4 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-import { AdminRoute, AdminStaffSection } from './components/AdminRoute';
 import { DashboardRoute, OverviewSection } from './components/DashboardRoute';
 import { ClansPage } from './pages/ClansPage';
 import { ClanDetailPage } from './pages/ClanDetailPage';
@@ -24,48 +23,21 @@ import { SurvivalEventPage } from './pages/SurvivalEventPage';
 import { SurvivalTeamsPage } from './pages/SurvivalTeamsPage';
 import { TournamentEventPage } from './pages/TournamentEventPage';
 import { TournamentPage } from './pages/TournamentPage';
-import { AccountDetailPage } from './pages/admin/AccountDetailPage';
-import { AccountsPage } from './pages/admin/AccountsPage';
-import { AdminCharacterDetailPage } from './pages/admin/CharacterDetailPage';
-import { CharactersPage } from './pages/admin/CharactersPage';
-import { DiscordPage } from './pages/admin/DiscordPage';
-import { EventOperationsPage } from './pages/admin/EventOperationsPage';
-import { AdminMailPage } from './pages/admin/MailPage';
-import { AdminNewsPage } from './pages/admin/NewsPage';
 
 /**
- * Every page of the site, and the two frames the signed-in pages share.
+ * Every page of the site, and the one frame the signed-in pages share.
  *
- * The dashboard and the admin dashboard are separate route trees rather than two
- * sets of tabs in one page, so each can be linked to, reloaded and put in a second
- * window — which is how an operator actually uses one: the list they care about open
- * beside the control they are adjusting. They are separate rather than one tree
- * with a switch in the sidebar because they answer different questions. The
- * dashboard is a set of reads any signed-in account may make; the admin frame is the
- * work of running the server. An account moves between them from the card at the
- * foot of the sidebar, which is the one control present on every page of both.
+ * There is one frame and it is read-only: every page below draws what the game
+ * server already holds — who is connected, which lobby they are in, what is
+ * published, which teams are on the ladder, who is in the bracket. Nothing here
+ * writes, because a write made in the browser is a second source of truth for a
+ * figure the game is already the source of, and the two would disagree the moment
+ * the client acted on its own copy.
  *
- * The overview is the one page both frames open with, and it is the same component
- * in both. It used to be a second one drawing the same figures and the same lobby
- * table with three panels of staff work bolted underneath, which made it a second
- * copy of the server's state that could disagree with the player's about how many
- * people were online. An operator reading the admin overview and a player reading
- * theirs were looking at the same server through two implementations; now they
- * look at the same one. The staff sections those extra panels pointed at are in
- * the sidebar, which is where an operator goes looking for them anyway.
- *
- * Each layout reads the token and the roles itself rather than taking them as props,
- * because every route needs them and passing them through each one would be four
- * arguments that are always the same. A signed-out browser reaching either is sent
- * to sign in, and remembers where it was going.
- *
- * The read sections are written out under both frames rather than shared as one
- * fragment of `<Route>` elements. The components are the same either way — an
- * operator reading a clan roster wants it in the frame they are working in, and a
- * second copy of a read-only page would be a second thing to keep correct — but a
- * shared fragment would give the two copies the same generated route id, and the id
- * is the key the router resolves relative paths by. Five lines repeated is cheaper
- * than an id that collides.
+ * The layout reads the token itself rather than taking it as a prop, because every
+ * route needs it and passing it through each one would be an argument that is
+ * always the same. A signed-out browser is sent to sign in, and remembers where it
+ * was going.
  *
  * A section the sidebar splits into sub-options is a set of routes rather than one
  * route with a view chosen inside it: survival's events and teams, rankings'
@@ -92,20 +64,8 @@ import { AdminNewsPage } from './pages/admin/NewsPage';
  * its fixtures — and each is a segment under the event rather than a switch
  * inside the event's page. The bare event path is the registrations, so the
  * address a card has always led to is still an address and not a redirect.
- *
- * The player's own characters are pages in the player tree, and the staff search
- * over every account is the admin frame's: they were the same address once, and
- * the frame whose route registered first was the frame that answered. The staff
- * reads are under `/api/admin` for that reason, while the reads both frames make
- * of the same rows — news, clans, games, the events, the boards — stay shared,
- * because a second copy of a read any player may make is a second thing to keep
- * correct.
- *
- * The staff sections exist once, in the admin tree: Discord, accounts and
- * announcements speak for the server and need a manager, and the event operations
- * run the events and need a moderator. The check in the route decides what the
- * browser draws; the API decides what it is allowed to do.
  */
+
 export function App() {
   return (
     <BrowserRouter>
@@ -121,7 +81,7 @@ export function App() {
           <Route path="news" element={<NewsPage />} />
           <Route
             path="news/:identifier"
-            element={<NewsDetailPage scope="player" listPath="/dashboard/news" />}
+            element={<NewsDetailPage listPath="/dashboard/news" />}
           />
           <Route path="mail" element={<Navigate to="mail/inbox" replace />} />
           <Route path="mail/inbox" element={<MailInboxPage />} />
@@ -129,15 +89,15 @@ export function App() {
           <Route path="mail/all" element={<MailAllPage />} />
           <Route
             path="mail/inbox/:identifier"
-            element={<MailDetailPage scope="inbox" back="/dashboard/mail/inbox" label="Inbox" />}
+            element={<MailDetailPage back="/dashboard/mail/inbox" label="Inbox" />}
           />
           <Route
             path="mail/outbox/:identifier"
-            element={<MailDetailPage scope="inbox" back="/dashboard/mail/outbox" label="Outbox" />}
+            element={<MailDetailPage back="/dashboard/mail/outbox" label="Outbox" />}
           />
           <Route
             path="mail/all/:identifier"
-            element={<MailDetailPage scope="inbox" back="/dashboard/mail/all" label="All mail" />}
+            element={<MailDetailPage back="/dashboard/mail/all" label="All mail" />}
           />
           <Route path="clans" element={<ClansPage />} />
           <Route path="clans/:identifier" element={<ClanDetailPage />} />
@@ -162,68 +122,6 @@ export function App() {
           <Route path="rankings" element={<Navigate to="rankings/players" replace />} />
           <Route path="rankings/players" element={<RankingsPlayersPage />} />
           <Route path="rankings/clans" element={<RankingsClansPage />} />
-        </Route>
-
-        <Route path="/admin" element={<AdminRoute />}>
-          <Route index element={<OverviewPage />} />
-          <Route path="news" element={<AdminNewsPage />} />
-          <Route
-            path="news/:identifier"
-            element={<NewsDetailPage scope="manager" listPath="/admin/news" />}
-          />
-          <Route path="mail" element={<Navigate to="mail/inbox" replace />} />
-          <Route path="mail/inbox" element={<AdminMailPage box="inbox" />} />
-          <Route path="mail/outbox" element={<AdminMailPage box="outbox" />} />
-          <Route
-            path="mail/:identifier"
-            element={
-              <AdminStaffSection
-                role="manager"
-                page={<MailDetailPage scope="outbox" back="/admin/mail/inbox" label="Player mail" />}
-              />
-            }
-          />
-          <Route path="clans" element={<ClansPage basePath="/admin" />} />
-          <Route path="clans/:identifier" element={<ClanDetailPage basePath="/admin" />} />
-          <Route path="games" element={<GamesPage />} />
-          <Route path="survival" element={<Navigate to="survival/events" replace />} />
-          <Route path="survival/events" element={<SurvivalEventsPage basePath="/admin" />} />
-          <Route
-            path="survival/events/:identifier"
-            element={<SurvivalEventPage basePath="/admin" />}
-          />
-          <Route path="survival/teams" element={<SurvivalTeamsPage />} />
-          <Route path="tournament" element={<TournamentPage basePath="/admin" />} />
-          <Route
-            path="tournament/:identifier"
-            element={<TournamentEventPage basePath="/admin" area="registrations" />}
-          />
-          <Route
-            path="tournament/:identifier/bracket"
-            element={<TournamentEventPage basePath="/admin" area="bracket" />}
-          />
-          <Route
-            path="tournament/:identifier/fixtures"
-            element={<TournamentEventPage basePath="/admin" area="fixtures" />}
-          />
-          <Route path="characters" element={<CharactersPage />} />
-          <Route path="characters/:identifier" element={<AdminCharacterDetailPage />} />
-          <Route
-            path="discord"
-            element={<AdminStaffSection role="manager" page={<DiscordPage />} />}
-          />
-          <Route
-            path="event-operations"
-            element={<AdminStaffSection role="moderator" page={<EventOperationsPage />} />}
-          />
-          <Route
-            path="accounts"
-            element={<AdminStaffSection role="manager" page={<AccountsPage />} />}
-          />
-          <Route
-            path="accounts/:identifier"
-            element={<AdminStaffSection role="manager" page={<AccountDetailPage />} />}
-          />
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />

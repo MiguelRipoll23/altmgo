@@ -1,9 +1,8 @@
 import { EventCards } from '../components/EventCards';
 import { SectionHeading } from '../components/DataDisplay';
-import { CreateSchedulePanel, type Schedule } from '../components/ScheduleForm';
+import type { Schedule } from '../components/Schedule';
 import { StatusMessage } from '../components/StatusMessage';
 import { useApiResource } from '../components/useApiResource';
-import { useMayModerate } from '../components/useStaffRole';
 
 /** Lobby selector of Survival, as the event subsystem numbers them. */
 const SurvivalMode = 4;
@@ -23,17 +22,11 @@ const SurvivalMode = 4;
  * game: a player can see what is published and when, and hiding that from the
  * dashboard while showing it in the client would be a strange thing to have done.
  *
- * A moderator is also offered the form that publishes one, on this page rather than
- * on a console elsewhere. Scheduling an event is done while looking at what is
- * already published — to see what is on, to avoid overlapping it, to close the one
- * that finished — and a moderator sent to another page to do it is a moderator
- * holding two pages open to answer one question. It is drawn for the role and not
- * for the frame, so a moderator reading the ladder from the player dashboard has
- * the same controls there; the server refuses the write either way, and a page
- * hiding them from a moderator only teaches them where else to look.
+ * Nothing here writes. Publishing an event, correcting its window and withdrawing
+ * it are a moderator's work, and the server is what performs them; this page
+ * shows what has been published and leaves it at that.
  */
 export function SurvivalEventsPage({ basePath = '/dashboard' }: { basePath?: string }) {
-  const mayModerate = useMayModerate();
   const schedules = useApiResource<{ schedules: Schedule[] }>(
     `/api/events/${SurvivalMode}/schedules`,
   );
@@ -56,10 +49,6 @@ export function SurvivalEventsPage({ basePath = '/dashboard' }: { basePath?: str
         loading={schedules.loading}
         loadingLabel="Reading the events…"
       />
-
-      {mayModerate ? (
-        <CreateSchedulePanel mode={SurvivalMode} onChanged={schedules.reload} />
-      ) : null}
     </div>
   );
 }

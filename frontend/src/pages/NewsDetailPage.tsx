@@ -14,9 +14,6 @@ type NewsItem = {
   publishedAt: string;
 };
 
-/** Which read answers for the item: the player's list or the manager's. */
-export type NewsScope = 'player' | 'manager';
-
 /**
  * One news item, on its own page.
  *
@@ -26,11 +23,9 @@ export type NewsScope = 'player' | 'manager';
  * can be linked to, reloaded, and opened in a second window beside the list — the
  * same reasons every other page of the dashboard has one.
  *
- * The two frames read the same rows through different routes, because the
- * player's read is open to any signed-in account and the manager's is not, and a
- * page that asked for the manager's read would be refused by a player. Which one
- * is asked for is therefore a prop rather than a guess, and the back link goes
- * to the list of the frame the page was opened from.
+ * It reads the player's list, which is open to any signed-in account, so there is
+ * one read and one page: a second read of the same rows for staff would be a
+ * second implementation of the same question.
  *
  * The back link is the first thing on the page rather than something below the
  * heading. A page reached from a list is read in that order — where am I, what is
@@ -40,17 +35,12 @@ export type NewsScope = 'player' | 'manager';
  * same page while it is being read rather than a heading followed by a sentence in
  * the place the card will be.
  */
-export function NewsDetailPage({
-  scope,
-  listPath,
-}: {
-  scope: NewsScope;
-  /** Where the back link returns to: the news list of this frame. */
+export function NewsDetailPage({ listPath }: {
+  /** Where the back link returns to: the news list this page was opened from. */
   listPath: string;
 }) {
   const { identifier } = useParams();
-  const path = scope === 'manager' ? `/api/manager/news/${identifier}` : `/api/news/${identifier}`;
-  const { data, error, loading } = useApiResource<{ news: NewsItem }>(path);
+  const { data, error, loading } = useApiResource<{ news: NewsItem }>(`/api/news/${identifier}`);
 
   const item = data?.news ?? null;
 

@@ -1,19 +1,4 @@
-import { Pencil, Trash2, UserPlus } from 'lucide-react';
-import { useState } from 'react';
-import { apiRequest } from '../api';
-import { readSessionToken } from '../session';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogTitle,
-} from './ui/alert-dialog';
 import { Badge } from './ui/badge';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
 
 /** One member of a roster. */
 export type Member = { slot: number; character_id: number; name: string; state: number };
@@ -32,23 +17,10 @@ export type Team = {
   members: Member[];
 };
 
-/** Runs a write and reports what it did, or the sentence for why it could not. */
-export type Write = (action: () => Promise<unknown>, done: string) => void;
-
-/** The team state a moderator can put a team into, and what it means. */
-const teamStates = [
-  { value: 'joinable', label: 'Joinable' },
-  { value: 'queued', label: 'Queued' },
-] as const;
-
-/** The member state a moderator can put a member into. */
-const memberStates = [
-  { value: 'pending', label: 'Pending' },
-  { value: 'ready', label: 'Ready' },
-] as const;
-
-/** The states as the numbers they are stored as, for showing what a row holds. */
+/** The team state as the numbers it is stored as, for showing what a row holds. */
 const teamStateNames: Record<number, string> = { 1: 'Joinable', 9: 'Queued' };
+
+/** The member state as the numbers it is stored as, for showing what a row holds. */
 const memberStateNames: Record<number, string> = { 1: 'Pending', 2: 'Ready' };
 
 /**
@@ -66,7 +38,7 @@ const memberStateNames: Record<number, string> = { 1: 'Pending', 2: 'Ready' };
  * about a member that is not about the member: it is the order the team put them
  * in, and a reader scanning a roster wants the name first.
  */
-function Roster({ team, mayWrite, onWrite }: { team: Team; mayWrite: boolean; onWrite: Write }) {
+function Roster({ team }: { team: Team }) {
   if (team.members.length === 0) {
     return <p className="text-sm text-muted-foreground">This team has nobody on it.</p>;
   }
@@ -92,33 +64,6 @@ function Roster({ team, mayWrite, onWrite }: { team: Team; mayWrite: boolean; on
             <Badge variant={member.state === 2 ? 'success' : 'secondary'}>
               {memberStateNames[member.state] ?? `State ${member.state}`}
             </Badge>
-
-            {mayWrite ? (
-              <span className="flex flex-wrap gap-1.5">
-                {memberStates.map((option) => (
-                  <Button
-                    key={option.value}
-                    variant="outline"
-                    size="sm"
-                    className="h-7 px-2"
-                    disabled={member.state === (option.value === 'ready' ? 2 : 1)}
-                    onClick={() =>
-                      onWrite(
-                        () =>
-                          apiRequest(`/api/moderator/teams/${team.id}/members/${member.slot}`, {
-                            method: 'PUT',
-                            token: readSessionToken(),
-                            body: { state: option.value },
-                          }),
-                        `${member.name} is ${option.label.toLowerCase()}.`,
-                      )
-                    }
-                  >
-                    {option.label}
-                  </Button>
-                ))}
-              </span>
-            ) : null}
           </div>
         </li>
       ))}
@@ -127,29 +72,19 @@ function Roster({ team, mayWrite, onWrite }: { team: Team; mayWrite: boolean; on
 }
 
 /**
- * One team, its roster, and the controls that act on it.
+ * One team and its roster.
  *
- * The controls are drawn only for a moderator, and the server refuses the
- * writes whatever the browser drew, so what is decided here is what a player
- * sees rather than what they may do.
+ * It draws no controls, and that is a decision rather than an oversight. The team
+ * state, each member's state, the roster itself and the team's own name and comment
+ * are all written by the event subsystem and by the players in the client, and a
+ * dashboard that could move them would be a second place to keep them correct: one
+ * whose writes the client knows nothing about, and whose next read contradicts.
+ *
+ * The numbers are therefore read the way the client will draw them — a state as the
+ * word the client uses for it, a dedicated match character marked as one — rather
+ * than as the integers they are stored as.
  */
-export function TeamCard({
-  team,
-  mayWrite,
-  onWrite,
-  onChanged,
-}: {
-  team: Team;
-  mayWrite: boolean;
-  onWrite: Write;
-  onChanged: () => void;
-}) {
-  const [memberName, setMemberName] = useState('');
-  const [renaming, setRenaming] = useState(false);
-  const [name, setName] = useState(team.name);
-  const [comment, setComment] = useState(team.comment);
-  const [removing, setRemoving] = useState(false);
-
+export function TeamCard({ team }: { team: Team }) {
   return (
     <div className="rounded-xl border border-border bg-card/50 p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -161,143 +96,11 @@ export function TeamCard({
             {team.consecutive_wins === 1 ? '' : 's'}
           </p>
         </div>
-
-        {mayWrite ? (
-          <div className="flex flex-wrap gap-2">
-            {teamStates.map((option) => (
-              <Button
-                key={option.value}
-                variant="secondary"
-                onClick={() =>
-                  onWrite(
-                    () =>
-                      apiRequest(`/api/moderator/teams/${team.id}/state`, {
-                        method: 'PUT',
-                        token: readSessionToken(),
-                        body: { state: option.value },
-                      }),
-                    `${team.name} is now ${option.label.toLowerCase()}.`,
-                  )
-                }
-              >
-                {option.label}
-              </Button>
-            ))}
-
-            <Button variant="outline" onClick={() => setRenaming((open) => !open)}>
-              <Pencil />
-              {renaming ? 'Cancel' : 'Edit'}
-            </Button>
-
-            <Button variant="destructive" onClick={() => setRemoving(true)}>
-              <Trash2 />
-              Remove
-            </Button>
-          </div>
-        ) : null}
       </div>
-
-      {renaming ? (
-        <div className="mt-4 grid gap-3 rounded-lg border border-border bg-background/40 p-3 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor={`rename-${team.id}`}>Team name</Label>
-            <Input id={`rename-${team.id}`} value={name} onChange={(event) => setName(event.target.value)} />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor={`comment-${team.id}`}>Comment</Label>
-            <Input
-              id={`comment-${team.id}`}
-              value={comment}
-              onChange={(event) => setComment(event.target.value)}
-            />
-          </div>
-
-          <Button
-            className="sm:col-span-2 sm:w-fit"
-            disabled={name.trim().length === 0}
-            onClick={() =>
-              onWrite(
-                () =>
-                  apiRequest(`/api/moderator/teams/${team.id}`, {
-                    method: 'PUT',
-                    token: readSessionToken(),
-                    body: { name: name.trim(), comment },
-                  }),
-                `${team.name} was renamed.`,
-              )
-            }
-          >
-            Save
-          </Button>
-        </div>
-      ) : null}
 
       <div className="mt-4">
-        <Roster team={team} mayWrite={mayWrite} onWrite={onWrite} />
+        <Roster team={team} />
       </div>
-
-      {mayWrite ? (
-        <div className="mt-4 flex flex-wrap items-end gap-2">
-          <div className="min-w-48 flex-1 space-y-2">
-            <Label htmlFor={`member-${team.id}`}>Add a character</Label>
-            <Input
-              id={`member-${team.id}`}
-              type="text"
-              value={memberName}
-              onChange={(event) => setMemberName(event.target.value)}
-              placeholder="Character name, or a server- one"
-            />
-          </div>
-
-          <Button
-            disabled={memberName.trim().length === 0}
-            onClick={() => {
-              onWrite(
-                () =>
-                  apiRequest(`/api/moderator/teams/${team.id}/members`, {
-                    method: 'POST',
-                    token: readSessionToken(),
-                    body: { characterName: memberName.trim() },
-                  }),
-                `${memberName.trim()} was added to ${team.name}.`,
-              );
-              setMemberName('');
-            }}
-          >
-            <UserPlus />
-            Add
-          </Button>
-        </div>
-      ) : null}
-
-      <AlertDialog open={removing} onOpenChange={setRemoving}>
-        <AlertDialogContent>
-          <AlertDialogTitle>Remove {team.name}?</AlertDialogTitle>
-          <AlertDialogDescription>
-            The team and its roster are deleted. A team that has already been drawn into a bracket
-            cannot be removed — the fixtures still name it.
-          </AlertDialogDescription>
-          <div className="flex justify-end gap-2">
-            <AlertDialogCancel>Keep it</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                onWrite(
-                  () =>
-                    apiRequest(`/api/moderator/teams/${team.id}`, {
-                      method: 'DELETE',
-                      token: readSessionToken(),
-                    }),
-                  `${team.name} was removed.`,
-                );
-                onChanged();
-              }}
-            >
-              Remove
-            </AlertDialogAction>
-          </div>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

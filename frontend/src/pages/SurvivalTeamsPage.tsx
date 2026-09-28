@@ -1,10 +1,7 @@
 import { LoadingBlock, SectionHeading } from '../components/DataDisplay';
 import { StatusMessage } from '../components/StatusMessage';
 import { TeamCard, type Team } from '../components/TeamCard';
-import { CreateTeamPanel } from '../components/TeamForm';
 import { useApiResource } from '../components/useApiResource';
-import { useEventWrite } from '../components/useEventWrite';
-import { useMayModerate } from '../components/useStaffRole';
 
 /** Lobby selector of Survival, as the event subsystem numbers them. */
 const SurvivalMode = 4;
@@ -25,14 +22,11 @@ const SurvivalMode = 4;
  * the dashboard while showing it in the client would be a strange thing to have
  * done.
  *
- * A moderator is offered the whole set here: form a team, rename one, change a
- * state, add a character, take one off, and remove the team. It used to be told
- * that these belonged on a separate console, on the grounds that a player reading
- * the ladder should not have a delete-shaped control near a refresh button. That is
- * true, and it is a reason to draw the controls for the role rather than a reason
- * to put them on another page: a player reading this ladder still sees a ladder,
- * and a moderator forming a team is looking at the ladder they are about to put it
- * on. Drawing by role is the server's own rule, so the two cannot drift.
+ * Nothing here writes. Forming a team, renaming one, changing a state, adding a
+ * character and removing the team are a moderator's work, and the server is what
+ * performs them. The reason is reach as much as tidiness: this page is reached by
+ * players who came to read the ladder, and a delete-shaped control a click from a
+ * refresh button serves none of them.
  *
  * The teams are drawn as cards in a grid, and their rosters as cards inside them,
  * for the reason the tournament pages draw their registrations and fixtures as
@@ -42,11 +36,7 @@ const SurvivalMode = 4;
  * same thing, and the outermost one was only there to hold the list.
  */
 export function SurvivalTeamsPage() {
-  const mayModerate = useMayModerate();
-
   const ladder = useApiResource<{ teams: Team[] }>(`/api/events/${SurvivalMode}/teams`);
-  const { status, setStatus, write } = useEventWrite(ladder.reload);
-
   const teams = ladder.data?.teams ?? [];
 
   return (
@@ -59,7 +49,6 @@ export function SurvivalTeamsPage() {
       {ladder.error === null ? null : (
         <StatusMessage kind="error">{ladder.error}</StatusMessage>
       )}
-      {status === null ? null : <StatusMessage kind={status.kind}>{status.message}</StatusMessage>}
 
       {teams.length === 0 ? (
         ladder.loading ? (
@@ -70,27 +59,10 @@ export function SurvivalTeamsPage() {
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           {teams.map((team) => (
-            <TeamCard
-              key={team.id}
-              team={team}
-              mayWrite={mayModerate}
-              onWrite={write}
-              onChanged={ladder.reload}
-            />
+            <TeamCard key={team.id} team={team} />
           ))}
         </div>
       )}
-
-      {mayModerate ? (
-        <CreateTeamPanel
-          mode={SurvivalMode}
-          onCreated={(message) => {
-            setStatus({ kind: 'success', message });
-            ladder.reload();
-          }}
-          onFailed={(message) => setStatus({ kind: 'error', message })}
-        />
-      ) : null}
     </div>
   );
 }

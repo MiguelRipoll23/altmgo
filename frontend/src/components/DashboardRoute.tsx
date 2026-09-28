@@ -1,7 +1,7 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { DashboardLayout } from './DashboardLayout';
 import { useSessionAccount } from './useSessionAccount';
-import { readSessionRoles, readSessionToken } from '../session';
+import { readSessionToken } from '../session';
 import { OverviewPage } from '../pages/OverviewPage';
 
 
@@ -9,16 +9,16 @@ import { OverviewPage } from '../pages/OverviewPage';
  * The layout every player-dashboard section renders inside.
  *
  * It is the one place that knows a dashboard needs a session, so each section
- * does not: the account name and the roles are read once here and handed down
- * through the layout rather than re-read by every page.
+ * does not: the account name is read once here and handed down through the
+ * layout rather than re-read by every page.
  *
  * A browser with no token is sent to sign in and remembers where it was going, so
  * signing in returns it to the section it asked for rather than to the overview it
  * did not.
  *
- * There is no role gate on any of this any more. The sections that were gated moved
- * to the admin frame, which has its own route; what is left is readable by any
- * signed-in account and reads nothing a player could not read in the client.
+ * There is no role gate here, and none anywhere in the frame: everything it
+ * draws is a read any signed-in account may make, so the only question this
+ * component answers is whether there is a session at all.
  */
 export function DashboardRoute() {
   const location = useLocation();
@@ -31,7 +31,7 @@ export function DashboardRoute() {
   const account = useSessionAccount();
 
   return (
-    <DashboardLayout accountName={account?.displayName ?? null} roles={readSessionRoles()}>
+    <DashboardLayout accountName={account?.displayName ?? null}>
       <Outlet />
     </DashboardLayout>
   );

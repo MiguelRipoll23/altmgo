@@ -20,16 +20,13 @@ type MailMessage = {
   received?: boolean;
 };
 
-/** Which read answers for the message: the player's inbox or the manager's outbox. */
-export type MailScope = 'inbox' | 'outbox';
-
 /**
  * One message, on its own page.
  *
- * The same page answers for both sides of a letter: the inbox a player reads and
- * the outbox a manager sent it from. They are the same words about the same
- * message and they are reached from two different lists in two different frames,
- * so they are one component with a scope rather than two pages that would drift.
+ * The inbox, the outbox and the full mailbox are three lists of the same messages,
+ * so this is one page reached from all three. The only thing that differs is where
+ * the back link goes, and that is the reader's choice rather than the page's, so it
+ * travels in the address.
  *
  * It is a page rather than an expansion under the list for the reason the news
  * detail page is: a link to a letter is a thing people paste to each other, and a
@@ -46,20 +43,14 @@ export type MailScope = 'inbox' | 'outbox';
  * same reason the news detail page puts it there: a page reached from a list is read
  * in that order.
  */
-export function MailDetailPage({
-  scope,
-  back,
-  label,
-}: {
-  scope: MailScope;
+export function MailDetailPage({ back, label }: {
   /** Where the back link returns to: the list this message was opened from. */
   back: string;
   /** The words on the back link, which differ between a mailbox and a sent list. */
   label: string;
 }) {
   const { identifier } = useParams();
-  const path = scope === 'outbox' ? `/api/manager/mail/${identifier}` : `/api/mail/${identifier}`;
-  const { data, error, loading } = useApiResource<{ mail: MailMessage }>(path);
+  const { data, error, loading } = useApiResource<{ mail: MailMessage }>(`/api/mail/${identifier}`);
 
   const message = data?.mail ?? null;
 

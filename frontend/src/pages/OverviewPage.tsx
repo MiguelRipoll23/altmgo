@@ -18,18 +18,13 @@ type Overview = {
 };
 
 /**
- * The page both frames open with: how many people are on the server, the gameplay
- * lobbies they are spread across, and the address their own last character
- * publishes.
+ * The page the dashboard opens with: how many people are on the server, the
+ * gameplay lobbies they are spread across, and the address their own last
+ * character publishes.
  *
- * It is one page rather than one per frame because the figures it shows are the
- * server's, not the reader's. The admin frame used to carry a second copy of this
- * drawing the same numbers and the same lobby table with staff panels underneath,
- * and two implementations of the same reading is one of them eventually wrong: an
- * operator and a player on the same server would see two different answers to how
- * many people are online. The address tile is about the reader in either frame —
- * it is the character belonging to whoever is signed in, which for an operator is
- * their own account hosting a game.
+ * The figures it shows are the server's rather than the reader's, and the address
+ * tile is the one part that is the reader's — the character belonging to whoever is
+ * signed in.
  *
  * The four figures at the top are the whole state of the server in one line each
  * — how many players it has, how many are on it now, how many games it has

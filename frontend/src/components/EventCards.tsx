@@ -2,8 +2,8 @@ import { CalendarClock, ChevronRight, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Badge } from './ui/badge';
 import { LoadingBlock } from './DataDisplay';
-import type { Schedule } from './ScheduleForm';
-import { formatEpoch } from './ScheduleForm';
+import type { Schedule } from './Schedule';
+import { formatEpoch } from './Schedule';
 
 /**
  * How a window of time is said on a card.

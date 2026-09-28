@@ -1,8 +1,7 @@
-import { Menu, PanelLeftClose, type LucideIcon } from 'lucide-react';
+import { Menu, PanelLeftClose } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { cn } from '../lib/utils';
-import type { StaffRole } from '../session';
 import { AccountMenu } from './AccountMenu';
 import { SidebarNav, type SidebarSection } from './SidebarNav';
 import { Button } from './ui/button';
@@ -49,17 +48,12 @@ function isWideWindow(): boolean {
 export function DashboardShell({
   sections,
   accountName,
-  roles,
-  frame,
   brand,
   children,
 }: {
   sections: SidebarSection[];
   accountName: string | null;
-  roles: StaffRole[];
-  /** The way out of this frame, which only the account card leads to. */
-  frame: { to: string; label: string; icon: LucideIcon };
-  /** The wordmark at the head of the column; the two frames word it differently. */
+  /** The wordmark at the head of the column. */
   brand: ReactNode;
   children: ReactNode;
 }) {
@@ -155,7 +149,7 @@ export function DashboardShell({
 
         <SidebarNav sections={sections} />
 
-        <AccountMenu accountName={accountName} roles={roles} frame={frame} />
+        <AccountMenu accountName={accountName} />
       </aside>
 
       {open ? null : (
