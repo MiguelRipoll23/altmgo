@@ -7,8 +7,6 @@ import { characterRoutes } from './routes/characterRoutes.js';
 import { addressRoutes } from './routes/addressRoutes.js';
 import { clanRoutes } from './routes/clanRoutes.js';
 import { dashboardRoutes } from './routes/dashboardRoutes.js';
-import { managerRoutes } from './routes/managerRoutes.js';
-import { moderatorRoutes } from './routes/moderatorRoutes.js';
 
 /**
  * Vercel finds the backend by this default export — from `app`, `index` or
@@ -46,13 +44,6 @@ app.route('/api', characterRoutes);
 app.route('/api', addressRoutes);
 app.route('/api', clanRoutes);
 app.route('/api', dashboardRoutes);
-
-// The staff routes are grouped by what they may do rather than by what they act
-// on: everything under /moderator is the work of running the events, and
-// everything under /manager speaks for the server. Each group checks the role
-// itself, so a route added to the wrong group is refused rather than opened.
-app.route('/api', moderatorRoutes);
-app.route('/api', managerRoutes);
 
 app.notFound((context) => context.json({ error: 'Not found.' }, 404));
 

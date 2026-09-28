@@ -28,10 +28,10 @@ const PresenceFreshSeconds = 60;
  * One lobby with what is connected to it right now.
  *
  * The four restriction flags are carried rather than summarised into a count:
- * a moderator reading a lobby is deciding whether a player can join it, and
- * "beginners only, expansion required" says something a single number of
- * restrictions would not. They are the lobby's own settings, not anything this
- * deployment infers, so the row reports them as the lobby stored them.
+ * a reader deciding whether they can join a lobby is told "beginners only,
+ * expansion required", which says something a number of restrictions would not.
+ * They are the lobby's own settings, not anything this deployment infers, so the
+ * row reports them as the lobby stored them.
  */
 export type LobbyPresenceRow = {
   id: number;
@@ -45,15 +45,6 @@ export type LobbyPresenceRow = {
   expansionRequired: boolean;
   noHeadshots: boolean;
   replaysOnly: boolean;
-};
-
-/** One connected player and the lobby they are in. */
-export type ConnectedCharacterRow = {
-  id: number;
-  name: string;
-  lobby_id: number;
-  lobby_name: string;
-  last_seen: Date;
 };
 
 /** The count every reader of the overview leads with. */
@@ -158,24 +149,4 @@ export async function listLobbyPresence(): Promise<LobbyPresenceRow[]> {
   `;
 
   return rows as LobbyPresenceRow[];
-}
-
-/** Everyone currently connected, with the lobby each of them is in. */
-export async function listConnectedCharacters(): Promise<ConnectedCharacterRow[]> {
-  const rows = await database()`
-    select
-      character.id,
-      character.name,
-      presence.lobby_id,
-      lobby.name as lobby_name,
-      presence.last_seen
-    from character_presence presence
-    join characters character on character.id = presence.character_id
-    join lobbies lobby on lobby.id = presence.lobby_id
-    where presence.last_seen >= now() - ${PresenceFreshSeconds} * interval '1 second'
-      and lobby.type_id = ${GameLobbyType}
-    order by lobby.name, character.name
-  `;
-
-  return rows as ConnectedCharacterRow[];
 }

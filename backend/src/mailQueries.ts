@@ -4,13 +4,11 @@ import { database } from './database.js';
  * The mail a player reads and writes, as the client's inbox and sent list show
  * them.
  *
- * It is a module of its own because mail is the one thing this dashboard reads
- * that belongs to a person rather than to the server: the inbox and the sent
- * list are per account and never open to staff, and the game master outbox a
- * manager writes is a different table entirely (`game_master_mail`, read in
- * `staffQueries`). Keeping the two apart is the point — the game master outbox
- * holds what was said to everybody, the mail here holds what was said between
- * characters, and a reader of one has no reason to be able to reach the other.
+ * Mail is the one thing this dashboard reads that belongs to a person rather than
+ * to the server, so it lives in its own module. The game masters' mailbox is a
+ * different table entirely (`game_master_mail`): that one holds what was said to
+ * everybody, this holds what was said between characters, and the two are kept
+ * apart rather than joined into one list a reader would have to filter.
  *
  * A mail row is one delivery seen from both ends, with a read and a deleted flag
  * per side, so a message the account both sent and received is a single row that
@@ -161,37 +159,4 @@ export async function findAccountMail(
   `;
 
   return rows[0] as AccountMailRow | undefined;
-}
-
-/** One message of the game masters' mailbox, which is addressed to no character. */
-export type OutboxMailRow = {
-  id: number;
-  subject: string;
-  body: string;
-  sender_name: string;
-  /** Who wrote it, or nothing for a letter the console wrote. */
-  sender_character_id: number | null;
-  /** The name of that character, where there is one. */
-  sender_character_name: string | null;
-  sent_at: Date;
-};
-
-/** One message of the game masters' mailbox, by id, for the manager's detail page. */
-export async function findOutboxMail(mailIdentifier: number): Promise<OutboxMailRow | undefined> {
-  const rows = await database()`
-    select
-      mail.id,
-      mail.subject,
-      mail.body,
-      mail.sender_name,
-      mail.sender_character_id,
-      character.name as sender_character_name,
-      mail.sent_at
-    from game_master_mail mail
-    left join characters character on character.id = mail.sender_character_id
-    where mail.id = ${mailIdentifier}
-    limit 1
-  `;
-
-  return rows[0] as OutboxMailRow | undefined;
 }

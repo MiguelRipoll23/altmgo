@@ -3,11 +3,9 @@ import { database } from './database.js';
 /**
  * The news the client shows on the login screen.
  *
- * It is a module of its own rather than part of the staff reads because the news is
- * not a staff thing: a player sees the same rows on their way into the game, and the
- * dashboard section that shows them is read-only and open to any signed-in account.
- * The manager's news page reads the same query and then adds the writing, which is
- * the only difference between the two.
+ * The same rows, in the same order, with the same flags — a page here cannot
+ * disagree with what the client draws on its way in, because it is reading what
+ * the client reads.
  */
 
 /** One news item, as the client shows it on the login screen. */

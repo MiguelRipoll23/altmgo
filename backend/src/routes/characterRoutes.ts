@@ -8,14 +8,10 @@ export const characterRoutes = new Hono<AppBindings>();
 /**
  * The signed-in account's own characters, and one of them in full.
  *
- * They are under `/account` rather than at `/characters` because that path is
- * already the staff search: the dashboard searches every account's characters,
- * answers with an account name beside each row, and is registered after this one.
- * A bare `/api/characters` was therefore answered by whichever matched first, and
- * the staff page was quietly being given the reader's own two characters however
- * many terms and orderings it asked for. Naming these by what they are settles
- * both: the staff search is the staff search again, and a page about a reader's
- * own characters is not built on a route another frame can widen.
+ * They are under `/account` because that is what they are, and because the path
+ * says so before anybody reads a line of the query: a bare `/api/characters` was
+ * once the same address as a search over every account, and whichever of the two
+ * was registered first was the one that answered.
  *
  * The figures sent back are the ones the game already stores — the rank and
  * experience the client derives its level and title from, the reward total its

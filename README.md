@@ -22,27 +22,22 @@ would have to be trusted to pass it along.
 - **Register and sign in** with the credentials the game itself uses. An account made here can be
   signed into in game and the other way round, because both store the same password digest over the
   same `accounts` row.
-- **A dashboard** with a fixed sidebar of sections — overview, characters, games, survival, tournament,
-  rankings and discord — reading the game server's own tables. The overview leads with how many
-  players are connected and which gameplay lobby each is in, taken from `character_presence` rather
-  than from a total the server keeps, so the count and the list beside it are the same reading of the
-  same moment. Only `type_id = 2` rows are listed: the gate and the account server are permanent
-  services nobody plays on. It also shows the public address the signed-in account's most recently
-  active character publishes, with a button to re-publish it after a network change.
-- **Survival and tournament are open to any signed-in account.** The ladder and the bracket are public
-  in the game, so the pages read them for players too; the controls that write — forming, renaming and
-  removing a team, publishing, editing and withdrawing an event, changing a state — are drawn for
-  moderators only, and the server refuses them whatever the browser drew.
-- **Server characters.** The `server-` prefixed characters that stand in for dedicated match rooms are
-  created on demand rather than seeded: a moderator asks for six and six are written, up to a pool of
-  sixteen, attached to the `server` account. Ones that already exist are used as they are, and because
-  a character fills one slot on one team at a time, the pool moves them — putting one on a team takes
-  it off the other. This replaces typing a `server-` name by hand, which is how a moderator used to
-  place one.
-- **Moderator and manager tooling.** A manager holds every moderator permission and can additionally
-  write an official message into a Discord channel, which is its own sidebar section rather than a
-  card on the overview — it is the one control there that reaches outside the game, and it should not
-  sit within reach of the click that dismisses a refresh.
+- **A dashboard** with a fixed sidebar of sections — overview, characters, news, mail, clans, games,
+  survival, tournament and rankings — reading the game server's own tables. The overview leads with
+  how many players are connected and which gameplay lobby each is in, taken from `character_presence`
+  rather than from a total the server keeps, so the count and the list beside it are the same reading
+  of the same moment. Only `type_id = 2` rows are listed: the gate and the account server are
+  permanent services nobody plays on. It also shows the public address the signed-in account's most
+  recently active character publishes, with a button to re-publish it after a network change.
+- **Every page reads.** There is no control anywhere in the dashboard that changes what the server
+  holds. That is deliberate rather than unfinished: the ladder, the bracket, the rosters, the news and
+  the mail are all written by the game and the players, and a browser that could also write them
+  would be a second source of truth for each — one the client knows nothing about, and whose next
+  read contradicts it.
+- **Every page is open to any signed-in account.** There are no roles, so there is no section that
+  only one person may open and no permission the server has to look up before it can answer. The
+  things an account may read about are its own characters and its own mail, and the queries name the
+  account in the lookup rather than filtering afterwards, so another account's rows are never found.
 - **The interface is shadcn/ui on Radix, with lucide icons.** The components live in
   `frontend/src/components/ui/` and the design tokens in `frontend/src/index.css`, so a colour is
   changed in one place rather than written into every page.
@@ -50,28 +45,6 @@ would have to be trusted to pass it along.
   sent a chat line in game: `Go to <site> and sign in to make your game joinable to other players
   outside your network`. Signing in publishes the caller's public address for every character of the
   account that has a connection row, and the dashboard says whether that made it discoverable.
-
-## Who may do what
-
-The staff surface is decided by one table, `account_roles`, holding one row per account per role. It
-was a single integer column on `accounts` before this change, which could only ever say "one of
-these", and every reader had to agree what each number meant — the change is what lets a dashboard
-ask "is this a moderator" and be answered.
-
-A **manager holds every moderator permission**. A manager is somebody who has been trusted with the
-moderation work as well, so making them re-approve the same actions under a second role would be
-ceremony rather than safety. The two names are still kept apart wherever the distinction is the point.
-
-Granting a role is a row:
-
-```sql
-insert into account_roles (account_id, role) values (:account, 'moderator')
-```
-
-The dashboard reads the roles on every request rather than trusting them from the session token, so a
-revoked role stops working at once instead of whenever the token it was minted into expires. The
-browser is told the roles at sign-in so the sidebar can show the sections that account may open, but
-that is a hint and never the permission.
 
 ## Environment variables
 
@@ -81,7 +54,7 @@ One project reads them from Vercel's project settings.
 | --- | --- |
 | `DATABASE_URL` | Neon connection string — the **pooled** one |
 | `JWT_SECRET` | signs this site's session tokens |
-| `DISCORD_BOT_TOKEN` | bot token the manager writes official messages from — optional |
+
 
 `VITE_API_BASE_URL` is deliberately **not** set: with one origin the calls stay relative. It is still
 honoured if it is set, which is what running the site and the API as two projects would need.
@@ -90,11 +63,6 @@ honoured if it is set, which is what running the site and the API as two project
 does **not** have to be the game server's secret, and a value of its own is better. It is still a real
 secret: it is what makes a token the backend issues unforgeable, so keep it in the Vercel
 environment, never in the repository.
-
-`DISCORD_BOT_TOKEN` is optional. With it absent, the Discord message control is refused rather than
-failing halfway through a send. It is a token of *this* deployment: the game server holds one of its
-own for its slash commands, and publishing that one here would hand the bot to every signed-in
-moderator.
 
 ## Local development
 

@@ -10,45 +10,35 @@ configuration of its own.
 Everything lives under `/api`. The site and the API share an origin, so the frontend calls it
 relatively and the browser reaches the function directly.
 
+Every route reads. There is no write here except the two that create a session and the one that
+publishes a public address, and those three are the only things a signed-in account may change about
+itself.
+
 | method | path | what it does |
 | --- | --- | --- |
 | `POST` | `/api/auth/register` | creates the game's own account row |
-| `POST` | `/api/auth/login` | returns a bearer token, the account and its roles |
-| `GET` | `/api/characters` | the signed-in account and its characters, with the address each published |
+| `POST` | `/api/auth/login` | returns a bearer token |
+| `GET` | `/api/account` | who the caller is, read from the account row |
+| `GET` | `/api/account/characters` | the signed-in account's characters |
+| `GET` | `/api/account/characters/:id` | one of them in full |
 | `POST` | `/api/addresses` | publishes the caller's address for the account's characters that have a connection row |
 | `GET` | `/api/overview` | how many players are connected, and which lobby each is in |
-| `GET` | `/api/characters/:id` | one character's profile |
 | `GET` | `/api/games` | the game rooms that are up right now |
+| `GET` | `/api/clans` | the clan directory, filtered and ordered |
+| `GET` | `/api/clans/:id` | one clan: its notice, roster and waiting applications |
 | `GET` | `/api/survival` | the Survival teams and their rosters |
 | `GET` | `/api/tournament?event=N` | one Tournament event: registrations, bracket and fixtures |
+| `GET` | `/api/events/:mode/teams` | the teams of any lobby mode |
 | `GET` | `/api/events/:mode/schedules` | the events scheduled in one lobby mode |
+| `GET` | `/api/news` | the published news, newest first |
+| `GET` | `/api/news/:id` | one news item |
+| `GET` | `/api/mail?box=inbox\|outbox\|all` | the account's own mail, from either side |
+| `GET` | `/api/mail/:id` | one message, if it is in that account's mailbox |
 | `GET` | `/api/rankings/players` | a window of a player board |
 | `GET` | `/api/rankings/clans` | a window of a clan board |
 
 Everything wants `Authorization: Bearer <token>` from `/api/auth/login` except the two `/api/auth`
-routes and the two in `characterRoutes` that the player's own account needs.
-
-### The staff routes
-
-The staff surface is grouped by what it may do rather than by what it acts on, and each group
-checks its own role:
-
-| method | path | role | what it does |
-| --- | --- | --- | --- |
-| `POST` | `/api/moderator/teams` | moderator | forms a team in a lobby mode |
-| `POST` | `/api/moderator/teams/:id/members` | moderator | puts a character on a team by name — the path that admits a `server-` one |
-| `PUT` | `/api/moderator/teams/:id/members/:slot` | moderator | sets a member's state |
-| `PUT` | `/api/moderator/teams/:id/state` | moderator | sets a team's state |
-| `POST` | `/api/moderator/schedules` | moderator | publishes an event, which is what makes it enterable |
-| `DELETE` | `/api/moderator/schedules/:id` | moderator | withdraws an event |
-| `GET` | `/api/manager/discord` | manager | whether this deployment can write to Discord |
-| `POST` | `/api/manager/discord/messages` | manager | writes a message from the bot into a channel |
-
-A **manager holds every moderator permission**: a manager is somebody who has been trusted with the
-moderation work as well, so making them re-approve the same actions under a second role would be
-ceremony rather than safety. The two names are still checked separately wherever the distinction is
-the point — the dashboard shows which one an account holds, and granting one does not grant the
-other.
+routes.
 
 ## Layout
 
@@ -57,19 +47,16 @@ other.
 | `src/index.ts` | the app itself: middleware, route mounting, the JSON error front, and the default export Vercel takes |
 | `src/environment.ts` | the settings, each refused when absent |
 | `src/database.ts` | the Neon client, the unique-violation test and the raw-SQL escape hatch |
-| `src/authentication.ts` | password hashing, session tokens, and the three middlewares |
-| `src/roles.ts` | the staff role names, the `account_roles` read, and the two predicates |
+| `src/authentication.ts` | password hashing, session tokens, and the one middleware |
 | `src/accounts.ts` | the `accounts` queries |
-| `src/characters.ts` | the character list for the player's own dashboard |
+| `src/characters.ts` | the character list for the account's own dashboard |
 | `src/clientAddress.ts` | the address a request arrived from, IPv4 only |
 | `src/publicAddresses.ts` | an account's connected characters, and the public address write |
 | `src/presence.ts` | the connected-player counts, the server totals and the lobby breakdown |
-| `src/dashboardQueries.ts` | the character, game, survival and tournament reads |
+| `src/dashboardQueries.ts` | the game, survival and tournament reads |
 | `src/newsQueries.ts` | the news list, and one news item by id |
-| `src/mailQueries.ts` | a player's own inbox, and the game master outbox single reads |
+| `src/mailQueries.ts` | a player's own mail, from either side of the delivery |
 | `src/rankingsQueries.ts` | the five player boards and the three clan boards |
-| `src/moderationWrites.ts` | the writes a moderator makes, each refusing with a reason |
-| `src/discord.ts` | the manager's Discord write, made server-side |
 | `src/routes/` | one file per group of routes |
 
 ## Notes worth keeping
@@ -86,18 +73,13 @@ other.
   names the visitor rather than an intermediate deployment.
 - **Errors are JSON.** `app.onError` answers with `{ "error": "..." }` so the pages can show the
   reason rather than parsing a Vercel error page. Those messages are written for the player.
-- **Roles are read per request, not from the token.** The token names the account and nothing about
-  its permissions, so a revoked role stops working immediately rather than whenever the token it was
-  minted into happens to expire. A role written into the token would be a claim the account could
-  keep presenting for a week after being demoted. The browser is told the roles at sign-in so the
-  sidebar can show the sections it may open, but that is a hint: every route reads them again, and an
-  edited role list in local storage buys nothing.
-- **A role is a name, not a number.** `account_roles` holds one row per account per role. It was a
-  single integer column on `accounts` before, which could only ever say "one of these" — and every
-  reader then had to agree what each number meant, which is the thing that made the column
-  unreadable without a lookup table nobody had written down. A manager outranks a moderator by
-  holding both, which is what makes the hierarchy a fact about the roles rather than a comparison
-  scattered across the code.
+- **There are no roles.** Every route above wants a valid token and nothing else, so there is no
+  `account_roles` read, no per-request permission query, and no name to keep consistent with a
+  login screen's badge. The permission a signed-in account has is the one it made for itself: its
+  own characters, its own mail, and the server's public state.
+- **A character read names its account in the query.** `findCharacterForAccount` takes the account as
+  part of the lookup rather than checking the row afterwards, so somebody else's character is not
+  found at all. A check that runs after the read is a check that can be forgotten.
 
 ## Commands
 

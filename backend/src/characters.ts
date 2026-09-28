@@ -62,12 +62,9 @@ export async function listCharactersForAccount(accountIdentifier: number): Promi
  * One of an account's own characters, in full.
  *
  * The account is part of the read rather than checked against the row afterwards,
- * so a character belonging to somebody else is not found at all. This is the
+ * so a character belonging to somebody else is not found at all. That is the whole
  * difference between a page that shows a reader their own character and a page
- * that shows a reader whatever identifier they type: the other search is the one
- * the staff frame uses, it is a search of every account, and it answers with a
- * different shape. Reusing it here would have meant either that exposure on a
- * player page or a new check that has to be remembered.
+ * that shows a reader whatever identifier they happen to type.
  */
 export async function findCharacterForAccount(
   accountIdentifier: number,

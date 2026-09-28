@@ -12,15 +12,20 @@ browser. There is deliberately no `vercel.json` here: this app is not deployed o
 | `/register` | creates the account the game logs in with |
 | `/signin` | signs in and keeps the bearer token |
 | `/dashboard` | the server's figures and the caller's published address, whose tile carries the update button |
-| `/dashboard/news`, `/admin/news` | the published news, newest first |
-| `/dashboard/news/:id`, `/admin/news/:id` | one news item, on a page of its own so it can be linked to |
+| `/dashboard/characters`, `/dashboard/characters/:id` | the caller's own characters, and one of them in full |
+| `/dashboard/news`, `/dashboard/news/:id` | the published news, and one item on a page of its own so it can be linked to |
 | `/dashboard/mail` | redirects to the inbox; the other mailboxes are `/dashboard/mail/outbox` and `/dashboard/mail/all` |
 | `/dashboard/mail/inbox/:id`, `/dashboard/mail/outbox/:id`, `/dashboard/mail/all/:id` | one message, under the mailbox it was opened from |
-| `/dashboard/survival/events`, `/dashboard/survival/teams` | the Survival schedule and the ladder, as two pages |
+| `/dashboard/clans`, `/dashboard/clans/:id` | the clan directory, and one clan with its roster |
+| `/dashboard/games` | the game rooms that are up right now |
+| `/dashboard/survival/events`, `/dashboard/survival/events/:id`, `/dashboard/survival/teams` | the Survival schedule, one event, and the ladder |
+| `/dashboard/tournament`, `/dashboard/tournament/:id{,/bracket,/fixtures}` | the tournament list, and one event's registrations, bracket and fixtures |
 | `/dashboard/rankings/players`, `/dashboard/rankings/clans` | the player and clan boards, as two pages |
-| `/admin/announcements/mail/:id` | one game master message, as it was sent to every inbox |
-| `/admin` | the same overview read as the server rather than as the account, plus what is published |
 | anything else | not found |
+
+Every one of these reads. There is no control on any page that changes what the server holds, because
+a value written in the browser is a second source of truth for something the game is already the
+source of, and the two disagree the moment the client acts on its own copy.
 
 ## Styling
 
@@ -48,6 +53,10 @@ npm run typecheck
 - **The token is in localStorage.** It is a bearer token with no cookie behind it, so it cannot be
   marked httpOnly and localStorage is the only place a page can keep one across reloads. A token the
   backend stops accepting is treated as the end of a session, not as an error to display.
+- **The account name comes from the server, not the token.** The token carries a display name as a
+  claim, but that is a snapshot from whenever it was issued, so a renamed account would be greeted by
+  the old one until the session expired. `GET /api/account` reads the row instead, and the sidebar
+  waits for it rather than printing the name it happened to be given.
 - **The dashboard publishes on arrival, and by refresh.** Signing in is what makes a game joinable,
   so the address is written when the page loads; the refresh button is the same work by hand, for a
   player who opened a game afterwards. Nothing publishes without a session token, so no prefetcher or

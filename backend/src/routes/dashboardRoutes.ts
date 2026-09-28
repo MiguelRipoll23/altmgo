@@ -1,25 +1,19 @@
 import { Hono } from 'hono';
-import type { Context } from 'hono';
 import type { AppBindings } from '../authentication.js';
-import { requireAccount, requireManager } from '../authentication.js';
+import { requireAccount } from '../authentication.js';
 import {
-  isCharacterSort,
   listEventSchedules,
   listEventTeams,
   listGames,
   listTournamentEntries,
   listTournamentFixtures,
-  findCharacterDetail,
   findTournamentBracket,
-  searchCharacters,
   isEventMode,
   SurvivalMode,
 } from '../dashboardQueries.js';
 import { listNews, findNews } from '../newsQueries.js';
 import { findAccountMail, isMailBox, listAccountMail } from '../mailQueries.js';
 import { listLobbyPresence, readPresenceTotals, readServerTotals } from '../presence.js';
-import { editGame, removeGame, type GameOutcome, type GameRefusal } from '../gameWrites.js';
-import { readBody, readText } from '../requestBody.js';
 import { findAccountById } from '../accounts.js';
 import { readAccountPublicAddress } from '../publicAddresses.js';
 import { isClanBoard, isPlayerBoard, readClanBoard, readPlayerBoard } from '../rankingsQueries.js';
@@ -28,9 +22,6 @@ export const dashboardRoutes = new Hono<AppBindings>();
 
 /** Largest window one page of results may hold. */
 const MaximumWindow = 100;
-
-/** Largest number of characters one search may return. */
-const MaximumSearchResults = 200;
 
 /**
  * Largest number of news items one read returns.
@@ -133,72 +124,6 @@ dashboardRoutes.get('/overview', requireAccount, async (context) => {
 });
 
 /**
- * Searches the characters of every account, for the admin frame's characters
- * section.
- *
- * It is under `/admin` because it is that frame's read and not a player's. A bare
- * `/api/characters` was a collision waiting to happen: it and the account's own
- * characters were the same address, and whichever route was registered first was
- * the one that answered, so the staff page was quietly being handed the reader's
- * own two characters however it filtered. Everything else in this file is a read
- * both frames make of the same rows and is deliberately shared; this one is not.
- */
-dashboardRoutes.get('/admin/characters', requireAccount, async (context) => {
-  const term = context.req.query('term')?.trim() ?? '';
-  const requested = context.req.query('sort') ?? 'name';
-  const sort = isCharacterSort(requested) ? requested : 'name';
-  const limit = readNumber(context.req.query('limit'), 50, 1, MaximumSearchResults);
-
-  const characters = await searchCharacters(term, sort, limit);
-
-  return context.json({
-    characters: characters.map((character) => ({
-      id: character.id,
-      name: character.name,
-      accountName: character.account_name,
-      rank: character.rank,
-      experience: character.experience,
-      totalRewards: character.total_rewards,
-      lobbyName: character.lobby_name,
-      publicAddress:
-        character.public_ip && character.public_port
-          ? `${character.public_ip}:${character.public_port}`
-          : null,
-      lastSeen: character.last_seen_at,
-    })),
-  });
-});
-
-/** One character's profile, for the same section and under the same prefix. */
-dashboardRoutes.get('/admin/characters/:identifier', requireAccount, async (context) => {
-  const character = await findCharacterDetail(Number(context.req.param('identifier')));
-
-  if (!character) {
-    return context.json({ error: 'No such character.' }, 404);
-  }
-
-  return context.json({
-    character: {
-      id: character.id,
-      name: character.name,
-      previousName: character.old_name,
-      accountName: character.account_name,
-      comment: character.comment,
-      rank: character.rank,
-      experience: character.experience,
-      totalRewards: character.total_rewards,
-      lobbyName: character.lobby_name,
-      publicAddress:
-        character.public_ip && character.public_port
-          ? `${character.public_ip}:${character.public_port}`
-          : null,
-      createdAt: character.created_at,
-      lastSeenAt: character.last_seen_at,
-    },
-  });
-});
-
-/**
  * Who the caller is.
  *
  * One account, named by the token, read from the row. The token already carries a
@@ -248,76 +173,6 @@ dashboardRoutes.get('/games', requireAccount, async (context) => {
   });
 });
 
-/**
- * What each refusal means to the person who pressed the button.
- *
- * The sentences name the field rather than the column, and the length ones say
- * what the limit is, because an operator who has been told a name is too long has
- * to guess at how much longer than what.
- */
-const gameRefusalMessages: Record<GameRefusal['reason'], string> = {
-  name: 'That room name cannot be used. It is empty or longer than sixteen characters.',
-  comment: 'That comment cannot be used. It is longer than a room comment can be.',
-  'unknown-game': 'That room has stopped being hosted, so it is no longer here to change.',
-};
-
-/** Answers a game write with either its result or the sentence for why it failed. */
-function answerGame(context: Context<AppBindings>, outcome: GameOutcome<unknown>) {
-  if (outcome.ok) {
-    return context.json(outcome.value, 200);
-  }
-
-  return context.json({ error: gameRefusalMessages[outcome.refusal.reason] }, 400);
-}
-
-/**
- * Corrects a hosted room's name and comment.
- *
- * It lives here beside the read rather than with the manager's other writes, because
- * it is the only one of those about something the server is actively using: a game
- * row is the host's, and this is a correction of it rather than a statement the
- * server makes. The manager role is the same either way — a moderator runs events,
- * and a room somebody is playing in is not an event.
- */
-dashboardRoutes.put('/games/:identifier', requireManager, async (context) => {
-  const body = await readBody(context);
-  const identifier = Number(context.req.param('identifier'));
-
-  if (!Number.isInteger(identifier) || identifier <= 0) {
-    return context.json({ error: 'No such room.' }, 404);
-  }
-
-  return answerGame(
-    context,
-    await editGame(identifier, {
-      name: readText(body, 'name'),
-      comment: readText(body, 'comment'),
-    }),
-  );
-});
-
-/**
- * Removes a hosted room.
- *
- * A refusal rather than a 404 when the room is not there, and deliberately: a room
- * stops being listed once its host stops writing, so the commonest reason for
- * pressing this on a room that has since ended is that the game is over. "It has
- * stopped being hosted" is a sentence an operator can act on, where a bare not-found
- * reads as a fault in the dashboard rather than as news about the game.
- *
- * What happens to a host that is still connected is the host subsystem's business,
- * not this write's, and the page says so before the button is pressed.
- */
-dashboardRoutes.delete('/games/:identifier', requireManager, async (context) => {
-  const identifier = Number(context.req.param('identifier'));
-
-  if (!Number.isInteger(identifier) || identifier <= 0) {
-    return context.json({ error: 'No such room.' }, 404);
-  }
-
-  return answerGame(context, await removeGame(identifier));
-});
-
 /** The Survival teams and the events they are played in. */
 dashboardRoutes.get('/survival', requireAccount, async (context) => {
   const teams = await listEventTeams(SurvivalMode);
@@ -344,10 +199,10 @@ dashboardRoutes.get('/tournament', requireAccount, async (context) => {
 /**
  * The teams of any event mode.
  *
- * Survival has a section of its own that reads the same rows, but the event
- * operations page works across all three modes from one selector, and a moderator
- * forming a Tournament team should not have to leave the page to see what is
- * already there.
+ * Survival and Tournament each have a section that reads the same rows, but both
+ * need the ladder of a mode the page is not about — a bracket draws every entrant,
+ * not only the ones on a named tournament — so the mode is part of the address
+ * rather than chosen by a selector on the page.
  */
 dashboardRoutes.get('/events/:mode/teams', requireAccount, async (context) => {
   const mode = Number(context.req.param('mode'));
@@ -373,11 +228,9 @@ dashboardRoutes.get('/events/:mode/schedules', requireAccount, async (context) =
 /**
  * The news the client shows on the login screen.
  *
- * Open to any signed-in account rather than to staff, because it is the one page of
- * this app a player cannot see any other way: the same rows are drawn by the client
- * before the lobby list, and a dashboard that hid them would only be a second,
- * worse copy of something already on their screen. It is the same query the manager
- * reads to publish; only the permission differs, and nothing here writes.
+ * It is the one page of this app a reader cannot see any other way: the same rows
+ * are drawn by the client before the lobby list, and a dashboard that hid them
+ * would only be a second, worse copy of something already on their screen.
  */
 dashboardRoutes.get('/news', requireAccount, async (context) => {
   const news = await listNews(MaximumNewsItems);
