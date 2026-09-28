@@ -25,6 +25,7 @@ type HealthResponse = {
   online: boolean;
   status: number | null;
   latencyMilliseconds: number;
+  reason?: string | null;
 };
 
 /** The connection the game server is reached over, as the badge shows it. */
@@ -48,7 +49,7 @@ function healthMessage(health: HealthResponse | null): string {
 
   return health.online
     ? `Game server online, answered in ${health.latencyMilliseconds} ms`
-    : 'Game server unreachable';
+    : `Game server unreachable${health.reason ? ` — ${health.reason}` : ''}`;
 }
 
 /** The signed-in view: who you are, what you own, and whether the server is up. */

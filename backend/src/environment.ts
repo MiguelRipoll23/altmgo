@@ -10,9 +10,6 @@ export type Environment = {
 
   /** Key the session tokens are signed with, and the host-link codes derived from. */
   readonly jwtSecret: string;
-
-  /** Address of the game server, host and port, without a scheme. */
-  readonly serverIp: string;
 };
 
 /** Reads one setting, refusing a value that is absent or blank. */
@@ -25,11 +22,29 @@ function readSetting(name: string): string {
   return value;
 }
 
-/** Reads every setting the backend runs on. */
+/** Reads the settings every request needs. */
 export function readEnvironment(): Environment {
   return {
     databaseUrl: readSetting('DATABASE_URL'),
     jwtSecret: readSetting('JWT_SECRET'),
-    serverIp: readSetting('SERVER_IP'),
   };
+}
+
+/**
+ * The game server's address, when one is configured.
+ *
+ * It is optional deliberately. A deployment can be reachable only on the tailnet
+ * the players share — the game server joins it rather than being exposed — and
+ * then there is no address an internet-hosted function can ask. A health check
+ * that says so is more useful than one that refuses to start.
+ *
+ * Accepts `host` or `host:port`, with or without a scheme.
+ */
+export function readServerIp(): string | undefined {
+  const address = process.env.SERVER_IP?.trim();
+  if (!address) {
+    return undefined;
+  }
+
+  return address.replace(/^https?:\/\//i, '').replace(/\/+$/, '');
 }

@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import type { AppBindings } from '../authentication';
-import { readEnvironment } from '../environment';
+import { readServerIp } from '../environment';
 
 export const healthRoutes = new Hono<AppBindings>();
 
@@ -14,10 +14,24 @@ const HealthTimeoutMilliseconds = 4000;
  * served over https and the game server answers plain http, so a browser would
  * refuse the mixed request outright. Relaying it also keeps SERVER_IP on the
  * server, where a setting belongs.
+ *
+ * Every failure is a 200 carrying a reason, because "the game server is not
+ * reachable from here" is an answer to the question the dashboard asked — not an
+ * error in asking it.
  */
 healthRoutes.get('/health', async (context) => {
   const startedAt = Date.now();
-  const { serverIp } = readEnvironment();
+  const serverIp = readServerIp();
+
+  if (!serverIp) {
+    return context.json({
+      online: false,
+      status: null,
+      latencyMilliseconds: 0,
+      reason:
+        'SERVER_IP is not set, so there is no address to ask. A server reachable only on the tailnet has none.',
+    });
+  }
 
   try {
     const response = await fetch(`http://${serverIp}/health`, {
@@ -28,8 +42,14 @@ healthRoutes.get('/health', async (context) => {
       online: response.ok,
       status: response.status,
       latencyMilliseconds: Date.now() - startedAt,
+      reason: response.ok ? null : `The game server answered ${response.status}.`,
     });
   } catch {
-    return context.json({ online: false, status: null, latencyMilliseconds: Date.now() - startedAt });
+    return context.json({
+      online: false,
+      status: null,
+      latencyMilliseconds: Date.now() - startedAt,
+      reason: `Nothing answered at http://${serverIp}/health.`,
+    });
   }
 });

@@ -32,7 +32,7 @@ Both projects read them from Vercel's project settings.
 | --- | --- | --- |
 | backend | `DATABASE_URL` | Neon connection string — the **pooled** one |
 | backend | `JWT_SECRET` | the game server's own secret |
-| backend | `SERVER_IP` | game server address, `host:port`, no scheme |
+| backend | `SERVER_IP` | game server address, `host` or `host:port`, no scheme — optional, see below |
 | frontend | `VITE_API_BASE_URL` | origin of the backend deployment, no trailing slash |
 
 `JWT_SECRET` does double duty: it signs the site's session tokens, and it is the key the host-link
@@ -77,6 +77,13 @@ https and the game server answers plain http, so a browser would refuse the mixe
 
 The game server grew a `/health` route for this, answered under an allow-all CORS policy. It returns
 `{"status":"ok","timestamp":"..."}` and touches no store.
+
+**`SERVER_IP` is optional, and on a tailnet-only deployment there is no right value for it.** When
+the game server joins the players' tailnet rather than being exposed, nothing on the internet can
+reach it, so the check can only report that it cannot ask. That is why an unset `SERVER_IP` answers
+`{"online": false, "reason": "..."}` instead of failing — and why the dashboard shows the reason
+rather than an error. Set it to the public address of the game server's HTTP API once that exists
+(a tunnel, or a port forward); the deployed site then needs a redeploy to pick the value up.
 
 ## The host link contract
 
