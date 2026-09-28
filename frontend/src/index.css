@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+/*
+ * The accent the game server's own home page defines, so a player who has seen
+ * one of the two pages recognises the other. The rest of the palette is
+ * Tailwind's own slate and sky, which that page uses directly.
+ */
+@theme {
+  --color-mgo-400: #7dd3fc;
+  --color-mgo-500: #38bdf8;
+  --color-mgo-600: #0ea5e9;
+}
