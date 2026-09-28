@@ -13,7 +13,8 @@ import { StatusMessage } from '../components/StatusMessage';
 import { TeamCard, type Team } from '../components/TeamCard';
 import { CreateTeamPanel } from '../components/TeamForm';
 import { useApiResource } from '../components/useApiResource';
-import { useEventWrite, useMayModerate } from '../components/useEventWrite';
+import { useEventWrite } from '../components/useEventWrite';
+import { useMayModerate } from '../components/useStaffRole';
 import { Badge } from '../components/ui/badge';
 
 /** Lobby selector of Tournament, as the event subsystem numbers them. */

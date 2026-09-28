@@ -3,7 +3,7 @@ import { SectionHeading } from '../components/DataDisplay';
 import { CreateSchedulePanel, type Schedule } from '../components/ScheduleForm';
 import { StatusMessage } from '../components/StatusMessage';
 import { useApiResource } from '../components/useApiResource';
-import { useMayModerate } from '../components/useEventWrite';
+import { useMayModerate } from '../components/useStaffRole';
 
 /** Lobby selector of Survival, as the event subsystem numbers them. */
 const SurvivalMode = 4;

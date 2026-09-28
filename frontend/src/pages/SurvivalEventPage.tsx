@@ -5,7 +5,8 @@ import { StatusMessage } from '../components/StatusMessage';
 import { TeamCard, type Team } from '../components/TeamCard';
 import { CreateTeamPanel } from '../components/TeamForm';
 import { useApiResource } from '../components/useApiResource';
-import { useEventWrite, useMayModerate } from '../components/useEventWrite';
+import { useEventWrite } from '../components/useEventWrite';
+import { useMayModerate } from '../components/useStaffRole';
 import { ScheduleList, formatEpoch, type Schedule } from '../components/ScheduleForm';
 import { Badge } from '../components/ui/badge';
 
