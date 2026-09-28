@@ -1,5 +1,7 @@
-import type { LucideIcon } from 'lucide-react';
+import { ChevronRight, type LucideIcon } from 'lucide-react';
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { cn } from '../lib/utils';
 
 /**
  * One section of a sidebar, and the sub-options it is split into when it is more
@@ -19,10 +21,10 @@ export type SidebarSection = {
   children?: SidebarSubSection[];
 };
 
-/** The classes a section link carries, active or not. Both frames draw the same. */
+/** The classes a section row carries, active or not. Both frames draw the same. */
 function sectionClasses(isActive: boolean): string {
   return [
-    'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition',
+    'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition',
     isActive
       ? 'bg-primary/10 font-semibold text-primary'
       : 'font-medium text-muted-foreground hover:bg-muted/60 hover:text-foreground',
@@ -31,12 +33,12 @@ function sectionClasses(isActive: boolean): string {
 
 /**
  * The classes a sub-option carries: the same shape as its section, set smaller
- * and indented under it, so a reader sees that it belongs to the section above
- * rather than reading it as a section of its own.
+ * and indented under a rule, so a reader sees that it belongs to the section
+ * above rather than reading it as a section of its own.
  */
 function subSectionClasses(isActive: boolean): string {
   return [
-    'flex items-center rounded-lg py-2 pl-9 pr-3 text-xs transition',
+    'flex items-center rounded-lg py-2 pl-3 pr-3 text-xs transition',
     isActive
       ? 'bg-primary/10 font-semibold text-primary'
       : 'font-medium text-muted-foreground hover:bg-muted/60 hover:text-foreground',
@@ -47,10 +49,10 @@ function subSectionClasses(isActive: boolean): string {
  * Whether a section is the one being read.
  *
  * A frame's own root — `/dashboard`, `/admin` — is the only path every other path
- * in the column sits under, so it is matched exactly and the rest by prefix.
- * Without that distinction the overview would be highlighted on every page, which
- * is the one thing a sidebar must never be. A section with sub-options is matched
- * by prefix so that it stays lit while one of its own pages is open.
+ * in the column sits under, so it is matched exactly and the rest by prefix. A
+ * section with sub-options is matched by prefix, which is what keeps it lit while
+ * one of its own pages is open — the row that is not a link still has to say
+ * where the reader is.
  */
 function isSectionActive(section: SidebarSection, pathname: string): boolean {
   if (section.path.split('/').filter(Boolean).length === 1) {
@@ -60,49 +62,96 @@ function isSectionActive(section: SidebarSection, pathname: string): boolean {
   return pathname === section.path || pathname.startsWith(`${section.path}/`);
 }
 
+/** Whether a sub-option is the one being read, including pages nested under it. */
+function isSubSectionActive(subSection: SidebarSubSection, pathname: string): boolean {
+  return pathname === subSection.path || pathname.startsWith(`${subSection.path}/`);
+}
+
+/** The id a section's sub-option list is named by, for the control that opens it. */
+function subListId(section: SidebarSection): string {
+  return `sub-${section.path.replace(/[^a-z]+/gi, '-')}`;
+}
+
 /**
- * The column of sections down the side of a frame, with the sub-options of any
- * section that has them.
+ * The column of sections down the side of a frame.
+ *
+ * A section that is more than one page is a heading with a disclosure, not a
+ * link. It was a link, and that was wrong twice over: it sent a reader to an
+ * address that is not a page — the bare section path, which only exists to
+ * redirect to the first of its sub-options — and it made the sub-options
+ * something a reader only found by arriving at the section, so the fastest way
+ * to reach the Survival teams was a click that went nowhere and then another.
+ *
+ * The list starts closed, so the column is the same length whichever sections
+ * have sub-options. A section holding the page being read opens itself, because a
+ * closed list cannot say which of its pages is open; that is a default rather
+ * than a rule, so a reader who closes the section they are standing in keeps it
+ * closed.
  *
  * It is one component because both frames draw the same column over the same
  * pages, and two copies of this list is two things to keep correct: a sub-option
- * added to one frame and not the other is a page a player can open in one place
+ * added to one frame and not the other is a page a reader can open in one place
  * and not the other.
- *
- * Sub-options are always drawn rather than revealed on arrival. One that only
- * appeared inside its section could not be reached from anywhere else, so arriving
- * at the teams would take a click through events and the sub-options would be
- * something a reader found by accident.
- *
- * A sub-option stays lit on the pages nested under it — an event opened from the
- * Survival events, a message opened from the inbox — so the column says where the
- * reader is at every depth rather than going dark one page down.
  */
 export function SidebarNav({ sections }: { sections: SidebarSection[] }) {
   const { pathname } = useLocation();
+  const [opened, setOpened] = useState<Record<string, boolean>>({});
 
   return (
     <nav className="flex flex-1 flex-col gap-1">
-      {sections.map((section) => (
-        <div key={section.path} className="flex flex-col gap-1">
-          <Link to={section.path} className={sectionClasses(isSectionActive(section, pathname))}>
-            <section.icon className="size-4 shrink-0" />
-            {section.label}
-          </Link>
+      {sections.map((section) => {
+        const active = isSectionActive(section, pathname);
 
-          {(section.children ?? []).map((subSection) => (
-            <Link
-              key={subSection.path}
-              to={subSection.path}
-              className={subSectionClasses(
-                pathname === subSection.path || pathname.startsWith(`${subSection.path}/`),
-              )}
-            >
-              {subSection.label}
+        if (section.children === undefined) {
+          return (
+            <Link key={section.path} to={section.path} className={sectionClasses(active)}>
+              <section.icon className="size-4 shrink-0" />
+              {section.label}
             </Link>
-          ))}
-        </div>
-      ))}
+          );
+        }
+
+        const open = opened[section.path] ?? active;
+
+        return (
+          <div key={section.path} className="flex flex-col gap-1">
+            <button
+              type="button"
+              onClick={() => setOpened((state) => ({ ...state, [section.path]: !open }))}
+              className={sectionClasses(active)}
+              aria-expanded={open}
+              aria-controls={subListId(section)}
+            >
+              <section.icon className="size-4 shrink-0" />
+              {section.label}
+              <ChevronRight
+                className={cn(
+                  'ml-auto size-4 shrink-0 transition-transform duration-150',
+                  open && 'rotate-90',
+                )}
+              />
+            </button>
+
+            {open ? (
+              <div
+                id={subListId(section)}
+                className="flex flex-col gap-1 border-l border-border pl-3"
+              >
+                {section.children.map((subSection) => (
+                  <Link
+                    key={subSection.path}
+                    to={subSection.path}
+                    className={subSectionClasses(isSubSectionActive(subSection, pathname))}
+                    aria-current={isSubSectionActive(subSection, pathname) ? 'page' : undefined}
+                  >
+                    {subSection.label}
+                  </Link>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        );
+      })}
     </nav>
   );
 }

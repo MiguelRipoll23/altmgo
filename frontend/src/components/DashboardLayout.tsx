@@ -29,9 +29,10 @@ import type { SidebarSection } from './SidebarNav';
  * the inbox, and these are the same two lists without leaving the browser.
  *
  * Mail, Survival and rankings are the sections that are more than one page, so
- * they carry their sub-options. Each sub-option is a page with its own path rather
- * than a view of one page, so it can be linked to and reloaded on its own; the
- * section itself leads to the first of them.
+ * they carry their sub-options. Their rows are headings with a disclosure rather
+ * than links, because the bare section path is not a page — it is a redirect to
+ * the first sub-option, and a row that goes there and bounces teaches a reader
+ * that the column is not where they think it is.
  *
  * Nothing here writes. Everything that changes the server moved to the admin frame,
  * which is reached from the account card at the foot of this column: a signed-in
