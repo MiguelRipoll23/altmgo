@@ -8,7 +8,7 @@ export type Environment = {
   /** Neon connection string. */
   readonly databaseUrl: string;
 
-  /** Key the session tokens are signed with, and the host-link codes derived from. */
+  /** Key this site's session tokens are signed with. */
   readonly jwtSecret: string;
 };
 
@@ -28,23 +28,4 @@ export function readEnvironment(): Environment {
     databaseUrl: readSetting('DATABASE_URL'),
     jwtSecret: readSetting('JWT_SECRET'),
   };
-}
-
-/**
- * The game server's address, when one is configured.
- *
- * It is optional deliberately. A deployment can be reachable only on the tailnet
- * the players share — the game server joins it rather than being exposed — and
- * then there is no address an internet-hosted function can ask. A health check
- * that says so is more useful than one that refuses to start.
- *
- * Accepts `host` or `host:port`, with or without a scheme.
- */
-export function readServerIp(): string | undefined {
-  const address = process.env.SERVER_IP?.trim();
-  if (!address) {
-    return undefined;
-  }
-
-  return address.replace(/^https?:\/\//i, '').replace(/\/+$/, '');
 }

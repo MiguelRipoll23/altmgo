@@ -1,9 +1,14 @@
 import type { ReactNode } from 'react';
 
-/** How wide the content column is. Forms are narrow, lists are not. */
-export type PageLayoutWidth = 'form' | 'wide';
+/**
+ * How wide the content column is. Forms are narrow, lists are not, and a page
+ * whose whole content is a pair of stacked buttons is narrower still — a card
+ * that wide for two buttons reads as a page that lost its content.
+ */
+export type PageLayoutWidth = 'narrow' | 'form' | 'wide';
 
 const widths: Record<PageLayoutWidth, string> = {
+  narrow: 'max-w-sm',
   form: 'max-w-md',
   wide: 'max-w-3xl',
 };

@@ -1,4 +1,4 @@
-import { database } from './database';
+import { database } from './database.js';
 
 /** An account row, as the login and registration paths read it. */
 export type AccountRow = {

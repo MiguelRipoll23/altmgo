@@ -20,11 +20,11 @@ export const hintClassName = 'mt-1.5 text-xs text-slate-500';
 
 /** The one action on a form. */
 export const primaryButtonClassName =
-  'rounded-lg bg-mgo-500 px-4 py-3 text-sm font-bold uppercase tracking-widest text-slate-950 transition hover:bg-mgo-400 focus:outline-none focus:ring-2 focus:ring-mgo-400 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:cursor-not-allowed disabled:opacity-60';
+  'cursor-pointer rounded-lg bg-mgo-500 px-4 py-3 text-sm font-bold uppercase tracking-widest text-slate-950 transition hover:bg-mgo-400 focus:outline-none focus:ring-2 focus:ring-mgo-400 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:cursor-not-allowed disabled:opacity-60';
 
 /** The action that is not the point of the page, and a link that looks like it. */
 export const secondaryButtonClassName =
-  'rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-3 text-sm font-bold uppercase tracking-widest text-slate-200 transition hover:border-slate-600 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-mgo-400 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:cursor-not-allowed disabled:opacity-60';
+  'cursor-pointer rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-3 text-sm font-bold uppercase tracking-widest text-slate-200 transition hover:border-slate-600 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-mgo-400 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:cursor-not-allowed disabled:opacity-60';
 
 /** Both primary actions, which are stacked and so are full width. */
 export const blockButtonClassName = 'block w-full text-center';

@@ -26,7 +26,9 @@ export function RegisterPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitting(true);
-    setStatus({ kind: 'progress', message: 'Creating account…' });
+    // The button says what is happening; the banner is only for what happened, so
+    // the refusal from the attempt before this one is cleared rather than left up.
+    setStatus(null);
 
     try {
       const payload = await apiRequest<RegistrationResponse>('/api/auth/register', {
@@ -52,7 +54,7 @@ export function RegisterPage() {
       <PageHeading subtitle="Create your account to start playing on this server" />
 
       <div className={panelClassName}>
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-5" noValidate>
           {status === null ? null : <StatusMessage kind={status.kind}>{status.message}</StatusMessage>}
 
           <div>
@@ -98,7 +100,7 @@ export function RegisterPage() {
           </div>
 
           <button type="submit" disabled={submitting} className={`${primaryButtonClassName} w-full`}>
-            Create account
+            {submitting ? 'Registering…' : 'Create account'}
           </button>
         </form>
       </div>

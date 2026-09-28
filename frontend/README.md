@@ -1,7 +1,8 @@
 # altmgo frontend
 
-Vite + React + Tailwind single-page site. Vercel detects the Vite preset, and `vercel.json` pins it
-and adds the rewrite that sends every path to `index.html`, because routing happens in the browser.
+Vite + React + Tailwind single-page site. It is built by the `vercel.json` at the repository root,
+which also carries the rewrite that sends every path to `index.html`, because routing happens in the
+browser. There is deliberately no `vercel.json` here: this app is not deployed on its own.
 
 ## Pages
 
@@ -10,13 +11,8 @@ and adds the rewrite that sends every path to `index.html`, because routing happ
 | `/` | the front door: sign in or register |
 | `/register` | creates the account the game logs in with |
 | `/signin` | signs in and keeps the bearer token |
-| `/dashboard` | the account's characters, each one's published address, and whether the game server answers |
-| `/:code` | the host link: exactly four digits |
+| `/dashboard` | the account's characters, each one's published address, and the refresh button that republishes it |
 | anything else | not found |
-
-The single-segment route is the host link and it decides for itself whether the segment is a code;
-the named routes above win by being static, which is what keeps `/dashboard` a page rather than a
-code that happens to be spelled that way.
 
 ## Styling
 
@@ -28,14 +24,14 @@ look like one site.
 
 | name | what it is |
 | --- | --- |
-| `VITE_API_BASE_URL` | origin of the backend deployment, no trailing slash. Unset keeps calls relative, for a single-origin deployment |
+| `VITE_API_BASE_URL` | origin of the API, no trailing slash. Deliberately unset in production, where the site and the API share an origin and the calls stay relative; set it to `http://localhost:3000` to develop against a local API |
 
 ## Commands
 
 ```sh
-npm install
-npm run dev        # vite, on http://localhost:5173
-npm run build      # tsc --noEmit && vite build
+npm install          # once, at the repository root — this is an npm workspace
+npm run dev          # vite, on http://localhost:5173
+npm run build        # tsc --noEmit && vite build
 npm run typecheck
 ```
 
@@ -44,7 +40,7 @@ npm run typecheck
 - **The token is in localStorage.** It is a bearer token with no cookie behind it, so it cannot be
   marked httpOnly and localStorage is the only place a page can keep one across reloads. A token the
   backend stops accepting is treated as the end of a session, not as an error to display.
-- **The health check is relayed by the backend.** The browser cannot call it directly: this site is
-  https and the game server answers plain http, and a mixed request is refused before it leaves.
-- **The host link writes on a button, not on load.** A prefetch or a link scanner must not be able to
-  publish an address on a player's behalf.
+- **The dashboard publishes on arrival, and by refresh.** Signing in is what makes a game joinable,
+  so the address is written when the page loads; the refresh button is the same work by hand, for a
+  player who opened a game afterwards. Nothing publishes without a session token, so no prefetcher or
+  scanner can act on a player's behalf.
