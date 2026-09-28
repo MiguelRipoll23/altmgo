@@ -70,7 +70,7 @@ export function SignInPage() {
           <form onSubmit={handleSubmit} className="space-y-5" noValidate>
             {status === null ? null : <StatusMessage kind={status.kind}>{status.message}</StatusMessage>}
 
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Label htmlFor="username">Username</Label>
               <Input
                 id="username"
@@ -83,7 +83,7 @@ export function SignInPage() {
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
