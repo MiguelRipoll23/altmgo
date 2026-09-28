@@ -11,7 +11,13 @@ browser. There is deliberately no `vercel.json` here: this app is not deployed o
 | `/` | the front door: sign in or register |
 | `/register` | creates the account the game logs in with |
 | `/signin` | signs in and keeps the bearer token |
-| `/dashboard` | the account's characters, each one's published address, and the refresh button that republishes it |
+| `/dashboard` | the server's figures and the caller's published address, whose tile carries the update button |
+| `/dashboard/news`, `/admin/news` | the published news, newest first |
+| `/dashboard/news/:id`, `/admin/news/:id` | one news item, on a page of its own so it can be linked to |
+| `/dashboard/mail` | the mail sent to the caller's own characters |
+| `/dashboard/mail/:id` | one inbox message |
+| `/admin/announcements/mail/:id` | one game master message, as it was sent to every inbox |
+| `/admin` | the same overview read as the server rather than as the account, plus what is published |
 | anything else | not found |
 
 ## Styling

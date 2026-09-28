@@ -21,9 +21,12 @@ import {
  * sign-out button is the one control that has to be reachable from every screen
  * rather than the one that deserves permanent space.
  *
- * The roles are shown inside the menu as well, because the menu is where the
+ * The roles are shown inside the menu only, because the menu is where the
  * question "why is that button not there" is answered, and answering it takes
- * the two facts together.
+ * the two facts together. A second line of role text under the name would say the
+ * same thing on every page of both frames in a place nobody looks, so the closed
+ * card carries the name and nothing else, set to the same measure as the section
+ * links above it because the account name is a heading rather than a figure.
  */
 export function AccountMenu({
   accountName,
@@ -48,15 +51,10 @@ export function AccountMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        className="flex w-full items-center gap-3 rounded-lg border border-border bg-card/60 px-3 py-2.5 text-left transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="flex w-full items-center gap-3 rounded-lg border border-border bg-card/60 px-3 py-2.5 text-left text-sm font-medium text-foreground transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label="Account and roles"
       >
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-medium text-foreground">{accountName}</span>
-          <span className="block text-xs text-muted-foreground">
-            {roles.length === 0 ? 'Player' : roles.join(', ')}
-          </span>
-        </span>
+        <span className="min-w-0 flex-1 truncate">{accountName}</span>
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="start" side="top" className="w-56">

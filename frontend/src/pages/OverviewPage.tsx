@@ -1,12 +1,10 @@
-import { Globe, RefreshCw } from 'lucide-react';
-import { useState } from 'react';
-import { apiRequest, describeError } from '../api';
-import { DataTable, Panel, SectionHeading, StatTile } from '../components/DataDisplay';
+import { RefreshCw } from 'lucide-react';
+import { DataTable, Panel, SectionHeading, StatTile, formatNumber } from '../components/DataDisplay';
+import { PublicAddressTile } from '../components/PublicAddressTile';
 import { RestrictionBadges, type Restrictions } from '../components/RestrictionBadges';
 import { StatusMessage } from '../components/StatusMessage';
 import { useApiResource } from '../components/useApiResource';
 import { Button } from '../components/ui/button';
-import { readSessionToken } from '../session';
 
 type Lobby = {
   id: number;
@@ -16,7 +14,7 @@ type Lobby = {
 };
 type PublishedAddress = { characterId: number; characterName: string; address: string | null };
 type Overview = {
-  totals: { connectedPlayers: number };
+  totals: { totalPlayers: number; connectedPlayers: number; totalGames: number };
   lobbies: Lobby[];
   publishedAddress: PublishedAddress | null;
 };
@@ -26,35 +24,20 @@ type Overview = {
  * gameplay lobbies they are spread across, and the address their own last
  * character publishes.
  *
- * The count comes from the character presence table rather than from a total the
- * server keeps, because a kept total is a number that is right until the process
- * that kept it stops. Reading the rows means the figure and the lobby list beside
- * it are the same reading of the same moment.
+ * The four figures at the top are the whole state of the server in one line each
+ * — how many players it has, how many are on it now, how many games it has
+ * hosted, and what address the reader publishes — and the lobby table below says
+ * where the connected ones are. The counts come from the character and game rows
+ * rather than from totals the server keeps, because a kept total is a number
+ * that is right until the process that kept it stops. Reading the rows means the
+ * figures and the lobby list beside them are the same reading of the same moment.
  *
  * The published address is the one figure here that is about the person reading
- * rather than the server, and it is the one that goes stale: a host whose
- * network changed still sees their old address until they press the button, so
- * the button sits next to the value rather than in a toolbar of its own.
+ * rather than the server, and it is the one that goes stale, so its button is
+ * inside its own tile rather than in a toolbar under the row.
  */
 export function OverviewPage() {
   const { data, error, loading, reload } = useApiResource<Overview>('/api/overview');
-  const [publishing, setPublishing] = useState(false);
-  const [published, setPublished] = useState<string | null>(null);
-
-  async function publishAddress() {
-    setPublishing(true);
-    setPublished(null);
-
-    try {
-      await apiRequest('/api/addresses', { method: 'POST', token: readSessionToken() });
-      setPublished('Your address was published for every character that has one.');
-      reload();
-    } catch (caught) {
-      setPublished(describeError(caught));
-    } finally {
-      setPublishing(false);
-    }
-  }
 
   return (
     <div className="space-y-6">
@@ -65,37 +48,32 @@ export function OverviewPage() {
 
       {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile
-          label="Connected players"
-          value={data?.totals.connectedPlayers ?? '—'}
+          label="Total players"
+          value={data === null ? '—' : formatNumber(data.totals.totalPlayers)}
         />
         <StatTile
-          label="Your public IP"
-          textual
-          value={
-            data === null
-              ? '—'
-              : (data.publishedAddress?.address ?? 'Not published')
-          }
+          label="Online players"
+          value={data === null ? '—' : formatNumber(data.totals.connectedPlayers)}
+        />
+        <StatTile
+          label="Total games"
+          value={data === null ? '—' : formatNumber(data.totals.totalGames)}
+        />
+        <PublicAddressTile
+          address={data === null ? null : (data.publishedAddress?.address ?? null)}
+          loading={loading}
+          onPublished={reload}
         />
       </div>
-
-      {data?.publishedAddress === null && !loading ? (
-        <StatusMessage kind="progress">
-          None of your characters has a connection row yet, so there is no address to publish. Open
-          a game in the client first.
-        </StatusMessage>
-      ) : null}
 
       <div className="flex flex-wrap gap-3">
-        <Button onClick={() => void publishAddress()} disabled={publishing}>
-          {publishing ? <RefreshCw className="animate-spin" /> : <Globe />}
-          {publishing ? 'Publishing…' : 'Update my IP'}
+        <Button variant="secondary" onClick={reload}>
+          <RefreshCw />
+          Refresh
         </Button>
       </div>
-
-      {published === null ? null : <StatusMessage kind="success">{published}</StatusMessage>}
 
       <Panel title="Game lobbies">
         <DataTable

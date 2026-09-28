@@ -47,6 +47,10 @@ type Section = {
  * The role on a section is a hint about what to draw, not the permission: the
  * server checks the same role on every call, so a browser with an edited role list
  * sees a section and is then refused by the API.
+ *
+ * The column itself is the same one the player dashboard draws, to the same
+ * measure: the two frames are two views of one account, and the account card at
+ * the foot of it is the only control that is on every page of both.
  */
 const sections: Section[] = [
   { path: '/admin', label: 'Overview', icon: LayoutDashboard },
@@ -95,7 +99,7 @@ export function AdminLayout({
 
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
-      <aside className="fixed inset-y-0 left-0 z-40 flex w-64 flex-col gap-6 overflow-y-auto border-r border-border bg-card/60 p-5">
+      <aside className="fixed inset-y-0 left-0 z-40 flex w-64 flex-col gap-6 overflow-y-auto border-r border-border bg-card/60 px-5 pb-6 pt-5">
         <p className="text-lg font-extrabold tracking-tight">
           <span className="text-primary">Alt</span>MGO
           <span className="ml-2 align-middle text-xs font-semibold uppercase tracking-widest text-muted-foreground">

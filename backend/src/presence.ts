@@ -63,6 +63,37 @@ export type PresenceTotalsRow = {
 };
 
 /**
+ * How many players the server has ever had, as opposed to how many are on it now.
+ *
+ * The ever figure is the count of active characters rather than of accounts: a
+ * player is a character, and an account is a login that may hold three of them.
+ * Inactive characters are excluded because a deleted character is not a player
+ * anybody can be missing, and leaving them in would make the number only ever
+ * grow.
+ *
+ * The games figure counts every row the game server has written rather than the
+ * rooms that are up, because "total games" is a figure about the server's whole
+ * life and the live rooms are already on the overview as a list. A game row is
+ * written when a room is created, so the two would agree at this moment and
+ * diverge the moment a room closes.
+ */
+export type ServerTotalsRow = {
+  players: number;
+  games: number;
+};
+
+/** How many players the server has, and how many games have been hosted on it. */
+export async function readServerTotals(): Promise<ServerTotalsRow> {
+  const rows = await database()`
+    select
+      (select count(*)::int from characters character where character.active) as players,
+      (select count(*)::int from games game) as games
+  `;
+
+  return rows[0] as ServerTotalsRow;
+}
+
+/**
  * How many characters are connected, and how many lobbies have somebody on
  * them. The two are counted separately on purpose: a lobby with nobody on it
  * is a lobby that is up, and the difference between the two figures is the

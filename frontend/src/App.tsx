@@ -4,6 +4,9 @@ import { DashboardRoute, OverviewSection } from './components/DashboardRoute';
 import { ClansPage } from './pages/ClansPage';
 import { GamesPage } from './pages/GamesPage';
 import { HomePage } from './pages/HomePage';
+import { MailDetailPage } from './pages/MailDetailPage';
+import { MailPage } from './pages/MailPage';
+import { NewsDetailPage } from './pages/NewsDetailPage';
 import { NewsPage } from './pages/NewsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { RankingsPage } from './pages/RankingsPage';
@@ -59,6 +62,17 @@ export function App() {
         <Route path="/dashboard" element={<DashboardRoute />}>
           <Route index element={<OverviewSection />} />
           <Route path="news" element={<NewsPage />} />
+          <Route
+            path="news/:identifier"
+            element={<NewsDetailPage scope="player" listPath="/dashboard/news" />}
+          />
+          <Route path="mail" element={<MailPage />} />
+          <Route
+            path="mail/:identifier"
+            element={
+              <MailDetailPage scope="inbox" listPath="/dashboard/mail" listLabel="Your inbox" />
+            }
+          />
           <Route path="clans" element={<ClansPage />} />
           <Route path="games" element={<GamesPage />} />
           <Route path="survival" element={<SurvivalPage />} />
@@ -68,7 +82,11 @@ export function App() {
 
         <Route path="/admin" element={<AdminRoute />}>
           <Route index element={<AdminOverviewPage />} />
-          <Route path="news" element={<NewsPage />} />
+          <Route path="news" element={<NewsPage basePath="/admin" />} />
+          <Route
+            path="news/:identifier"
+            element={<NewsDetailPage scope="manager" listPath="/admin/news" />}
+          />
           <Route path="clans" element={<ClansPage />} />
           <Route path="games" element={<GamesPage />} />
           <Route path="survival" element={<SurvivalPage />} />
@@ -89,6 +107,21 @@ export function App() {
           <Route
             path="announcements"
             element={<AdminStaffSection role="manager" page={<AnnouncementsPage />} />}
+          />
+          <Route
+            path="announcements/mail/:identifier"
+            element={
+              <AdminStaffSection
+                role="manager"
+                page={
+                  <MailDetailPage
+                    scope="outbox"
+                    listPath="/admin/announcements"
+                    listLabel="Sent mail"
+                  />
+                }
+              />
+            }
           />
         </Route>
 

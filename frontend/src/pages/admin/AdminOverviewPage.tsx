@@ -7,7 +7,8 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { DataTable, Panel, SectionHeading, StatTile } from '../../components/DataDisplay';
+import { DataTable, Panel, SectionHeading, StatTile, formatNumber } from '../../components/DataDisplay';
+import { PublicAddressTile } from '../../components/PublicAddressTile';
 import { RestrictionBadges, type Restrictions } from '../../components/RestrictionBadges';
 import { formatEpoch, type Schedule } from '../../components/ScheduleForm';
 import { StatusMessage } from '../../components/StatusMessage';
@@ -22,7 +23,13 @@ type Lobby = {
   restrictions: Restrictions;
 };
 
-type Overview = { totals: { connectedPlayers: number }; lobbies: Lobby[] };
+type PublishedAddress = { characterId: number; characterName: string; address: string | null };
+
+type Overview = {
+  totals: { totalPlayers: number; connectedPlayers: number; totalGames: number };
+  lobbies: Lobby[];
+  publishedAddress: PublishedAddress | null;
+};
 
 type Schedules = { schedules: Schedule[] };
 
@@ -58,10 +65,15 @@ const shortcuts: Shortcut[] = [
  * It is a separate page from the player overview rather than the same one, because
  * the two answer different questions. The player overview is about the account
  * reading it — how many are here, and what address do I publish. This one is about
- * the server: the same count and the same lobbies, but read as "is anything wrong
- * with the rooms" rather than "what is my address", with the published events
- * underneath because an event left published after it finished is the thing an
- * operator most often has to notice on their way in.
+ * the server: the same figures and the same lobbies, but read as "is anything
+ * wrong with the rooms" rather than "what is my address", with the published
+ * events underneath because an event left published after it finished is the
+ * thing an operator most often has to notice on their way in.
+ *
+ * The address tile is the operator's own rather than the server's, and it is here
+ * for the same reason it is on the player overview: an operator hosting a game
+ * from their own account is the one person on this page for whom a stale address
+ * costs something, and the button that corrects it belongs inside the tile.
  */
 export function AdminOverviewPage() {
   const overview = useApiResource<Overview>('/api/overview');
@@ -113,11 +125,31 @@ export function AdminOverviewPage() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <StatTile label="Connected players" value={overview.data?.totals.connectedPlayers ?? '—'} />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <StatTile
+          label="Total players"
+          value={
+            overview.data === null ? '—' : formatNumber(overview.data.totals.totalPlayers)
+          }
+        />
+        <StatTile
+          label="Online players"
+          value={
+            overview.data === null ? '—' : formatNumber(overview.data.totals.connectedPlayers)
+          }
+        />
+        <StatTile
+          label="Total games"
+          value={overview.data === null ? '—' : formatNumber(overview.data.totals.totalGames)}
+        />
         <StatTile
           label="Occupied lobbies"
           value={(overview.data?.lobbies ?? []).filter((lobby) => lobby.players > 0).length}
+        />
+        <PublicAddressTile
+          address={overview.data === null ? null : (overview.data.publishedAddress?.address ?? null)}
+          loading={overview.loading}
+          onPublished={overview.reload}
         />
       </div>
 

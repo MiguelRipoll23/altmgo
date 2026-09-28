@@ -4,7 +4,8 @@ import type { AppBindings } from '../authentication.js';
 import { requireManager } from '../authentication.js';
 import { isDiscordConfigured, sendChannelMessage } from '../discord.js';
 import { readBody, readBoolean, readInteger, readText } from '../requestBody.js';
-import { listNews } from '../newsQueries.js';
+import { listNews, findNews } from '../newsQueries.js';
+import { findOutboxMail } from '../mailQueries.js';
 import { listGameMasterMail, listStaffAccounts } from '../staffQueries.js';
 import {
   grantRole,
@@ -161,6 +162,31 @@ managerRoutes.get('/manager/news', requireManager, async (context) => {
   });
 });
 
+/**
+ * One news item, for the page the published list opens.
+ *
+ * It is the same read the player dashboard answers with, reached from a list
+ * that has just been written, so withdrawing an item and then following an old
+ * link says the item is gone rather than showing the last body it had.
+ */
+managerRoutes.get('/manager/news/:identifier', requireManager, async (context) => {
+  const item = await findNews(Number(context.req.param('identifier')));
+
+  if (!item) {
+    return context.json({ error: 'That news item has been withdrawn.' }, 404);
+  }
+
+  return context.json({
+    news: {
+      id: item.id,
+      title: item.title,
+      body: item.body,
+      important: item.important,
+      publishedAt: item.time,
+    },
+  });
+});
+
 /** Publishes a news item. */
 managerRoutes.post('/manager/news', requireManager, async (context) => {
   const body = await readBody(context);
@@ -194,6 +220,30 @@ managerRoutes.get('/manager/mail', requireManager, async (context) => {
       senderName: message.sender_name,
       sentAt: message.sent_at,
     })),
+  });
+});
+
+/**
+ * One game master message, for the page the sent list opens.
+ *
+ * The outbox rather than an inbox: a manager reads back what was said to
+ * everybody, and there is no single character it was addressed to.
+ */
+managerRoutes.get('/manager/mail/:identifier', requireManager, async (context) => {
+  const message = await findOutboxMail(Number(context.req.param('identifier')));
+
+  if (!message) {
+    return context.json({ error: 'There is no sent message with that id.' }, 404);
+  }
+
+  return context.json({
+    mail: {
+      id: message.id,
+      subject: message.subject,
+      body: message.body,
+      senderName: message.sender_name,
+      sentAt: message.sent_at,
+    },
   });
 });
 

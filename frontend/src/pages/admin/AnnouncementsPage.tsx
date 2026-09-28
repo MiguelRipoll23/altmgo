@@ -1,5 +1,6 @@
 import { Mail, Newspaper, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { apiRequest, describeError } from '../../api';
 import { DataTable, Panel, SectionHeading, formatDate } from '../../components/DataDisplay';
 import { StatusMessage } from '../../components/StatusMessage';
@@ -20,6 +21,11 @@ import { readSessionToken } from '../../session';
  * tables the game reads, so what appears here is what a player sees on their next
  * login, and nothing is scheduled: a news item is published the moment it is
  * submitted.
+ *
+ * Mail cannot be withdrawn, so the sent list is the only record of it there will
+ * ever be, and each subject opens the message on a page of its own for the same
+ * reason: a letter a manager may have to point a player at is a thing that needs
+ * an address someone else can be sent to.
  */
 
 /** One news item, as the login screen shows it. */
@@ -170,10 +176,13 @@ export function AnnouncementsPage() {
             {
               header: 'Subject',
               cell: (row) => (
-                <span className="flex items-center gap-2">
-                  <Mail className="size-3.5 shrink-0 text-muted-foreground" />
-                  <span className="font-medium text-foreground">{row.subject}</span>
-                </span>
+                <Link
+                  to={`/admin/announcements/mail/${row.id}`}
+                  className="flex items-center gap-2 font-medium text-primary hover:underline"
+                >
+                  <Mail className="size-3.5 shrink-0" />
+                  {row.subject}
+                </Link>
               ),
             },
             { header: 'From', cell: (row) => row.senderName },

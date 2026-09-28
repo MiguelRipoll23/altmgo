@@ -2,6 +2,7 @@ import {
   Flag,
   Gamepad2,
   LayoutDashboard,
+  Mail,
   Medal,
   Newspaper,
   Shield,
@@ -26,10 +27,11 @@ type Section = { path: string; label: string; icon: LucideIcon };
  * The sections, in the order they are offered.
  *
  * The order is the shape of a session rather than the shape of the schema: who is
- * on, what the server has said, who they play with and where, what is running, the
- * two event ladders, and finally where they stand on the boards. News sits second
- * because it is the one section a player has no other way to read — the client
- * shows it on the way in, and this is the same list without leaving the browser.
+ * on, what the server has said to them, who they play with and where, what is
+ * running, the two event ladders, and finally where they stand on the boards.
+ * News and mail sit second and third because they are the two things addressed to
+ * the reader personally — the client shows the news on the way in and the mail in
+ * the inbox, and these are the same two lists without leaving the browser.
  *
  * Nothing here writes. Everything that changes the server moved to the admin frame,
  * which is reached from the account card at the foot of this column: a signed-in
@@ -39,6 +41,7 @@ type Section = { path: string; label: string; icon: LucideIcon };
 const sections: Section[] = [
   { path: '/dashboard', label: 'Overview', icon: LayoutDashboard },
   { path: '/dashboard/news', label: 'News', icon: Newspaper },
+  { path: '/dashboard/mail', label: 'Mail', icon: Mail },
   { path: '/dashboard/clans', label: 'Clans', icon: Flag },
   { path: '/dashboard/games', label: 'Games', icon: Gamepad2 },
   { path: '/dashboard/survival', label: 'Survival', icon: Swords },
@@ -58,7 +61,7 @@ export function DashboardLayout({
 }) {
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
-      <aside className="fixed inset-y-0 left-0 z-40 flex w-64 flex-col gap-6 overflow-y-auto border-r border-border bg-card/60 p-5">
+      <aside className="fixed inset-y-0 left-0 z-40 flex w-64 flex-col gap-6 overflow-y-auto border-r border-border bg-card/60 px-5 pb-6 pt-5">
         <p className="text-lg font-extrabold tracking-tight">
           <span className="text-primary">Alt</span>MGO
         </p>

@@ -1,5 +1,5 @@
 import { Newspaper } from 'lucide-react';
-import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { DataTable, Panel, SectionHeading, formatDate } from '../components/DataDisplay';
 import { StatusMessage } from '../components/StatusMessage';
 import { useApiResource } from '../components/useApiResource';
@@ -25,11 +25,15 @@ type NewsItem = {
  * It is a list of the titles rather than the items expanded one under another,
  * because a news item is a paragraph written for the login screen and most of them
  * are not worth reading; the list says what has been said and when, and one click
- * opens the one somebody cares about.
+ * opens the one somebody cares about — on a page of its own, so the link can be
+ * shared, reloaded and opened beside this list.
+ *
+ * `basePath` is which frame is drawing the list, because the two keep their own
+ * copy of every read section and the detail page is a route rather than a piece
+ * of state: the title has to lead back to the list the reader was looking at.
  */
-export function NewsPage() {
+export function NewsPage({ basePath = '/dashboard' }: { basePath?: string }) {
   const { data, error, loading } = useApiResource<{ news: NewsItem[] }>('/api/news');
-  const [open, setOpen] = useState<number | null>(null);
 
   return (
     <div className="space-y-6">
@@ -49,51 +53,20 @@ export function NewsPage() {
             {
               header: 'Title',
               cell: (row) => (
-                <button
-                  type="button"
-                  onClick={() => setOpen(open === row.id ? null : row.id)}
-                  className="flex items-center gap-2 text-left font-medium text-primary hover:underline"
+                <Link
+                  to={`${basePath}/news/${row.id}`}
+                  className="flex items-center gap-2 font-medium text-primary hover:underline"
                 >
                   <Newspaper className="size-3.5 shrink-0" />
                   {row.title}
                   {row.important ? <Badge variant="warning">important</Badge> : null}
-                </button>
+                </Link>
               ),
             },
             { header: 'Published', cell: (row) => formatDate(row.publishedAt) },
           ]}
         />
       </Panel>
-
-      {expanded(data?.news ?? [], open)}
     </div>
-  );
-}
-
-/**
- * The body of one news item, below the list, once its title has been opened.
- *
- * One item at a time rather than a page of them: the list is an index, and an index
- * that expands everything is just a wall. Clicking the open title closes it again,
- * because the same click that opened a long paragraph is the one somebody makes to
- * get rid of it.
- */
-function expanded(news: NewsItem[], open: number | null) {
-  const item = news.find((candidate) => candidate.id === open);
-
-  if (!item) {
-    return null;
-  }
-
-  return (
-    <Panel title={item.title}>
-      <p className="mb-4 text-xs uppercase tracking-widest text-muted-foreground">
-        Published {formatDate(item.publishedAt)}
-      </p>
-
-      <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
-        {item.body}
-      </p>
-    </Panel>
   );
 }

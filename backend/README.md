@@ -63,8 +63,10 @@ other.
 | `src/characters.ts` | the character list for the player's own dashboard |
 | `src/clientAddress.ts` | the address a request arrived from, IPv4 only |
 | `src/publicAddresses.ts` | an account's connected characters, and the public address write |
-| `src/presence.ts` | the connected-player counts and the lobby breakdown |
+| `src/presence.ts` | the connected-player counts, the server totals and the lobby breakdown |
 | `src/dashboardQueries.ts` | the character, game, survival and tournament reads |
+| `src/newsQueries.ts` | the news list, and one news item by id |
+| `src/mailQueries.ts` | a player's own inbox, and the game master outbox single reads |
 | `src/rankingsQueries.ts` | the five player boards and the three clan boards |
 | `src/moderationWrites.ts` | the writes a moderator makes, each refusing with a reason |
 | `src/discord.ts` | the manager's Discord write, made server-side |

@@ -39,3 +39,26 @@ export async function listNews(limit: number): Promise<NewsRow[]> {
   // so would let a renamed column arrive as a silently `undefined` value.
   return rows as unknown as NewsRow[];
 }
+
+/**
+ * One news item, for the page that shows it in full.
+ *
+ * The read is by id rather than by title because the detail page is reached from
+ * a list that already named the row: re-finding the item by its title would make
+ * two items with the same title indistinguishable, and the second one would show
+ * the first one's body.
+ *
+ * Nothing is returned when there is no such item, and the route turns that into a
+ * 404 rather than an empty page — a withdrawn item has a link in a browser
+ * history and an operator following one should be told it is gone.
+ */
+export async function findNews(newsIdentifier: number): Promise<NewsRow | undefined> {
+  const rows = await database()`
+    select news.id, news.title, news.body, news.important, news.time
+    from news
+    where news.id = ${newsIdentifier}
+    limit 1
+  `;
+
+  return rows[0] as unknown as NewsRow | undefined;
+}

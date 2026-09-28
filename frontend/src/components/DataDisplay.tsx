@@ -64,28 +64,42 @@ export function Panel({ title, description, children, className }: {
  * smaller size than a figure, because it is a length of text and not a count,
  * and a count set in a monospace size small enough for an address reads as a
  * quantity that happens to be missing.
+ *
+ * The action, when there is one, is drawn inside the tile under a rule rather
+ * than beside it: a figure with a control of its own is a figure and a control
+ * that belong together, and a button floating in a row of tiles under the one it
+ * acts on is a button somebody has to work out which tile it belongs to.
  */
 export function StatTile({
   label,
   value,
   textual = false,
+  action,
 }: {
   label: string;
   value: ReactNode;
   /** Whether the value is a word or an address rather than a figure. */
   textual?: boolean;
+  /** A control for this figure, drawn inside the tile below the label. */
+  action?: ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-card/50 px-4 py-4">
-      <p
-        className={cn(
-          'font-extrabold tracking-tight text-foreground',
-          textual ? 'font-mono text-sm break-all' : 'text-3xl tabular-nums',
-        )}
-      >
-        {value}
-      </p>
-      <p className="mt-1 text-xs uppercase tracking-widest text-muted-foreground">{label}</p>
+    <div className="flex flex-col rounded-xl border border-border bg-card/50 px-4 py-4">
+      <div className="flex-1">
+        <p
+          className={cn(
+            'font-extrabold tracking-tight text-foreground',
+            textual ? 'font-mono text-sm break-all' : 'text-3xl tabular-nums',
+          )}
+        >
+          {value}
+        </p>
+        <p className="mt-1 text-xs uppercase tracking-widest text-muted-foreground">{label}</p>
+      </div>
+
+      {action === undefined ? null : (
+        <div className="mt-3 border-t border-border pt-3">{action}</div>
+      )}
     </div>
   );
 }
