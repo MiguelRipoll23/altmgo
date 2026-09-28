@@ -48,10 +48,17 @@ function readFlag(value: string | undefined): boolean {
  *
  * The lobby breakdown is what makes the count actionable — a server with forty
  * players spread over one lobby and a server with forty spread over eight are
- * the same number and a very different afternoon — and the published address is
- * the one thing on this page that is about the person reading it rather than
- * about the server: it is what another player would connect to in order to join
- * their game, and it is the figure that goes stale when their network changes.
+ * the same number and a very different afternoon — and it carries each lobby's
+ * own restrictions, because "is this lobby one I can send a beginner to" is the
+ * question the list exists to answer. The published address is the one thing on
+ * this page that is about the person reading rather than the server: it is what
+ * another player would connect to in order to join their game, and it goes stale
+ * when their network changes.
+ *
+ * The address is deliberately not in the lobby list. Every lobby shows the same
+ * host in a deployment behind one address, so a column of identical values
+ * spends width on saying nothing, and the one address that has to be correct is
+ * the caller's own — which is above the table for that reason.
  */
 dashboardRoutes.get('/overview', requireAccount, async (context) => {
   const totals = await readPresenceTotals();
@@ -63,8 +70,13 @@ dashboardRoutes.get('/overview', requireAccount, async (context) => {
     lobbies: lobbies.map((lobby) => ({
       id: lobby.id,
       name: lobby.name,
-      address: `${lobby.address}:${lobby.port}`,
       players: lobby.players,
+      restrictions: {
+        beginnersOnly: lobby.beginnersOnly,
+        expansionRequired: lobby.expansionRequired,
+        noHeadshots: lobby.noHeadshots,
+        replaysOnly: lobby.replaysOnly,
+      },
     })),
     publishedAddress: published === undefined
       ? null

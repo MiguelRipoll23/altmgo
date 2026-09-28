@@ -1,19 +1,17 @@
 import {
   Gamepad2,
   LayoutDashboard,
-  LogOut,
+  Medal,
   MessageSquare,
   Swords,
   Trophy,
   UserSearch,
-  Medal,
   type LucideIcon,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
-import { clearSessionToken, isModerator, type StaffRole } from '../session';
-import { Button } from './ui/button';
-import { Badge } from './ui/badge';
+import { NavLink } from 'react-router-dom';
+import { isModerator, type StaffRole } from '../session';
+import { AccountMenu } from './AccountMenu';
 
 /**
  * One section of the dashboard. The role is what decides whether the section is
@@ -71,7 +69,6 @@ export function DashboardLayout({
   roles: StaffRole[];
   children: ReactNode;
 }) {
-  const navigate = useNavigate();
   const visible = sections.filter(
     (section) => section.role === undefined || roles.includes(section.role) || isModerator(roles),
   );
@@ -79,15 +76,9 @@ export function DashboardLayout({
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
       <aside className="fixed inset-y-0 left-0 z-40 flex w-64 flex-col gap-6 overflow-y-auto border-r border-border bg-card/60 p-5">
-        <div>
-          <p className="text-lg font-extrabold tracking-tight">
-            <span className="text-primary">Alt</span>MGO
-          </p>
-          <p className="mt-1 truncate text-xs text-muted-foreground" title={accountName}>
-            {accountName}
-          </p>
-          <RoleBadges roles={roles} />
-        </div>
+        <p className="text-lg font-extrabold tracking-tight">
+          <span className="text-primary">Alt</span>MGO
+        </p>
 
         <nav className="flex flex-1 flex-col gap-1">
           {visible.map((section) => (
@@ -110,37 +101,12 @@ export function DashboardLayout({
           ))}
         </nav>
 
-        <Button
-          variant="outline"
-          className="mt-auto w-full"
-          onClick={() => {
-            clearSessionToken();
-            navigate('/', { replace: true });
-          }}
-        >
-          <LogOut />
-          Sign out
-        </Button>
+        <AccountMenu accountName={accountName} roles={roles} />
       </aside>
 
       <main className="min-w-0 pl-64">
         <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-8">{children}</div>
       </main>
-    </div>
-  );
-}
-
-/** The roles the signed-in account holds, so the sidebar says what it may open. */
-function RoleBadges({ roles }: { roles: StaffRole[] }) {
-  if (roles.length === 0) {
-    return null;
-  }
-
-  return (
-    <div className="mt-2 flex flex-wrap gap-1.5">
-      {roles.map((role) => (
-        <Badge key={role}>{role}</Badge>
-      ))}
     </div>
   );
 }

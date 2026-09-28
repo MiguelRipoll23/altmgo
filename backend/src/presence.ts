@@ -24,7 +24,15 @@ const GameLobbyType = 2;
  */
 const PresenceFreshSeconds = 60;
 
-/** One lobby with what is connected to it right now. */
+/**
+ * One lobby with what is connected to it right now.
+ *
+ * The four restriction flags are carried rather than summarised into a count:
+ * a moderator reading a lobby is deciding whether a player can join it, and
+ * "beginners only, expansion required" says something a single number of
+ * restrictions would not. They are the lobby's own settings, not anything this
+ * deployment infers, so the row reports them as the lobby stored them.
+ */
 export type LobbyPresenceRow = {
   id: number;
   name: string;
@@ -33,6 +41,10 @@ export type LobbyPresenceRow = {
   address: string;
   port: number;
   players: number;
+  beginnersOnly: boolean;
+  expansionRequired: boolean;
+  noHeadshots: boolean;
+  replaysOnly: boolean;
 };
 
 /** One connected player and the lobby they are in. */
@@ -85,6 +97,10 @@ export async function listLobbyPresence(): Promise<LobbyPresenceRow[]> {
       lobby.subtype_id as subtype,
       lobby.ip_address as address,
       lobby.port,
+      lobby.begginers_only as beginnersOnly,
+      lobby.expansion_required as expansionRequired,
+      lobby.no_headshots as noHeadshots,
+      lobby.replays_only as replaysOnly,
       (
         select count(*)::int
         from character_presence presence

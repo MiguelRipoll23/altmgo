@@ -39,9 +39,15 @@ export function DashboardRoute() {
   );
 }
 
-/** The overview, named as a section so the route table reads as a list of them. */
+/**
+ * The overview, named as a section so the route table reads as a list of them.
+ *
+ * The account name is no longer passed down: the layout shows who is signed in
+ * at the foot of the sidebar, and a page that also headed itself with it said
+ * the same thing twice on the one screen a player sees first.
+ */
 export function OverviewSection() {
-  return <OverviewPage accountName={readSessionAccount()} />;
+  return <OverviewPage />;
 }
 
 /**
