@@ -67,6 +67,12 @@ import { EventOperationsPage } from './pages/admin/EventOperationsPage';
  * address per list rather than one address and a parameter that says which list
  * was meant, and no id ever shares a route with the name of a list it is not in.
  *
+ * The same holds for the sections of a record rather than a list of them: one
+ * tournament event is read in three places — its registrations, its bracket and
+ * its fixtures — and each is a segment under the event rather than a switch
+ * inside the event's page. The bare event path is the registrations, so the
+ * address a card has always led to is still an address and not a redirect.
+ *
  * The staff sections exist once, in the admin tree: Discord, accounts and
  * announcements speak for the server and need a manager, and the event operations
  * run the events and need a moderator. The check in the route decides what the
@@ -110,7 +116,18 @@ export function App() {
           <Route path="survival/events/:identifier" element={<SurvivalEventPage />} />
           <Route path="survival/teams" element={<SurvivalTeamsPage />} />
           <Route path="tournament" element={<TournamentPage />} />
-          <Route path="tournament/:identifier" element={<TournamentEventPage />} />
+          <Route
+            path="tournament/:identifier"
+            element={<TournamentEventPage area="registrations" />}
+          />
+          <Route
+            path="tournament/:identifier/bracket"
+            element={<TournamentEventPage area="bracket" />}
+          />
+          <Route
+            path="tournament/:identifier/fixtures"
+            element={<TournamentEventPage area="fixtures" />}
+          />
           <Route path="rankings" element={<Navigate to="rankings/players" replace />} />
           <Route path="rankings/players" element={<RankingsPlayersPage />} />
           <Route path="rankings/clans" element={<RankingsClansPage />} />
@@ -135,7 +152,15 @@ export function App() {
           <Route path="tournament" element={<TournamentPage basePath="/admin" />} />
           <Route
             path="tournament/:identifier"
-            element={<TournamentEventPage basePath="/admin" />}
+            element={<TournamentEventPage basePath="/admin" area="registrations" />}
+          />
+          <Route
+            path="tournament/:identifier/bracket"
+            element={<TournamentEventPage basePath="/admin" area="bracket" />}
+          />
+          <Route
+            path="tournament/:identifier/fixtures"
+            element={<TournamentEventPage basePath="/admin" area="fixtures" />}
           />
           <Route path="characters" element={<CharactersPage />} />
           <Route

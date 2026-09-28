@@ -1,6 +1,6 @@
 import { ArrowLeft, Mail } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
-import { Panel, SectionHeading, formatDate } from '../components/DataDisplay';
+import { LoadingBlock, Panel, SectionHeading, formatDate } from '../components/DataDisplay';
 import { StatusMessage } from '../components/StatusMessage';
 import { useApiResource } from '../components/useApiResource';
 
@@ -38,6 +38,11 @@ export type MailScope = 'inbox' | 'outbox';
  * reading — a letter found in the outbox goes back to the outbox rather than to
  * whichever mailbox happens to be first — and so a shared link names the list the
  * sender was reading rather than leaving the reader to guess.
+ *
+ * The letter is drawn in its card whether or not it has arrived, so the page is the
+ * same page while it is being read, and the back link sits above the heading for the
+ * same reason the news detail page puts it there: a page reached from a list is read
+ * in that order.
  */
 export function MailDetailPage({
   scope,
@@ -58,10 +63,6 @@ export function MailDetailPage({
 
   return (
     <div className="space-y-6">
-      <SectionHeading title="Mail" subtitle="One message, in full." />
-
-      {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
-
       <Link
         to={back}
         className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
@@ -70,32 +71,41 @@ export function MailDetailPage({
         {label}
       </Link>
 
-      {message === null ? (
-        loading ? (
-          <p className="text-sm text-muted-foreground">Reading the message…</p>
-        ) : error === null ? (
-          <p className="text-sm text-muted-foreground">That message could not be read.</p>
-        ) : null
-      ) : (
-        <Panel>
-          <div className="mb-4 flex flex-wrap items-center gap-3">
-            <Mail className="size-4 shrink-0 text-muted-foreground" />
-            <h2 className="text-xl font-extrabold tracking-tight text-foreground">
-              {message.subject}
-            </h2>
-          </div>
+      <SectionHeading
+        title={message?.subject ?? 'Mail'}
+        subtitle="One message, in full."
+      />
 
-          <p className="mb-4 text-xs uppercase tracking-widest text-muted-foreground">
-            From {message.senderName}
-            {message.recipientName === undefined ? null : ` · To ${message.recipientName}`} · Sent{' '}
-            {formatDate(message.sentAt)}
-          </p>
+      {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
 
-          <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
-            {message.body}
-          </p>
-        </Panel>
-      )}
+      {/* The letter is drawn in a card whether or not it has arrived, so the page is
+          the same page while it is being read: the reading sits inside the card the
+          message will be drawn in rather than replacing the card with a sentence
+          somewhere else on the page. */}
+      <Panel>
+        {message === null ? (
+          loading ? (
+            <LoadingBlock label="Reading the message…" />
+          ) : error === null ? (
+            <p className="text-sm text-muted-foreground">That message could not be read.</p>
+          ) : null
+        ) : (
+          <>
+            <div className="mb-4 flex flex-wrap items-center gap-3">
+              <Mail className="size-4 shrink-0 text-muted-foreground" />
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                From {message.senderName}
+                {message.recipientName === undefined ? null : ` · To ${message.recipientName}`} · Sent{' '}
+                {formatDate(message.sentAt)}
+              </p>
+            </div>
+
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
+              {message.body}
+            </p>
+          </>
+        )}
+      </Panel>
     </div>
   );
 }

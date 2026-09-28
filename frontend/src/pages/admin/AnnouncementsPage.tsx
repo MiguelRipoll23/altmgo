@@ -109,7 +109,9 @@ export function AnnouncementsPage() {
         <DataTable
           rows={news.data?.news ?? []}
           rowKey={(row) => row.id}
-          empty={news.loading ? 'Reading the news…' : 'No news has been published.'}
+          empty="No news has been published."
+          loading={news.loading}
+          loadingLabel="Reading the news…"
           columns={[
             {
               header: 'Title',
@@ -171,7 +173,9 @@ export function AnnouncementsPage() {
         <DataTable
           rows={mail.data?.mail ?? []}
           rowKey={(row) => row.id}
-          empty={mail.loading ? 'Reading the sent mail…' : 'No game master mail has been sent.'}
+          empty="No game master mail has been sent."
+          loading={mail.loading}
+          loadingLabel="Reading the sent mail…"
           columns={[
             {
               header: 'Subject',

@@ -78,7 +78,9 @@ export function Mailbox({ mailbox }: { mailbox: MailboxName }) {
         <DataTable
           rows={data?.mail ?? []}
           rowKey={(row) => row.id}
-          empty={loading ? 'Reading the mailbox…' : copy.empty}
+          empty={copy.empty}
+          loading={loading}
+          loadingLabel="Reading the mailbox…"
           columns={[
             {
               header: 'Subject',

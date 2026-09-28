@@ -61,7 +61,7 @@ export function PublicAddressTile({
 
   return (
     <StatTile
-      label="Your public IP"
+      label="Public IP"
       textual
       value={address ?? 'Not published'}
       action={
@@ -73,7 +73,7 @@ export function PublicAddressTile({
             disabled={publishing || address === null}
           >
             {publishing ? <RefreshCw className="animate-spin" /> : <Globe />}
-            {publishing ? 'Publishing…' : 'Update my IP'}
+            {publishing ? 'Publishing…' : 'Update'}
           </Button>
 
           {report === null ? null : (

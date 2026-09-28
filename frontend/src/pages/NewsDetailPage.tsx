@@ -1,6 +1,6 @@
 import { ArrowLeft, Newspaper } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
-import { Panel, SectionHeading, formatDate } from '../components/DataDisplay';
+import { LoadingBlock, Panel, SectionHeading, formatDate } from '../components/DataDisplay';
 import { StatusMessage } from '../components/StatusMessage';
 import { useApiResource } from '../components/useApiResource';
 import { Badge } from '../components/ui/badge';
@@ -35,6 +35,10 @@ export type NewsScope = 'player' | 'manager';
  * The back link is the first thing on the page rather than something below the
  * heading. A page reached from a list is read in that order — where am I, what is
  * this — and a link under a title is a link the eye has already passed.
+ *
+ * The item is drawn in its card whether or not it has arrived, so the page is the
+ * same page while it is being read rather than a heading followed by a sentence in
+ * the place the card will be.
  */
 export function NewsDetailPage({
   scope,
@@ -60,35 +64,40 @@ export function NewsDetailPage({
         All news
       </Link>
 
-      <SectionHeading title="News" subtitle="One item, as it is drawn on the login screen." />
+      <SectionHeading
+        title={item?.title ?? 'News'}
+        subtitle="One item, as it is drawn on the login screen."
+      />
 
       {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
 
-      {item === null ? (
-        loading ? (
-          <p className="text-sm text-muted-foreground">Reading the item…</p>
-        ) : error === null ? (
-          <p className="text-sm text-muted-foreground">That news item could not be read.</p>
-        ) : null
-      ) : (
-        <Panel>
-          <div className="mb-4 flex flex-wrap items-center gap-3">
-            <Newspaper className="size-4 shrink-0 text-muted-foreground" />
-            <h2 className="text-xl font-extrabold tracking-tight text-foreground">
-              {item.title}
-            </h2>
-            {item.important ? <Badge variant="warning">important</Badge> : null}
-          </div>
+      {/* Drawn in a card whether or not the item has arrived, so the page is the same
+          page while it is being read: the reading sits inside the card the item will
+          be drawn in rather than replacing the card with a sentence. */}
+      <Panel>
+        {item === null ? (
+          loading ? (
+            <LoadingBlock label="Reading the item…" />
+          ) : error === null ? (
+            <p className="text-sm text-muted-foreground">That news item could not be read.</p>
+          ) : null
+        ) : (
+          <>
+            <div className="mb-4 flex flex-wrap items-center gap-3">
+              <Newspaper className="size-4 shrink-0 text-muted-foreground" />
+              {item.important ? <Badge variant="warning">important</Badge> : null}
+            </div>
 
-          <p className="mb-4 text-xs uppercase tracking-widest text-muted-foreground">
-            Published {formatDate(item.publishedAt)}
-          </p>
+            <p className="mb-4 text-xs uppercase tracking-widest text-muted-foreground">
+              Published {formatDate(item.publishedAt)}
+            </p>
 
-          <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
-            {item.body}
-          </p>
-        </Panel>
-      )}
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
+              {item.body}
+            </p>
+          </>
+        )}
+      </Panel>
     </div>
   );
 }

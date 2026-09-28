@@ -1,6 +1,13 @@
 import { ArrowLeft, Crown, Swords, Trophy } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
-import { Panel, SectionHeading, formatDate } from '../components/DataDisplay';
+import {
+  LoadingBlock,
+  Panel,
+  SectionHeading,
+  formatDate,
+  formatNumber,
+} from '../components/DataDisplay';
+import { PageTabs } from '../components/PageTabs';
 import { StatusMessage } from '../components/StatusMessage';
 import { useApiResource } from '../components/useApiResource';
 import { Badge } from '../components/ui/badge';
@@ -32,6 +39,25 @@ type Bracket = {
 
 type Tournament = { event: number; entries: Entry[]; bracket: Bracket | null; fixtures: Fixture[] };
 
+/** Which of the three views of an event is being read. */
+export type TournamentArea = 'registrations' | 'bracket' | 'fixtures';
+
+/** What each view is called, and the sentence the page opens with for it. */
+const areas: Record<TournamentArea, { label: string; summary: string }> = {
+  registrations: {
+    label: 'Registrations',
+    summary: 'Who registered, in the order they took their places.',
+  },
+  bracket: {
+    label: 'Bracket',
+    summary: 'How the field was seeded, and how far the tournament has gone.',
+  },
+  fixtures: {
+    label: 'Fixtures',
+    summary: 'Every match that has been played, newest first.',
+  },
+};
+
 /**
  * One Tournament event: who registered, how the bracket was drawn, and what has
  * been played.
@@ -41,17 +67,35 @@ type Tournament = { event: number; entries: Entry[]; bracket: Bracket | null; fi
  * somebody — which is the whole reason it is a page and not a panel that appeared
  * under the list when a row was clicked.
  *
- * The three parts are cards rather than tables. A registration is a person and
- * the team they are in, a seed is an order, and a fixture is a match with a
- * winner: none of them is a row of columns, and a table of them asks a reader to
- * match up headers to work out who beat whom. As cards, a fixture says
- * "Team A beat Team B" in the order it was played.
+ * The three parts are three pages rather than three cards on one, for the reason
+ * the sidebar's sub-options are pages: a bracket that has not been drawn, a field of
+ * a hundred registrations and a list of fixtures are three different pages to be in,
+ * and the one a reader wants is usually not the one the page opens on. Each has its
+ * own segment under the event, so the address says which is being read, the row of
+ * tabs can be linked to, and the back button walks out of the bracket and back into
+ * it. Registrations are the bare event path, so the address a card has always led to
+ * is still an address rather than a redirect to one of its sections.
+ *
+ * The three are cards rather than tables. A registration is a person and the team
+ * they are in, a seed is an order, and a fixture is a match with a winner: none of
+ * them is a row of columns, and a table of them asks a reader to match up headers
+ * to work out who beat whom. As cards, a fixture says "Team A beat Team B" in the
+ * order it was played.
  */
-export function TournamentEventPage({ basePath = '/dashboard' }: { basePath?: string }) {
+export function TournamentEventPage({
+  basePath = '/dashboard',
+  area = 'registrations',
+}: {
+  basePath?: string;
+  /** Which of the three sections this address is reading. */
+  area?: TournamentArea;
+}) {
   const { identifier } = useParams();
   const { data, error, loading } = useApiResource<Tournament>(
     `/api/tournament?event=${encodeURIComponent(identifier ?? '')}`,
   );
+
+  const eventPath = `${basePath}/tournament/${identifier}`;
 
   return (
     <div className="space-y-6">
@@ -65,116 +109,190 @@ export function TournamentEventPage({ basePath = '/dashboard' }: { basePath?: st
 
       <SectionHeading
         title={`Tournament event ${identifier}`}
-        subtitle="Who registered, how the bracket was drawn, and what has been played."
+        subtitle={areas[area].summary}
       />
 
       {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
 
-      <Panel title="Registrations">
-        {data?.entries.length === 0 && !loading ? (
-          <p className="text-sm text-muted-foreground">Nobody has registered for this event.</p>
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {(data?.entries ?? []).map((entry) => (
-              <div
-                key={entry.character_id}
-                className="rounded-lg border border-border bg-background/40 px-4 py-3"
-              >
-                <p className="font-semibold text-foreground">{entry.character_name}</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {entry.team_name ?? 'No team yet'}
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Place {entry.slot_index} · reserved {formatDate(entry.reserved_at)}
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
-      </Panel>
+      <PageTabs
+        label="Sections of this event"
+        tabs={[
+          {
+            to: eventPath,
+            label: areas.registrations.label,
+            badge: data === null ? undefined : formatNumber(data.entries.length),
+          },
+          { to: `${eventPath}/bracket`, label: areas.bracket.label },
+          {
+            to: `${eventPath}/fixtures`,
+            label: areas.fixtures.label,
+            badge: data === null ? undefined : formatNumber(data.fixtures.length),
+          },
+        ]}
+      />
 
-      <Panel title="Bracket">
-        {data?.bracket === null || data === null ? (
-          <p className="text-sm text-muted-foreground">
-            {loading ? 'Reading the bracket…' : 'This event has not been drawn yet.'}
-          </p>
-        ) : (
-          <>
-            <p className="mb-4 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-              <Trophy className="size-4 shrink-0" />
-              Round {data.bracket.current_round}
-              {data.bracket.champion_team_name === null ? null : (
-                <Badge variant="success">
-                  <Crown className="size-3" />
-                  {data.bracket.champion_team_name}
-                </Badge>
-              )}
-            </p>
-
-            {data.bracket.seeds.length === 0 ? (
-              <p className="text-sm text-muted-foreground">The bracket has no seeds.</p>
-            ) : (
-              <ol className="grid gap-2 sm:grid-cols-2">
-                {data.bracket.seeds.map((seed) => (
-                  <li
-                    key={seed.seed_index}
-                    className="flex items-center gap-3 rounded-lg border border-border bg-background/40 px-4 py-2.5"
-                  >
-                    <span className="w-6 shrink-0 text-right text-sm tabular-nums text-muted-foreground">
-                      {seed.seed_index + 1}
-                    </span>
-                    <span className="font-medium text-foreground">
-                      {seed.team_name ?? 'To be decided'}
-                    </span>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </>
-        )}
-      </Panel>
-
-      <Panel title="Fixtures">
-        {data?.fixtures.length === 0 && !loading ? (
-          <p className="text-sm text-muted-foreground">No fixture has been played.</p>
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2">
-            {(data?.fixtures ?? []).map((fixture) => {
-              const first = fixture.winner_team_id === fixture.first_team_id;
-              const winner = first ? fixture.first_team_name : fixture.second_team_name;
-
-              return (
-                <div
-                  key={fixture.id}
-                  className="rounded-lg border border-border bg-background/40 px-4 py-3"
-                >
-                  <p className="text-xs uppercase tracking-widest text-muted-foreground">
-                    Round {fixture.round_index + 1}
-                  </p>
-
-                  <p className="mt-2 flex items-center gap-2 text-sm">
-                    <Swords className="size-3.5 shrink-0 text-muted-foreground" />
-                    <span className={first ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
-                      {fixture.first_team_name ?? 'To be decided'}
-                    </span>
-                    <span className="text-muted-foreground">vs</span>
-                    <span
-                      className={first ? 'text-muted-foreground' : 'font-semibold text-foreground'}
-                    >
-                      {fixture.second_team_name ?? 'To be decided'}
-                    </span>
-                  </p>
-
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {winner === null ? 'No winner reported' : `${winner} won`} ·{' '}
-                    {formatDate(fixture.reported_at)}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </Panel>
+      {area === 'registrations' ? <Registrations data={data} loading={loading} /> : null}
+      {area === 'bracket' ? <BracketPanel data={data} loading={loading} /> : null}
+      {area === 'fixtures' ? <Fixtures data={data} loading={loading} /> : null}
     </div>
+  );
+}
+
+/**
+ * Who registered, in the order they reserved their place.
+ *
+ * The order is the place they took rather than the order they arrived or the order
+ * they are drawn, because a registration list that is not in registration order is a
+ * list a reader has to sort before reading.
+ */
+function Registrations({ data, loading }: { data: Tournament | null; loading: boolean }) {
+  const entries = [...(data?.entries ?? [])].sort(
+    (left, right) => left.slot_index - right.slot_index,
+  );
+
+  if (entries.length === 0) {
+    return (
+      <Panel>
+        {loading ? (
+          <LoadingBlock label="Reading the registrations…" />
+        ) : (
+          <p className="text-sm text-muted-foreground">Nobody has registered for this event.</p>
+        )}
+      </Panel>
+    );
+  }
+
+  return (
+    <Panel>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {entries.map((entry) => (
+          <div
+            key={entry.character_id}
+            className="rounded-lg border border-border bg-background/40 px-4 py-3"
+          >
+            <p className="font-semibold text-foreground">{entry.character_name}</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {entry.team_name ?? 'No team yet'}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Place {entry.slot_index} · reserved {formatDate(entry.reserved_at)}
+            </p>
+          </div>
+        ))}
+      </div>
+    </Panel>
+  );
+}
+
+/** The draw, and how far the tournament has gone. */
+function BracketPanel({ data, loading }: { data: Tournament | null; loading: boolean }) {
+  const bracket = data?.bracket ?? null;
+
+  return (
+    <Panel>
+      {bracket === null ? (
+        loading ? (
+          <LoadingBlock label="Reading the bracket…" />
+        ) : (
+          <p className="text-sm text-muted-foreground">This event has not been drawn yet.</p>
+        )
+      ) : (
+        <>
+          <p className="mb-4 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            <Trophy className="size-4 shrink-0" />
+            Round {bracket.current_round}
+            {bracket.champion_team_name === null ? null : (
+              <Badge variant="success">
+                <Crown className="size-3" />
+                {bracket.champion_team_name}
+              </Badge>
+            )}
+          </p>
+
+          {bracket.seeds.length === 0 ? (
+            <p className="text-sm text-muted-foreground">The bracket has no seeds.</p>
+          ) : (
+            <ol className="grid gap-2 sm:grid-cols-2">
+              {bracket.seeds.map((seed) => (
+                <li
+                  key={seed.seed_index}
+                  className="flex items-center gap-3 rounded-lg border border-border bg-background/40 px-4 py-2.5"
+                >
+                  <span className="w-6 shrink-0 text-right text-sm tabular-nums text-muted-foreground">
+                    {seed.seed_index + 1}
+                  </span>
+                  <span className="font-medium text-foreground">
+                    {seed.team_name ?? 'To be decided'}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </>
+      )}
+    </Panel>
+  );
+}
+
+/**
+ * The matches that have been played, most recently reported first.
+ *
+ * A fixture is reported the moment it finishes, so the order they arrived in is the
+ * order they were played, and a reader asking "what happened last" reads the top row
+ * rather than the bottom.
+ */
+function Fixtures({ data, loading }: { data: Tournament | null; loading: boolean }) {
+  const fixtures = [...(data?.fixtures ?? [])].sort(
+    (left, right) => new Date(right.reported_at).getTime() - new Date(left.reported_at).getTime(),
+  );
+
+  if (fixtures.length === 0) {
+    return (
+      <Panel>
+        {loading ? (
+          <LoadingBlock label="Reading the fixtures…" />
+        ) : (
+          <p className="text-sm text-muted-foreground">No fixture has been played.</p>
+        )}
+      </Panel>
+    );
+  }
+
+  return (
+    <Panel>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {fixtures.map((fixture) => {
+          const first = fixture.winner_team_id === fixture.first_team_id;
+          const winner = first ? fixture.first_team_name : fixture.second_team_name;
+
+          return (
+            <div
+              key={fixture.id}
+              className="rounded-lg border border-border bg-background/40 px-4 py-3"
+            >
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                Round {fixture.round_index + 1}
+              </p>
+
+              <p className="mt-2 flex items-center gap-2 text-sm">
+                <Swords className="size-3.5 shrink-0 text-muted-foreground" />
+                <span className={first ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
+                  {fixture.first_team_name ?? 'To be decided'}
+                </span>
+                <span className="text-muted-foreground">vs</span>
+                <span className={first ? 'text-muted-foreground' : 'font-semibold text-foreground'}>
+                  {fixture.second_team_name ?? 'To be decided'}
+                </span>
+              </p>
+
+              <p className="mt-1 text-xs text-muted-foreground">
+                {winner === null ? 'No winner reported' : `${winner} won`} ·{' '}
+                {formatDate(fixture.reported_at)}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+    </Panel>
   );
 }

@@ -1,6 +1,7 @@
 import { CalendarClock, ChevronRight, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Badge } from './ui/badge';
+import { LoadingBlock } from './DataDisplay';
 import type { Schedule } from './ScheduleForm';
 import { formatEpoch } from './ScheduleForm';
 
@@ -40,14 +41,24 @@ export function EventCards({
   schedules,
   basePath,
   empty,
+  loading = false,
+  loadingLabel = 'Loading…',
 }: {
   schedules: Schedule[];
   /** The section the cards live under, so the link is that section's event. */
   basePath: string;
   empty: string;
+  /** Whether the schedules are still being read. */
+  loading?: boolean;
+  /** What the reading is, for the case where there is nothing to keep on screen. */
+  loadingLabel?: string;
 }) {
   if (schedules.length === 0) {
-    return <p className="text-sm text-muted-foreground">{empty}</p>;
+    return loading ? (
+      <LoadingBlock label={loadingLabel} />
+    ) : (
+      <p className="text-sm text-muted-foreground">{empty}</p>
+    );
   }
 
   return (

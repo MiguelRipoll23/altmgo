@@ -172,7 +172,9 @@ export function AdminOverviewPage() {
         <DataTable
           rows={overview.data?.lobbies ?? []}
           rowKey={(row) => row.id}
-          empty={overview.loading ? 'Reading the lobbies…' : 'No game lobby is running.'}
+          empty="No game lobby is running."
+          loading={overview.loading}
+          loadingLabel="Reading the lobbies…"
           columns={[
             { header: 'Lobby', cell: (row) => row.name },
             {

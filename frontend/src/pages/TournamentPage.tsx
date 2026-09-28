@@ -42,7 +42,9 @@ export function TournamentPage({ basePath = '/dashboard' }: { basePath?: string 
       <EventCards
         schedules={data?.schedules ?? []}
         basePath={`${basePath}/tournament`}
-        empty={loading ? 'Reading the events…' : 'No Tournament event is scheduled.'}
+        empty="No Tournament event is scheduled."
+        loading={loading}
+        loadingLabel="Reading the events…"
       />
     </div>
   );

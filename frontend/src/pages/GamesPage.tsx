@@ -1,7 +1,7 @@
 import { RefreshCw } from 'lucide-react';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
-import { DataTable, Panel, SectionHeading, formatDate } from '../components/DataDisplay';
+import { DataTable, Panel, SectionHeading, formatDate, formatNumber } from '../components/DataDisplay';
 import { StatusMessage } from '../components/StatusMessage';
 import { useApiResource } from '../components/useApiResource';
 
@@ -36,18 +36,26 @@ export function GamesPage() {
 
       {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
 
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <Button onClick={reload} disabled={loading}>
           <RefreshCw className={loading ? 'animate-spin' : undefined} />
           {loading ? 'Refreshing…' : 'Refresh'}
         </Button>
+
+        {loading || data === null ? null : (
+          <p className="text-sm text-muted-foreground">
+            {formatNumber(data.games.length)} {data.games.length === 1 ? 'room' : 'rooms'} being hosted
+          </p>
+        )}
       </div>
 
       <Panel>
         <DataTable
           rows={data?.games ?? []}
           rowKey={(row) => row.id}
-          empty={loading ? 'Reading the rooms…' : 'No game is being hosted right now.'}
+          empty="No game is being hosted right now."
+          loading={loading}
+          loadingLabel="Reading the rooms…"
           columns={[
             {
               header: 'Room',

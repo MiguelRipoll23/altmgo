@@ -64,20 +64,29 @@ export function DashboardShell({
   // opened is behind the column, and a reader who tapped a section on a narrow
   // window is looking at the column rather than the section.
   //
-  // The first arrival is not a change of page, though, and treating it as one
-  // would put the column away on every load — on a wide window too, which is
-  // where it is part of the layout rather than a drawer over it.
+  // On a wide window nothing is put away. The column is part of the layout there
+  // rather than a drawer laid over the page, so a section that closes it every
+  // time it is followed turns a desktop dashboard into one that has to be opened
+  // again after every click — and the reader who opened it by hand would watch it
+  // close itself for having been used.
+  //
+  // The first arrival is not a change of page either, and treating it as one would
+  // put the column away on every load, on a wide window above all.
   useEffect(() => {
     if (!arrived.current) {
       arrived.current = true;
       return;
     }
 
-    setOpen(false);
+    if (!isWideWindow()) {
+      setOpen(false);
+    }
   }, [location.pathname, location.search]);
 
   // Escape closes it, because a drawer with no keyboard way out is a drawer some
-  // people cannot use at all.
+  // people cannot use at all. It is a control the reader pressed, so it is honoured
+  // on a wide window too: a column left open on a desktop is a column they asked
+  // to have.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {

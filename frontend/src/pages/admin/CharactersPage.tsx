@@ -115,7 +115,9 @@ export function CharactersPage() {
         <DataTable
           rows={list.data?.characters ?? []}
           rowKey={(row) => row.id}
-          empty={list.loading ? 'Searching…' : 'No character matched that search.'}
+          empty="No character matched that search."
+          loading={list.loading}
+          loadingLabel="Searching…"
           columns={[
             {
               header: 'Name',

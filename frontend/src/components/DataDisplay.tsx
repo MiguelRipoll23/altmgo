@@ -1,6 +1,7 @@
+import { RefreshCw } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { cn } from '../lib/utils';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card';
 import {
   Table,
   TableBody,
@@ -30,26 +31,56 @@ export function SectionHeading({ title, subtitle }: { title: string; subtitle?: 
 }
 
 /** A card a panel of controls or a list sits in. */
-export function Panel({ title, description, children, className }: {
+export function Panel({ title, description, footer, children, className }: {
   title?: string;
   description?: ReactNode;
+  /** A band under the content, for paging or a count. Drawn inside the card. */
+  footer?: ReactNode;
   children: ReactNode;
   className?: string;
 }) {
+  const headed = title !== undefined || description !== undefined;
+
   return (
     <Card className={className}>
-      {title === undefined && description === undefined ? (
-        <CardContent>{children}</CardContent>
-      ) : (
-        <>
-          <CardHeader>
-            {title === undefined ? null : <CardTitle>{title}</CardTitle>}
-            {description === undefined ? null : <CardDescription>{description}</CardDescription>}
-          </CardHeader>
-          <CardContent>{children}</CardContent>
-        </>
-      )}
+      {headed ? (
+        <CardHeader>
+          {title === undefined ? null : <CardTitle>{title}</CardTitle>}
+          {description === undefined ? null : <CardDescription>{description}</CardDescription>}
+        </CardHeader>
+      ) : null}
+
+      {/* The card's own content band carries no top padding of its own, because it
+          normally sits under a heading band that has already given the card its
+          space. A panel with no heading has nothing above it doing that, so it puts
+          the padding back — otherwise its first line is drawn against the top border
+          of the card, which is what a body of text touching the frame looks like. */}
+      <CardContent className={cn(headed ? undefined : 'pt-5 sm:pt-6')}>{children}</CardContent>
+
+      {footer === undefined ? null : <CardFooter>{footer}</CardFooter>}
     </Card>
+  );
+}
+
+/**
+ * A panel that is still being read.
+ *
+ * It is drawn inside the card the content will arrive in rather than above it or in
+ * place of it, because the position of the reading message is the position of the
+ * answer: a page that shows a card with nothing in it has shown an empty box, and a
+ * page that shows the message outside the card has shown it somewhere the content is
+ * not going to be.
+ *
+ * The words are the ones the page would have said, and a spinner rides beside them
+ * because a sentence with nothing moving on it reads as a page that has settled on
+ * an empty answer.
+ */
+export function LoadingBlock({ label }: { label: string }) {
+  return (
+    <p role="status" className="flex items-center gap-2 py-1 text-sm text-muted-foreground">
+      <RefreshCw className="size-4 shrink-0 animate-spin" />
+      {label}
+    </p>
   );
 }
 
@@ -149,46 +180,72 @@ export type Column<T> = {
  *
  * The empty line says what was looked for rather than showing nothing: an empty
  * table is either "no such character", "no games running" or "the query failed",
- * and only the sentence tells those apart.
+ * and only the sentence tells those apart. While the rows are being read it is a
+ * loading line inside the same card rather than the empty sentence, because a table
+ * that says "no rooms are being hosted" for the half second before the rooms arrive
+ * is a page telling the reader something it does not know.
+ *
+ * A table that already has rows says it is reading again underneath them, rather
+ * than emptying itself. The rows on screen are the last ones that were true, and a
+ * board that blanks itself while the next page is fetched is a board that loses the
+ * reader's place every time they turn a page.
  */
 export function DataTable<T>({
   columns,
   rows,
   rowKey,
   empty,
+  loading = false,
+  loadingLabel = 'Loading…',
 }: {
   columns: Column<T>[];
   rows: T[];
   rowKey: (row: T) => string | number;
   empty: string;
+  /** Whether the rows are still being read. */
+  loading?: boolean;
+  /** What the reading is, for the case where there is nothing to keep on screen. */
+  loadingLabel?: string;
 }) {
   if (rows.length === 0) {
-    return <p className="text-sm text-muted-foreground">{empty}</p>;
+    return loading ? (
+      <LoadingBlock label={loadingLabel} />
+    ) : (
+      <p className="text-sm text-muted-foreground">{empty}</p>
+    );
   }
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          {columns.map((column) => (
-            <TableHead key={column.header} scope="col" className={column.className}>
-              {column.header}
-            </TableHead>
-          ))}
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {rows.map((row) => (
-          <TableRow key={rowKey(row)}>
+    <div>
+      <Table>
+        <TableHeader>
+          <TableRow>
             {columns.map((column) => (
-              <TableCell key={column.header} className={column.className}>
-                {column.cell(row) ?? <span className="text-muted-foreground">—</span>}
-              </TableCell>
+              <TableHead key={column.header} scope="col" className={column.className}>
+                {column.header}
+              </TableHead>
             ))}
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {rows.map((row) => (
+            <TableRow key={rowKey(row)}>
+              {columns.map((column) => (
+                <TableCell key={column.header} className={column.className}>
+                  {column.cell(row) ?? <span className="text-muted-foreground">—</span>}
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+
+      {loading ? (
+        <div className="mt-3">
+          <LoadingBlock label={loadingLabel} />
+        </div>
+      ) : null}
+    </div>
   );
 }
 

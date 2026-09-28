@@ -141,7 +141,9 @@ export function EventOperationsPage() {
           mayWrite
           onWrite={writeNow}
           onChanged={schedules.reload}
-          empty={schedules.loading ? 'Reading the schedule…' : 'No event is scheduled in this mode.'}
+          empty="No event is scheduled in this mode."
+          loading={schedules.loading}
+          loadingLabel="Reading the schedule…"
         />
       </Panel>
 

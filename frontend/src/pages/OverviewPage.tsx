@@ -67,7 +67,9 @@ export function OverviewPage() {
         <DataTable
           rows={data?.lobbies ?? []}
           rowKey={(row) => row.id}
-          empty={loading ? 'Reading the lobbies…' : 'No game lobby is running.'}
+          empty="No game lobby is running."
+          loading={loading}
+          loadingLabel="Reading the lobbies…"
           columns={[
             { header: 'Lobby', cell: (row) => row.name },
             {

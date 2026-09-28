@@ -2,7 +2,7 @@ import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { apiRequest, describeError } from '../api';
 import { readSessionToken } from '../session';
-import { Panel } from './DataDisplay';
+import { LoadingBlock, Panel } from './DataDisplay';
 import { StatusMessage } from './StatusMessage';
 import type { Write } from './TeamCard';
 import { Button } from './ui/button';
@@ -354,15 +354,25 @@ export function ScheduleList({
   onWrite,
   onChanged,
   empty,
+  loading = false,
+  loadingLabel = 'Loading…',
 }: {
   schedules: Schedule[];
   mayWrite: boolean;
   onWrite: Write;
   onChanged: () => void;
   empty: string;
+  /** Whether the schedules are still being read. */
+  loading?: boolean;
+  /** What the reading is, for the case where there is nothing to keep on screen. */
+  loadingLabel?: string;
 }) {
   if (schedules.length === 0) {
-    return <p className="text-sm text-muted-foreground">{empty}</p>;
+    return loading ? (
+      <LoadingBlock label={loadingLabel} />
+    ) : (
+      <p className="text-sm text-muted-foreground">{empty}</p>
+    );
   }
 
   return (

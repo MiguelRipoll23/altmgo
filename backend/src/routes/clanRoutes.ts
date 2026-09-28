@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import type { AppBindings } from '../authentication.js';
 import { requireAccount } from '../authentication.js';
-import { findClanDetail, isClanSort, searchClans } from '../clanQueries.js';
+import { findClanDetail, isClanSort, isClanStatus, searchClans } from '../clanQueries.js';
 
 /**
  * The clan directory and the record of any one clan.
@@ -22,10 +22,17 @@ clanRoutes.get('/clans', requireAccount, async (context) => {
   const requested = context.req.query('sort') ?? 'name';
   const sort = isClanSort(requested) ? requested : 'name';
 
+  // The status is narrowed here rather than in the page, so the list that arrives is
+  // the list the filter asked for rather than the first page of it. An unknown one
+  // falls back to both sides rather than being refused, the same as an unknown
+  // ordering: a stale link should still open the directory.
+  const askedStatus = context.req.query('status') ?? 'all';
+  const status = isClanStatus(askedStatus) ? askedStatus : 'all';
+
   const parsed = Number(context.req.query('limit') ?? MaximumSearchResults);
   const limit = Number.isInteger(parsed) ? Math.min(Math.max(parsed, 1), MaximumSearchResults) : MaximumSearchResults;
 
-  const clans = await searchClans(term, sort, limit);
+  const clans = await searchClans(term, sort, limit, status);
 
   return context.json({
     clans: clans.map((clan) => ({

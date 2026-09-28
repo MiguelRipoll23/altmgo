@@ -43,7 +43,9 @@ export function SurvivalEventsPage({ basePath = '/dashboard' }: { basePath?: str
       <EventCards
         schedules={data?.schedules ?? []}
         basePath={`${basePath}/survival/events`}
-        empty={loading ? 'Reading the events…' : 'No Survival event is scheduled.'}
+        empty="No Survival event is scheduled."
+        loading={loading}
+        loadingLabel="Reading the events…"
       />
     </div>
   );

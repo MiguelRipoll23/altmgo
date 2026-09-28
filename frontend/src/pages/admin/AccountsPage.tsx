@@ -131,7 +131,9 @@ export function AccountsPage() {
         <DataTable
           rows={shown}
           rowKey={(row) => row.id}
-          empty={accounts.loading ? 'Reading the accounts…' : 'No account matched that search.'}
+          empty="No account matched that search."
+          loading={accounts.loading}
+          loadingLabel="Reading the accounts…"
           columns={[
             { header: 'Account', cell: (row) => row.displayName },
             { header: 'Main character', cell: (row) => row.mainCharacterName },

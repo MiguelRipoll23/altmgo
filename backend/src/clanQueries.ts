@@ -21,6 +21,17 @@ export function isClanSort(name: string): name is ClanSort {
   return (ClanSorts as readonly string[]).includes(name);
 }
 
+/** Which side of the applications a clan search is looking at. */
+export type ClanStatus = 'all' | 'open' | 'closed';
+
+/** Every status a clan search can be asked for, so an unknown one is refused. */
+export const ClanStatuses: readonly ClanStatus[] = ['all', 'open', 'closed'];
+
+/** Whether a name is one of the statuses. */
+export function isClanStatus(name: string): name is ClanStatus {
+  return (ClanStatuses as readonly string[]).includes(name);
+}
+
 /** One clan as the directory lists it. */
 export type ClanSummaryRow = {
   id: number;
@@ -79,6 +90,12 @@ async function readRows<T>(rows: Promise<Record<string, unknown>[]>): Promise<T[
  * usually knows its name; the roster and the notice are what the list then offers to
  * show, and neither is a word anybody types to find it.
  *
+ * The status narrows the same search to the clans that are taking applications or to
+ * the ones that have closed them. It is a filter in the query rather than in the
+ * page because the list is capped: filtering a capped list on arrival would report
+ * the count of what arrived rather than the count of what matched, and the page
+ * prints a count.
+ *
  * The leader is reached through the membership row rather than through a character
  * id, because `clans.leader_id` points at `clans_members.id` — joining it straight to
  * `characters` would name whoever happened to hold that character id. The two counts
@@ -86,7 +103,12 @@ async function readRows<T>(rows: Promise<Record<string, unknown>[]>): Promise<T[
  * tables at once multiplies the two counts into each other: a clan with four members
  * and two applications would otherwise report eight of each.
  */
-export async function searchClans(term: string, sort: ClanSort, limit: number): Promise<ClanSummaryRow[]> {
+export async function searchClans(
+  term: string,
+  sort: ClanSort,
+  limit: number,
+  status: ClanStatus = 'all',
+): Promise<ClanSummaryRow[]> {
   const pattern = `%${term}%`;
 
   // The ordering is a fixed expression per sort rather than a column name, so it
@@ -98,6 +120,15 @@ export async function searchClans(term: string, sort: ClanSort, limit: number): 
     members: raw('member_count desc, clan.name'),
     recent: raw('clan.created_at desc nulls last, clan.name'),
   };
+
+  // The same argument as the ordering: the status is one of three named sides, and
+  // the expression is chosen from those three rather than from what arrived.
+  const statuses: Record<ClanStatus, ReturnType<typeof raw> | null> = {
+    all: null,
+    open: raw('clan.open <> 0'),
+    closed: raw('clan.open = 0'),
+  };
+  const narrowed = statuses[status];
 
   return readRows<ClanSummaryRow>(database()`
     select
@@ -122,7 +153,8 @@ export async function searchClans(term: string, sort: ClanSort, limit: number): 
     from clans clan
     left join clans_members leader on leader.id = clan.leader_id
     left join characters leader_character on leader_character.id = leader.character_id
-    where ${term} = '' or clan.name ilike ${pattern}
+    where (${term} = '' or clan.name ilike ${pattern})
+      and (${narrowed === null ? raw('true') : narrowed})
     order by ${orderings[sort]}
     limit ${limit}
   `);

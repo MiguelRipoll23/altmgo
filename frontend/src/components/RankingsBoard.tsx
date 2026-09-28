@@ -61,8 +61,10 @@ const subjects: Record<BoardSubject, { title: string; subtitle: string }> = {
 /** Rows one page of a board holds. */
 const PageSize = 25;
 
-type Entry = { rank: number; identifier: number; name: string; value: number };
+/** The window, once the rows are in. */
 type Page = { entries: Entry[]; total: number };
+
+type Entry = { rank: number; identifier: number; name: string; value: number };
 
 /**
  * One window of one board, for one subject.
@@ -80,6 +82,12 @@ type Page = { entries: Entry[]; total: number };
  * shown. The sidebar's sub-options are where that choice is made, and making it
  * in the address rather than in a control is what gives each subject a link that
  * can be shared and reloaded.
+ *
+ * The paging is drawn at the foot of the board rather than below it as a row of
+ * its own, because the buttons and the count are statements about the rows above
+ * them: a reader who turns a page should not have to look away from the board to
+ * find out whether there is another one, and the window should not be somewhere
+ * else on the page that a narrow window can scroll past on its own.
  */
 export function RankingsBoard({ subject }: { subject: BoardSubject }) {
   const [board, setBoard] = useState(boards[subject][0].value);
@@ -92,12 +100,19 @@ export function RankingsBoard({ subject }: { subject: BoardSubject }) {
   // asking for a board that is not on this page and rendering the refusal.
   const offered = boards[subject];
   const shown = offered.some((option) => option.value === board) ? board : offered[0].value;
+  const name = offered.find((option) => option.value === shown)?.label ?? shown;
 
-  const { data, error, loading, reload } = useApiResource<Page>(
+  const { data, error, loading } = useApiResource<Page>(
     `/api/rankings/${subject}?board=${shown}&month=${month}&from=${from}&limit=${PageSize}`,
   );
 
-  const lastPage = data === null ? 0 : Math.max(0, Math.ceil(data.total / PageSize) - 1);
+  // The window is measured off the rows that arrived rather than off the request,
+  // so a board that returned fewer than a full page says where it stopped rather
+  // than claiming a range it does not have.
+  const first = data === null || data.entries.length === 0 ? 0 : from + 1;
+  const last = data === null ? 0 : from + data.entries.length;
+  const pages = data === null ? 1 : Math.max(1, Math.ceil(data.total / PageSize));
+  const page = Math.floor(from / PageSize) + 1;
 
   return (
     <div className="space-y-6">
@@ -105,7 +120,7 @@ export function RankingsBoard({ subject }: { subject: BoardSubject }) {
 
       <Panel>
         <div className="flex flex-wrap items-end gap-3">
-          <div className="space-y-2">
+          <div className="w-full space-y-2 sm:w-56">
             <Label htmlFor="board">Board</Label>
             <Select
               value={shown}
@@ -114,7 +129,7 @@ export function RankingsBoard({ subject }: { subject: BoardSubject }) {
                 setFrom(0);
               }}
             >
-              <SelectTrigger id="board" className="w-48">
+              <SelectTrigger id="board">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -127,7 +142,7 @@ export function RankingsBoard({ subject }: { subject: BoardSubject }) {
             </Select>
           </div>
 
-          <label className="flex items-center gap-2 pb-3 text-sm text-foreground/80">
+          <label className="flex h-9 items-center gap-2 text-sm text-foreground/80">
             <input
               type="checkbox"
               checked={month}
@@ -141,11 +156,48 @@ export function RankingsBoard({ subject }: { subject: BoardSubject }) {
 
       {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
 
-      <Panel>
+      {/* The count, the board's name and the paging all describe the same list, so
+          they are drawn with it: a heading that says "Grade points" above a card
+          that says "nothing is ranked here" and a count of zero on the button row
+          below is three statements about one list that a reader has to reconcile. */}
+      <Panel
+        title={name}
+        description={describeBoard(data, loading, month)}
+        footer={
+          data === null || data.total === 0 ? null : (
+            <div className="flex w-full flex-wrap items-center justify-between gap-3">
+              <Button
+                variant="secondary"
+                onClick={() => setFrom(Math.max(0, from - PageSize))}
+                disabled={from === 0 || loading}
+              >
+                <ChevronLeft />
+                Previous
+              </Button>
+
+              <p className="text-sm text-muted-foreground">
+                {formatNumber(first)}–{formatNumber(last)} of {formatNumber(data.total)}
+                <span className="mx-2 text-border">·</span>
+                page {formatNumber(page)} of {formatNumber(pages)}
+              </p>
+
+              <Button
+                onClick={() => setFrom(from + PageSize)}
+                disabled={loading || last >= data.total}
+              >
+                Next
+                <ChevronRight />
+              </Button>
+            </div>
+          )
+        }
+      >
         <DataTable
           rows={data?.entries ?? []}
           rowKey={(row) => row.identifier}
-          empty={loading ? 'Reading the board…' : 'Nothing is ranked on this board yet.'}
+          empty="Nothing is ranked on this board yet."
+          loading={loading}
+          loadingLabel="Reading the board…"
           columns={[
             {
               header: '#',
@@ -161,35 +213,27 @@ export function RankingsBoard({ subject }: { subject: BoardSubject }) {
           ]}
         />
       </Panel>
-
-      {data === null || data.total === 0 ? null : (
-        <div className="flex items-center justify-between gap-3">
-          <Button
-            variant="secondary"
-            onClick={() => setFrom(Math.max(0, from - PageSize))}
-            disabled={from === 0}
-          >
-            <ChevronLeft />
-            Previous
-          </Button>
-
-          <p className="text-sm text-muted-foreground">
-            {formatNumber(from + 1)}–{formatNumber(Math.min(from + PageSize, data.total))} of{' '}
-            {formatNumber(data.total)}
-          </p>
-
-          <Button
-            onClick={() => {
-              setFrom(from + PageSize);
-              reload();
-            }}
-            disabled={from >= lastPage * PageSize}
-          >
-            Next
-            <ChevronRight />
-          </Button>
-        </div>
-      )}
     </div>
   );
+}
+
+/**
+ * The sentence above the rows: how many are ranked, and over what.
+ *
+ * While the board is being read it says so rather than counting the rows still on
+ * screen from the board that was being read before, which is a count of a board the
+ * reader has already been shown and one they are no longer looking at.
+ */
+function describeBoard(data: Page | null, loading: boolean, month: boolean): string {
+  if (loading) {
+    return 'Reading the board…';
+  }
+
+  if (data === null) {
+    return 'The boards the game shows, computed from the same data.';
+  }
+
+  const count = `${formatNumber(data.total)} ${data.total === 1 ? 'entry' : 'entries'}`;
+
+  return month ? `${count}, counted from the first of this month.` : `${count}, counted over all time.`;
 }

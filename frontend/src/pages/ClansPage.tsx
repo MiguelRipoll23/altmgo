@@ -1,10 +1,18 @@
 import { useState } from 'react';
-import { DataTable, Panel, SectionHeading, formatDate, formatNumber } from '../components/DataDisplay';
+import {
+  DataTable,
+  LoadingBlock,
+  Panel,
+  SectionHeading,
+  formatDate,
+  formatNumber,
+} from '../components/DataDisplay';
 import { StatusMessage } from '../components/StatusMessage';
 import { useApiResource } from '../components/useApiResource';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
 import {
   Select,
   SelectContent,
@@ -53,6 +61,51 @@ const sorts = [
   { value: 'recent', label: 'Newest' },
 ] as const;
 
+/** Which side of the applications a search is looking at. */
+const statuses = [
+  { value: 'all', label: 'All clans' },
+  { value: 'open', label: 'Taking applications' },
+  { value: 'closed', label: 'Closed' },
+] as const;
+
+/**
+ * What the list panel says above the rows: how many clans answered, and under
+ * which of the three filters they answered.
+ *
+ * A count with no filter beside it is a number nobody can act on — twelve clans is
+ * only good news if you asked for the taking-applications ones. While the search is
+ * being read the line says so rather than counting the rows that are already on
+ * screen, which would be the previous search's answer.
+ */
+function describeSearch(
+  clans: Clan[] | undefined,
+  filtered: boolean,
+  term: string,
+  status: string,
+  order: string,
+  loading: boolean,
+): string {
+  if (loading) {
+    return 'Searching…';
+  }
+
+  if (clans === undefined) {
+    return 'Every clan on the server.';
+  }
+
+  const count = `${formatNumber(clans.length)} ${clans.length === 1 ? 'clan' : 'clans'}`;
+
+  if (!filtered) {
+    return `${count}, ordered by ${order.toLowerCase()}.`;
+  }
+
+  const side = statuses.find((option) => option.value === status)?.label ?? 'All clans';
+
+  return term.length === 0
+    ? `${count} · ${side.toLowerCase()}, ordered by ${order.toLowerCase()}.`
+    : `${count} matching “${term}” · ${side.toLowerCase()}, ordered by ${order.toLowerCase()}.`;
+}
+
 /**
  * Every clan on the server, and the record of whichever one is selected.
  *
@@ -69,15 +122,30 @@ const sorts = [
 export function ClansPage() {
   const [term, setTerm] = useState('');
   const [sort, setSort] = useState<string>('name');
+  const [status, setStatus] = useState<string>('all');
   const [submitted, setSubmitted] = useState('');
   const [selected, setSelected] = useState<number | null>(null);
 
   const list = useApiResource<{ clans: Clan[] }>(
-    `/api/clans?term=${encodeURIComponent(submitted)}&sort=${sort}`,
+    `/api/clans?term=${encodeURIComponent(submitted)}&sort=${sort}&status=${status}`,
   );
   const profile = useApiResource<ClanProfile>(
     selected === null ? null : `/api/clans/${selected}`,
   );
+
+  // The name is searched on submit rather than on every keystroke, so a reader who
+  // is halfway through typing an unfamiliar name does not watch the list change under
+  // the field they are typing in. The other two are dropdowns: a filter that has been
+  // chosen has been chosen.
+  const filtered = submitted.length > 0 || status !== 'all';
+  const order = sorts.find((option) => option.value === sort)?.label ?? 'Name';
+
+  function clearFilters() {
+    setTerm('');
+    setSubmitted('');
+    setStatus('all');
+    setSort('name');
+  }
 
   return (
     <div className="space-y-6">
@@ -95,19 +163,36 @@ export function ClansPage() {
           }}
         >
           <div className="min-w-48 flex-1 space-y-2">
+            <Label htmlFor="clan-term">Search</Label>
             <Input
               id="clan-term"
               type="text"
               value={term}
               onChange={(event) => setTerm(event.target.value)}
-              placeholder="Search clans by name"
-              aria-label="Search clans by name"
+              placeholder="Clan name"
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="w-full space-y-2 sm:w-48">
+            <Label htmlFor="clan-status">Applications</Label>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger id="clan-status">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {statuses.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="w-full space-y-2 sm:w-48">
+            <Label htmlFor="clan-sort">Order by</Label>
             <Select value={sort} onValueChange={setSort}>
-              <SelectTrigger id="clan-sort" className="w-48" aria-label="Order the clans by">
+              <SelectTrigger id="clan-sort">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -120,19 +205,42 @@ export function ClansPage() {
             </Select>
           </div>
 
-          <Button type="submit" variant="secondary">
-            Search
-          </Button>
+          <div className="flex gap-2">
+            <Button type="submit" variant="secondary">
+              Search
+            </Button>
+
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={clearFilters}
+              disabled={!filtered && sort === 'name'}
+            >
+              Clear
+            </Button>
+          </div>
         </form>
       </Panel>
 
       {list.error === null ? null : <StatusMessage kind="error">{list.error}</StatusMessage>}
 
-      <Panel title="Clans">
+      <Panel
+        title="Clans"
+        description={describeSearch(
+          list.data?.clans,
+          filtered,
+          submitted,
+          status,
+          order,
+          list.loading,
+        )}
+      >
         <DataTable
           rows={list.data?.clans ?? []}
           rowKey={(row) => row.id}
-          empty={list.loading ? 'Searching…' : 'No clan matched that search.'}
+          empty="No clan matched that search."
+          loading={list.loading}
+          loadingLabel="Searching…"
           columns={[
             {
               header: 'Name',
@@ -171,8 +279,8 @@ export function ClansPage() {
             <StatusMessage kind="error">{profile.error}</StatusMessage>
           )}
 
-          {profile.loading ? (
-            <p className="text-sm text-muted-foreground">Loading the clan…</p>
+          {profile.loading && profile.data === null ? (
+            <LoadingBlock label="Loading the clan…" />
           ) : null}
 
           {profile.data === null ? null : (
@@ -181,11 +289,11 @@ export function ClansPage() {
 
               <div>
                 <h2 className="mb-3 text-sm font-semibold uppercase tracking-widest text-muted-foreground">
-                  Roster
+                  Roster, by rank
                 </h2>
 
                 <DataTable
-                  rows={profile.data.members}
+                  rows={[...profile.data.members].sort((left, right) => left.rank - right.rank)}
                   rowKey={(row) => row.characterId}
                   empty="This clan has no members."
                   columns={[
@@ -209,11 +317,14 @@ export function ClansPage() {
 
               <div>
                 <h2 className="mb-3 text-sm font-semibold uppercase tracking-widest text-muted-foreground">
-                  Waiting to join
+                  Waiting to join, oldest first
                 </h2>
 
                 <DataTable
-                  rows={profile.data.applications}
+                  rows={[...profile.data.applications].sort(
+                    (left, right) =>
+                      new Date(left.appliedAt).getTime() - new Date(right.appliedAt).getTime(),
+                  )}
                   rowKey={(row) => row.id}
                   empty="Nobody is waiting to join this clan."
                   columns={[
