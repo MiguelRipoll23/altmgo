@@ -15,7 +15,7 @@ import {
   SurvivalMode,
 } from '../dashboardQueries.js';
 import { listNews, findNews } from '../newsQueries.js';
-import { findInboxMail, listInboxMail } from '../mailQueries.js';
+import { findAccountMail, isMailBox, listAccountMail } from '../mailQueries.js';
 import { listLobbyPresence, readPresenceTotals, readServerTotals } from '../presence.js';
 import { readAccountPublicAddress } from '../publicAddresses.js';
 import { isClanBoard, isPlayerBoard, readClanBoard, readPlayerBoard } from '../rankingsQueries.js';
@@ -301,38 +301,55 @@ dashboardRoutes.get('/news/:identifier', requireAccount, async (context) => {
 });
 
 /**
- * The mail addressed to the caller's own characters, newest first.
+ * The caller's own mail, newest first, on the side asked for.
  *
- * Open to any signed-in account and scoped to it, because an inbox is the one
+ * Open to any signed-in account and scoped to it, because a mailbox is the one
  * list on this dashboard that is about the person reading it rather than the
- * server. The window is the same as the news: the client shows a fixed handful
- * in the inbox and has no way to ask for more, so a longer list would be letters
- * the game itself never reaches.
+ * server. The box is `inbox` unless another is named, and an unknown one is
+ * refused rather than answered with a list the caller did not ask for — the three
+ * names are the whole vocabulary, and a fourth would be a list nobody has drawn.
+ *
+ * The window is the same as the news: the client shows a fixed handful and has no
+ * way to ask for more, so a longer list would be letters the game itself never
+ * reaches.
  */
 dashboardRoutes.get('/mail', requireAccount, async (context) => {
-  const mail = await listInboxMail(context.get('accountIdentifier'), MaximumMailItems);
+  const requested = context.req.query('box') ?? 'inbox';
+
+  if (!isMailBox(requested)) {
+    return context.json({ error: 'There is no such mailbox.' }, 400);
+  }
+
+  const mail = await listAccountMail(
+    context.get('accountIdentifier'),
+    requested,
+    MaximumMailItems,
+  );
 
   return context.json({
+    box: requested,
     mail: mail.map((message) => ({
       id: message.id,
       subject: message.subject,
       body: message.body,
       senderName: message.sender_name,
+      recipientName: message.recipient_name,
       sentAt: message.sent_at,
       isRead: message.is_read,
+      received: message.received,
     })),
   });
 });
 
-/** One message of the caller's inbox. */
+/** One message of the caller's own mail, from either side of it. */
 dashboardRoutes.get('/mail/:identifier', requireAccount, async (context) => {
-  const message = await findInboxMail(
+  const message = await findAccountMail(
     context.get('accountIdentifier'),
     Number(context.req.param('identifier')),
   );
 
   if (!message) {
-    return context.json({ error: 'That message is not in your inbox.' }, 404);
+    return context.json({ error: 'That message is not in your mailbox.' }, 404);
   }
 
   return context.json({
@@ -341,8 +358,10 @@ dashboardRoutes.get('/mail/:identifier', requireAccount, async (context) => {
       subject: message.subject,
       body: message.body,
       senderName: message.sender_name,
+      recipientName: message.recipient_name,
       sentAt: message.sent_at,
       isRead: message.is_read,
+      received: message.received,
     },
   });
 });

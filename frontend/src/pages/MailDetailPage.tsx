@@ -1,5 +1,5 @@
 import { ArrowLeft, Mail } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { Panel, SectionHeading, formatDate } from '../components/DataDisplay';
 import { StatusMessage } from '../components/StatusMessage';
 import { useApiResource } from '../components/useApiResource';
@@ -10,9 +10,12 @@ type MailMessage = {
   subject: string;
   body: string;
   senderName: string;
+  recipientName?: string;
   sentAt: string;
   /** Whether the recipient has opened it. Carried by the inbox read only. */
   isRead?: boolean;
+  /** Whether the account received it rather than sent it. The inbox read only. */
+  received?: boolean;
 };
 
 /** Which read answers for the message: the player's inbox or the manager's outbox. */
@@ -29,6 +32,11 @@ export type MailScope = 'inbox' | 'outbox';
  * It is a page rather than an expansion under the list for the reason the news
  * detail page is: a link to a letter is a thing people paste to each other, and a
  * pasted link has to open the letter and not a list it once sat in.
+ *
+ * The query it arrived with is carried on the back link, so a reader who opened a
+ * letter from the outbox goes back to the outbox rather than to whichever box
+ * happens to be the default. The game master outbox arrives with no query and is
+ * left alone, which is why the back link is built rather than hard-written.
  */
 export function MailDetailPage({
   scope,
@@ -42,10 +50,12 @@ export function MailDetailPage({
   listLabel: string;
 }) {
   const { identifier } = useParams();
+  const location = useLocation();
   const path = scope === 'outbox' ? `/api/manager/mail/${identifier}` : `/api/mail/${identifier}`;
   const { data, error, loading } = useApiResource<{ mail: MailMessage }>(path);
 
   const message = data?.mail ?? null;
+  const back = `${listPath}${location.search}`;
 
   return (
     <div className="space-y-6">
@@ -54,7 +64,7 @@ export function MailDetailPage({
       {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
 
       <Link
-        to={listPath}
+        to={back}
         className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
       >
         <ArrowLeft className="size-4" />
@@ -77,7 +87,9 @@ export function MailDetailPage({
           </div>
 
           <p className="mb-4 text-xs uppercase tracking-widest text-muted-foreground">
-            From {message.senderName} · Sent {formatDate(message.sentAt)}
+            From {message.senderName}
+            {message.recipientName === undefined ? null : ` · To ${message.recipientName}`} · Sent{' '}
+            {formatDate(message.sentAt)}
           </p>
 
           <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">

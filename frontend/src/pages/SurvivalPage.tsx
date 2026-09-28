@@ -39,7 +39,10 @@ export function SurvivalPage() {
 
       {data.error === null ? null : <StatusMessage kind="error">{data.error}</StatusMessage>}
 
-      <Panel title="Scheduled Survival events">
+      <Panel
+        title="Scheduled events"
+        description="What is published on the Survival ladder, and when it is enterable."
+      >
         <ScheduleList
           schedules={data.data?.schedules ?? []}
           mayWrite={false}
