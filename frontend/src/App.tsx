@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { DashboardRoute, OverviewSection, StaffSection } from './components/DashboardRoute';
 import { CharactersPage } from './pages/CharactersPage';
+import { DiscordPage } from './pages/DiscordPage';
 import { GamesPage } from './pages/GamesPage';
 import { HomePage } from './pages/HomePage';
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -21,10 +22,12 @@ import { TournamentPage } from './pages/TournamentPage';
  * The layout reads the token and the roles itself rather than taking them as
  * props, because every dashboard route needs them and passing them through each
  * one would be four arguments that are always the same. A signed-out browser
- * reaching any of these is sent to sign in, and a signed-in one that is not
- * staff reaching a staff section is sent to the overview: the section is not
- * hidden from the DOM, it is simply not reachable, and the API refuses it
- * whatever the browser thinks.
+ * reaching any of these is sent to sign in.
+ *
+ * Survival and Tournament are open to every signed-in account rather than to
+ * staff: they are public information in the game, and each page decides which of
+ * its controls to draw from the roles. The Discord section is the one place the
+ * route itself is gated, because the whole of it is staff work.
  */
 export function App() {
   return (
@@ -37,12 +40,13 @@ export function App() {
           <Route index element={<OverviewSection />} />
           <Route path="characters" element={<CharactersPage />} />
           <Route path="games" element={<GamesPage />} />
-          <Route path="survival" element={<StaffSection role="moderator" page={<SurvivalPage />} />} />
-          <Route
-            path="tournament"
-            element={<StaffSection role="moderator" page={<TournamentPage />} />}
-          />
+          <Route path="survival" element={<SurvivalPage />} />
+          <Route path="tournament" element={<TournamentPage />} />
           <Route path="rankings" element={<RankingsPage />} />
+          <Route
+            path="discord"
+            element={<StaffSection role="moderator" page={<DiscordPage />} />}
+          />
         </Route>
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

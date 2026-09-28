@@ -1,3 +1,4 @@
+import { LogIn } from 'lucide-react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -6,7 +7,10 @@ import { PageHeading, PageLayout } from '../components/PageLayout';
 import { StatusMessage } from '../components/StatusMessage';
 import type { StatusKind } from '../components/StatusMessage';
 import { writeSessionAccount, writeSessionRoles, writeSessionToken } from '../session';
-import { inputClassName, labelClassName, panelClassName, primaryButtonClassName } from '../theme';
+import { Button } from '../components/ui/button';
+import { Card, CardContent } from '../components/ui/card';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
 
 type LoginResponse = {
   token: string;
@@ -55,51 +59,48 @@ export function SignInPage() {
     <PageLayout>
       <PageHeading subtitle="Sign in with the same ID and password you use in game" />
 
-      <div className={panelClassName}>
-        <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-          {status === null ? null : <StatusMessage kind={status.kind}>{status.message}</StatusMessage>}
+      <Card>
+        <CardContent className="pt-6">
+          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+            {status === null ? null : <StatusMessage kind={status.kind}>{status.message}</StatusMessage>}
 
-          <div>
-            <label htmlFor="username" className={labelClassName}>
-              Username
-            </label>
-            <input
-              id="username"
-              name="username"
-              type="text"
-              autoComplete="username"
-              required
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
-              className={inputClassName}
-            />
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                name="username"
+                type="text"
+                autoComplete="username"
+                required
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
+              />
+            </div>
 
-          <div>
-            <label htmlFor="password" className={labelClassName}>
-              Password
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className={inputClassName}
-            />
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+              />
+            </div>
 
-          <button type="submit" disabled={submitting} className={`${primaryButtonClassName} w-full`}>
-            {submitting ? 'Signing in…' : 'Sign in'}
-          </button>
-        </form>
-      </div>
+            <Button type="submit" disabled={submitting} className="w-full" size="lg">
+              <LogIn />
+              {submitting ? 'Signing in…' : 'Sign in'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
-      <p className="mt-6 text-center text-sm text-slate-400">
+      <p className="mt-6 text-center text-sm text-muted-foreground">
         No account yet?{' '}
-        <Link to="/register" className="font-medium text-mgo-400 hover:text-mgo-500">
+        <Link to="/register" className="font-medium text-primary hover:underline">
           Register
         </Link>
       </p>

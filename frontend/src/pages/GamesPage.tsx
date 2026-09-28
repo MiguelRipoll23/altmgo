@@ -1,7 +1,9 @@
+import { RefreshCw } from 'lucide-react';
+import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/button';
 import { DataTable, Panel, SectionHeading, formatDate } from '../components/DataDisplay';
 import { StatusMessage } from '../components/StatusMessage';
 import { useApiResource } from '../components/useApiResource';
-import { primaryButtonClassName } from '../theme';
 
 type Game = {
   id: number;
@@ -35,14 +37,10 @@ export function GamesPage() {
       {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
 
       <div className="flex flex-wrap gap-3">
-        <button
-          type="button"
-          onClick={reload}
-          disabled={loading}
-          className={primaryButtonClassName}
-        >
+        <Button onClick={reload} disabled={loading}>
+          <RefreshCw className={loading ? 'animate-spin' : undefined} />
           {loading ? 'Refreshing…' : 'Refresh'}
-        </button>
+        </Button>
       </div>
 
       <Panel>
@@ -54,13 +52,9 @@ export function GamesPage() {
             {
               header: 'Room',
               cell: (row) => (
-                <span>
-                  <span className="font-medium text-slate-200">{row.name}</span>
-                  {row.hasPassword ? (
-                    <span className="ml-2 rounded border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-[11px] text-amber-300">
-                      password
-                    </span>
-                  ) : null}
+                <span className="flex items-center gap-2">
+                  <span className="font-medium text-foreground">{row.name}</span>
+                  {row.hasPassword ? <Badge variant="warning">password</Badge> : null}
                 </span>
               ),
             },

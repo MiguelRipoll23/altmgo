@@ -2,7 +2,14 @@ import type { ReactNode } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { DashboardLayout } from './DashboardLayout';
 import { OverviewPage } from '../pages/OverviewPage';
-import { isManager, isModerator, readSessionAccount, readSessionRoles, readSessionToken, type StaffRole } from '../session';
+import {
+  isManager,
+  isModerator,
+  readSessionAccount,
+  readSessionRoles,
+  readSessionToken,
+  type StaffRole,
+} from '../session';
 
 /**
  * The layout every dashboard section renders inside.
@@ -34,7 +41,7 @@ export function DashboardRoute() {
 
 /** The overview, named as a section so the route table reads as a list of them. */
 export function OverviewSection() {
-  return <OverviewPage accountName={readSessionAccount()} roles={readSessionRoles()} />;
+  return <OverviewPage accountName={readSessionAccount()} />;
 }
 
 /**

@@ -1,7 +1,19 @@
+import {
+  Gamepad2,
+  LayoutDashboard,
+  LogOut,
+  MessageSquare,
+  Swords,
+  Trophy,
+  UserSearch,
+  Medal,
+  type LucideIcon,
+} from 'lucide-react';
 import type { ReactNode } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { clearSessionToken, isModerator, type StaffRole } from '../session';
-import { secondaryButtonClassName } from '../theme';
+import { Button } from './ui/button';
+import { Badge } from './ui/badge';
 
 /**
  * One section of the dashboard. The role is what decides whether the section is
@@ -12,6 +24,7 @@ import { secondaryButtonClassName } from '../theme';
 type Section = {
   path: string;
   label: string;
+  icon: LucideIcon;
   /** The role a caller needs, or nothing when any signed-in account may open it. */
   role?: StaffRole;
 };
@@ -21,37 +34,33 @@ type Section = {
  *
  * Overview is first because it is what an operator opens the dashboard for, and
  * the rest follow the shape of the game: who you are, what you are playing, what
- * you are ranked by, and finally the two event modes the staff tooling acts on.
+ * you are ranked by, and then the event modes and the Discord tools the staff
+ * act through. Survival and Tournament carry no role because a player may read
+ * them — the ladder is public in the game — and the pages themselves decide
+ * which of their controls to draw.
  */
 const sections: Section[] = [
-  { path: '/dashboard', label: 'Overview' },
-  { path: '/dashboard/characters', label: 'Characters' },
-  { path: '/dashboard/games', label: 'Games' },
-  { path: '/dashboard/survival', label: 'Survival', role: 'moderator' },
-  { path: '/dashboard/tournament', label: 'Tournament', role: 'moderator' },
-  { path: '/dashboard/rankings', label: 'Rankings' },
+  { path: '/dashboard', label: 'Overview', icon: LayoutDashboard },
+  { path: '/dashboard/characters', label: 'Characters', icon: UserSearch },
+  { path: '/dashboard/games', label: 'Games', icon: Gamepad2 },
+  { path: '/dashboard/survival', label: 'Survival', icon: Swords },
+  { path: '/dashboard/tournament', label: 'Tournament', icon: Trophy },
+  { path: '/dashboard/rankings', label: 'Rankings', icon: Medal },
+  { path: '/dashboard/discord', label: 'Discord', icon: MessageSquare, role: 'moderator' },
 ];
 
-/** The class a sidebar link wears when it is the section being shown. */
-const activeLinkClassName =
-  'block rounded-lg border border-mgo-500/30 bg-mgo-500/10 px-4 py-2.5 text-sm font-semibold text-mgo-400';
-
-/** The class a sidebar link wears when it is not. */
-const idleLinkClassName =
-  'block rounded-lg border border-transparent px-4 py-2.5 text-sm font-medium text-slate-400 transition hover:border-slate-800 hover:bg-slate-900/60 hover:text-slate-200';
-
 /**
- * The dashboard itself: the sections down the left, the page beside them.
+ * The dashboard itself: a fixed column of sections down the left, the page
+ * beside them.
  *
- * The layout is a full-height frame rather than the centred column the public
- * pages use, because a dashboard is read beside something else — an operator
- * has the section open in one window and the list they care about in another, and
- * a column that re-centres on every navigation makes the two impossible to keep
- * side by side.
+ * The sidebar is fixed rather than sticky for the same reason the layout is a
+ * full-height frame: a dashboard is read beside something else, and a list of
+ * sections that scrolls away up a long page cannot be used without scrolling
+ * back to reach it. Fixing it means the way to the next section is always in
+ * the same place, whatever height the page has grown to.
  *
- * The sidebar collapses above the content on a narrow screen rather than
- * disappearing: a dashboard read on a phone is a dashboard with one section at a
- * time, and hiding the sections entirely would leave no way to reach the others.
+ * The margin on the content is the sidebar's width, because a fixed element is
+ * out of the flow and the page would otherwise start underneath it.
  */
 export function DashboardLayout({
   accountName,
@@ -68,45 +77,54 @@ export function DashboardLayout({
   );
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-950 bg-[radial-gradient(ellipse_at_top,rgba(56,189,248,0.12),transparent_55%),radial-gradient(ellipse_at_bottom_right,rgba(30,64,175,0.18),transparent_60%)] text-slate-100 antialiased lg:flex-row">
-      <aside className="flex shrink-0 flex-col gap-6 border-b border-slate-800/80 bg-slate-900/40 p-5 lg:h-screen lg:w-64 lg:border-b-0 lg:border-r">
+    <div className="min-h-screen bg-background text-foreground antialiased">
+      <aside className="fixed inset-y-0 left-0 z-40 flex w-64 flex-col gap-6 overflow-y-auto border-r border-border bg-card/60 p-5">
         <div>
           <p className="text-lg font-extrabold tracking-tight">
-            <span className="text-mgo-400">Alt</span>MGO
+            <span className="text-primary">Alt</span>MGO
           </p>
-          <p className="mt-1 truncate text-xs text-slate-500" title={accountName}>
+          <p className="mt-1 truncate text-xs text-muted-foreground" title={accountName}>
             {accountName}
           </p>
           <RoleBadges roles={roles} />
         </div>
 
-        <nav className="flex flex-wrap gap-1 lg:flex-col">
+        <nav className="flex flex-1 flex-col gap-1">
           {visible.map((section) => (
             <NavLink
               key={section.path}
               to={section.path}
               end={section.path === '/dashboard'}
-              className={({ isActive }) => (isActive ? activeLinkClassName : idleLinkClassName)}
+              className={({ isActive }) =>
+                [
+                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition',
+                  isActive
+                    ? 'bg-primary/10 font-semibold text-primary'
+                    : 'font-medium text-muted-foreground hover:bg-muted/60 hover:text-foreground',
+                ].join(' ')
+              }
             >
+              <section.icon className="size-4 shrink-0" />
               {section.label}
             </NavLink>
           ))}
         </nav>
 
-        <button
-          type="button"
+        <Button
+          variant="outline"
+          className="mt-auto w-full"
           onClick={() => {
             clearSessionToken();
             navigate('/', { replace: true });
           }}
-          className={`${secondaryButtonClassName} mt-auto w-full`}
         >
+          <LogOut />
           Sign out
-        </button>
+        </Button>
       </aside>
 
-      <main className="min-w-0 flex-1 px-4 py-8 sm:px-8">
-        <div className="mx-auto w-full max-w-5xl">{children}</div>
+      <main className="min-w-0 pl-64">
+        <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-8">{children}</div>
       </main>
     </div>
   );
@@ -121,12 +139,7 @@ function RoleBadges({ roles }: { roles: StaffRole[] }) {
   return (
     <div className="mt-2 flex flex-wrap gap-1.5">
       {roles.map((role) => (
-        <span
-          key={role}
-          className="rounded-full border border-mgo-500/30 bg-mgo-500/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-mgo-400"
-        >
-          {role}
-        </span>
+        <Badge key={role}>{role}</Badge>
       ))}
     </div>
   );

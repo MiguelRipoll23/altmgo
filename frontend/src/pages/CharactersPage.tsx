@@ -2,7 +2,16 @@ import { useState } from 'react';
 import { DataTable, Panel, SectionHeading, formatDate, formatNumber } from '../components/DataDisplay';
 import { StatusMessage } from '../components/StatusMessage';
 import { useApiResource } from '../components/useApiResource';
-import { inputClassName, labelClassName, secondaryButtonClassName } from '../theme';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../components/ui/select';
 
 type Character = {
   id: number;
@@ -69,41 +78,36 @@ export function CharactersPage() {
             setSubmitted(term.trim());
           }}
         >
-          <div className="min-w-48 flex-1">
-            <label htmlFor="term" className={labelClassName}>
-              Search
-            </label>
-            <input
+          <div className="min-w-48 flex-1 space-y-2">
+            <Label htmlFor="term">Search</Label>
+            <Input
               id="term"
               type="text"
               value={term}
               onChange={(event) => setTerm(event.target.value)}
               placeholder="Character or account name"
-              className={inputClassName}
             />
           </div>
 
-          <div>
-            <label htmlFor="sort" className={labelClassName}>
-              Order by
-            </label>
-            <select
-              id="sort"
-              value={sort}
-              onChange={(event) => setSort(event.target.value)}
-              className={inputClassName}
-            >
-              {sorts.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+          <div className="space-y-2">
+            <Label htmlFor="sort">Order by</Label>
+            <Select value={sort} onValueChange={setSort}>
+              <SelectTrigger id="sort" className="w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {sorts.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          <button type="submit" className={secondaryButtonClassName}>
+          <Button type="submit" variant="secondary">
             Search
-          </button>
+          </Button>
         </form>
       </Panel>
 
@@ -121,7 +125,7 @@ export function CharactersPage() {
                 <button
                   type="button"
                   onClick={() => setSelected(row.id)}
-                  className="font-medium text-mgo-400 hover:text-mgo-500"
+                  className="font-medium text-primary hover:underline"
                 >
                   {row.name}
                 </button>
@@ -146,7 +150,7 @@ export function CharactersPage() {
           )}
 
           {profile.loading ? (
-            <p className="text-sm text-slate-500">Loading the profile…</p>
+            <p className="text-sm text-muted-foreground">Loading the profile…</p>
           ) : null}
 
           {profile.data === null ? null : (
@@ -182,8 +186,8 @@ export function CharactersPage() {
 function Detail({ label, value }: { label: string; value: string | null }) {
   return (
     <div>
-      <dt className="text-xs uppercase tracking-widest text-slate-500">{label}</dt>
-      <dd className="mt-1 text-sm text-slate-200">{value ?? '—'}</dd>
+      <dt className="text-xs uppercase tracking-widest text-muted-foreground">{label}</dt>
+      <dd className="mt-1 text-sm text-foreground/90">{value ?? '—'}</dd>
     </div>
   );
 }

@@ -1,8 +1,17 @@
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import { DataTable, Panel, SectionHeading, formatNumber } from '../components/DataDisplay';
 import { StatusMessage } from '../components/StatusMessage';
 import { useApiResource } from '../components/useApiResource';
-import { inputClassName, labelClassName, primaryButtonClassName, secondaryButtonClassName } from '../theme';
+import { Button } from '../components/ui/button';
+import { Label } from '../components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../components/ui/select';
 
 type Entry = { rank: number; identifier: number; name: string; value: number };
 type Page = { entries: Entry[]; total: number };
@@ -61,47 +70,50 @@ export function RankingsPage() {
 
       <Panel>
         <div className="flex flex-wrap items-end gap-3">
-          <div>
-            <label htmlFor="subject" className={labelClassName}>
-              Whose
-            </label>
-            <select
-              id="subject"
+          <div className="space-y-2">
+            <Label htmlFor="subject">Whose</Label>
+            <Select
               value={subject}
-              onChange={(event) => {
-                setSubject(event.target.value as Subject);
-                setBoard(boards[event.target.value as Subject][0].value);
+              onValueChange={(next) => {
+                const chosen = next as Subject;
+                setSubject(chosen);
+                setBoard(boards[chosen][0].value);
                 setFrom(0);
               }}
-              className={inputClassName}
             >
-              <option value="players">Players</option>
-              <option value="clans">Clans</option>
-            </select>
+              <SelectTrigger id="subject" className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="players">Players</SelectItem>
+                <SelectItem value="clans">Clans</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          <div>
-            <label htmlFor="board" className={labelClassName}>
-              Board
-            </label>
-            <select
-              id="board"
+          <div className="space-y-2">
+            <Label htmlFor="board">Board</Label>
+            <Select
               value={board}
-              onChange={(event) => {
-                setBoard(event.target.value);
+              onValueChange={(next) => {
+                setBoard(next);
                 setFrom(0);
               }}
-              className={inputClassName}
             >
-              {currentBoards.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger id="board" className="w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {currentBoards.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          <label className="flex items-center gap-2 pb-3 text-sm text-slate-300">
+          <label className="flex items-center gap-2 pb-3 text-sm text-foreground/80">
             <input
               type="checkbox"
               checked={month}
@@ -109,7 +121,7 @@ export function RankingsPage() {
                 setMonth(event.target.checked);
                 setFrom(0);
               }}
-              className="h-4 w-4 rounded border-slate-600 bg-slate-800"
+              className="size-4 accent-primary"
             />
             This month only
           </label>
@@ -127,7 +139,7 @@ export function RankingsPage() {
             {
               header: '#',
               cell: (row) => row.rank,
-              className: 'text-right tabular-nums text-slate-500',
+              className: 'text-right tabular-nums text-muted-foreground',
             },
             { header: 'Name', cell: (row) => row.name },
             {
@@ -141,31 +153,30 @@ export function RankingsPage() {
 
       {data === null || data.total === 0 ? null : (
         <div className="flex items-center justify-between gap-3">
-          <button
-            type="button"
+          <Button
+            variant="secondary"
             onClick={() => setFrom(Math.max(0, from - PageSize))}
             disabled={from === 0}
-            className={secondaryButtonClassName}
           >
+            <ChevronLeft />
             Previous
-          </button>
+          </Button>
 
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted-foreground">
             {formatNumber(from + 1)}–{formatNumber(Math.min(from + PageSize, data.total))} of{' '}
             {formatNumber(data.total)}
           </p>
 
-          <button
-            type="button"
+          <Button
             onClick={() => {
               setFrom(from + PageSize);
               reload();
             }}
             disabled={from >= lastPage * PageSize}
-            className={primaryButtonClassName}
           >
             Next
-          </button>
+            <ChevronRight />
+          </Button>
         </div>
       )}
     </div>
