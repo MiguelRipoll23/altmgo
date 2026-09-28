@@ -121,14 +121,14 @@ export async function searchClans(
     recent: raw('clan.created_at desc nulls last, clan.name'),
   };
 
-  // The same argument as the ordering: the status is one of three named sides, and
-  // the expression is chosen from those three rather than from what arrived.
-  const statuses: Record<ClanStatus, ReturnType<typeof raw> | null> = {
-    all: null,
-    open: raw('clan.open <> 0'),
-    closed: raw('clan.open = 0'),
-  };
-  const narrowed = statuses[status];
+  // The status is a bind parameter compared in ordinary SQL rather than a spliced
+  // expression, and that is not tidiness: `raw` is the escape hatch for an
+  // `order by`, which takes no parameter, and it composes as a query of its own. A
+  // raw predicate in a `where` therefore cannot see the `clan` alias of the
+  // statement it is being placed in, and Postgres refuses it with a missing
+  // from-clause entry for `clan`. The three sides are spelled out and the named one
+  // is bound to each, so the column stays in the statement it belongs to and
+  // nothing a request carried is ever spliced.
 
   return readRows<ClanSummaryRow>(database()`
     select
@@ -154,7 +154,11 @@ export async function searchClans(
     left join clans_members leader on leader.id = clan.leader_id
     left join characters leader_character on leader_character.id = leader.character_id
     where (${term} = '' or clan.name ilike ${pattern})
-      and (${narrowed === null ? raw('true') : narrowed})
+      and (
+        ${status} = 'all'
+        or (${status} = 'open' and clan.open <> 0)
+        or (${status} = 'closed' and clan.open = 0)
+      )
     order by ${orderings[sort]}
     limit ${limit}
   `);
