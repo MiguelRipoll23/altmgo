@@ -148,6 +148,7 @@ export type GameSummaryRow = {
   host_name: string | null;
   lobby_name: string | null;
   players: number;
+  /** The room's own `max_players`, aliased so the shape stays readable. */
   maximum_players: number;
   current_game: number;
   status: number;
@@ -182,7 +183,7 @@ export async function listGames(): Promise<GameSummaryRow[]> {
         from game_players player
         where player.game_id = game.id
       ) as players,
-      game.maximum_players,
+      game.max_players as maximum_players,
       game.current_game,
       game.status,
       (game.password <> '') as has_password,

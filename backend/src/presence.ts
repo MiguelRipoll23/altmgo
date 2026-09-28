@@ -68,8 +68,8 @@ export async function listLobbyPresence(): Promise<LobbyPresenceRow[]> {
     select
       lobby.id,
       lobby.name,
-      lobby.type,
-      lobby.subtype_id,
+      lobby.type_id as type,
+      lobby.subtype_id as subtype,
       lobby.ip_address as address,
       lobby.port,
       (
