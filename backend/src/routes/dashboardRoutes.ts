@@ -14,6 +14,7 @@ import {
   isEventMode,
   SurvivalMode,
 } from '../dashboardQueries.js';
+import { listNews } from '../newsQueries.js';
 import { listLobbyPresence, readPresenceTotals } from '../presence.js';
 import { readAccountPublicAddress } from '../publicAddresses.js';
 import { isClanBoard, isPlayerBoard, readClanBoard, readPlayerBoard } from '../rankingsQueries.js';
@@ -25,6 +26,14 @@ const MaximumWindow = 100;
 
 /** Largest number of characters one search may return. */
 const MaximumSearchResults = 200;
+
+/**
+ * Largest number of news items one read returns.
+ *
+ * The login screen shows a fixed handful and has no way to ask for more, so a longer
+ * list would be pages nobody scrolls to rather than news anybody missed.
+ */
+const MaximumNewsItems = 50;
 
 /** Reads a whole-number query parameter, clamped into a range. */
 function readNumber(value: string | undefined, fallback: number, minimum: number, maximum: number): number {
@@ -215,6 +224,29 @@ dashboardRoutes.get('/events/:mode/schedules', requireAccount, async (context) =
   }
 
   return context.json({ schedules: await listEventSchedules(mode) });
+});
+
+/**
+ * The news the client shows on the login screen.
+ *
+ * Open to any signed-in account rather than to staff, because it is the one page of
+ * this app a player cannot see any other way: the same rows are drawn by the client
+ * before the lobby list, and a dashboard that hid them would only be a second,
+ * worse copy of something already on their screen. It is the same query the manager
+ * reads to publish; only the permission differs, and nothing here writes.
+ */
+dashboardRoutes.get('/news', requireAccount, async (context) => {
+  const news = await listNews(MaximumNewsItems);
+
+  return context.json({
+    news: news.map((item) => ({
+      id: item.id,
+      title: item.title,
+      body: item.body,
+      important: item.important,
+      publishedAt: item.time,
+    })),
+  });
 });
 
 /** A window of a player board. */

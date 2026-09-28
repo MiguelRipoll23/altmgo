@@ -1,12 +1,12 @@
 import { Search } from 'lucide-react';
 import { useState } from 'react';
-import { DataTable, Panel, SectionHeading, formatDate } from '../../components/DataDisplay';
-import { ScheduleList, type Schedule } from '../../components/ScheduleForm';
-import { StatusMessage } from '../../components/StatusMessage';
-import { useApiResource } from '../../components/useApiResource';
-import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
-import { Label } from '../../components/ui/label';
+import { DataTable, Panel, SectionHeading, formatDate } from '../components/DataDisplay';
+import { ScheduleList, type Schedule } from '../components/ScheduleForm';
+import { StatusMessage } from '../components/StatusMessage';
+import { useApiResource } from '../components/useApiResource';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
 
 type Entry = {
   event_id: number;

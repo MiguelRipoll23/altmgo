@@ -4,7 +4,8 @@ import type { AppBindings } from '../authentication.js';
 import { requireManager } from '../authentication.js';
 import { isDiscordConfigured, sendChannelMessage } from '../discord.js';
 import { readBody, readBoolean, readInteger, readText } from '../requestBody.js';
-import { listGameMasterMail, listNews, listStaffAccounts } from '../staffQueries.js';
+import { listNews } from '../newsQueries.js';
+import { listGameMasterMail, listStaffAccounts } from '../staffQueries.js';
 import {
   grantRole,
   publishNews,

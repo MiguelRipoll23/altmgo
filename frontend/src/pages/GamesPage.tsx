@@ -1,9 +1,9 @@
 import { RefreshCw } from 'lucide-react';
-import { Badge } from '../../components/ui/badge';
-import { Button } from '../../components/ui/button';
-import { DataTable, Panel, SectionHeading, formatDate } from '../../components/DataDisplay';
-import { StatusMessage } from '../../components/StatusMessage';
-import { useApiResource } from '../../components/useApiResource';
+import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/button';
+import { DataTable, Panel, SectionHeading, formatDate } from '../components/DataDisplay';
+import { StatusMessage } from '../components/StatusMessage';
+import { useApiResource } from '../components/useApiResource';
 
 type Game = {
   id: number;

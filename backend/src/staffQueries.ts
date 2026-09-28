@@ -1,13 +1,13 @@
 import { database } from './database.js';
 
 /**
- * What a manager reads: the accounts and the roles they hold, and the two tables
- * that speak for the server — the news the client shows on login and the game master
+ * What a manager reads: the accounts and the roles they hold, and the game master
  * mail a player receives in their inbox.
  *
- * None of it is derived. A role is a row in `account_roles` and a news item is a row
- * in `news`, both written by the game and readable here; the dashboard only draws
- * them and, for roles, changes them.
+ * None of it is derived. A role is a row in `account_roles` and a message is a row
+ * in `game_master_mail`, both written by the game and readable here; the dashboard
+ * only draws them and, for roles, changes them. The news is not in this file
+ * because a player reads it too — that read is in `newsQueries`.
  */
 
 /** One role an account holds, with when it was granted. */
@@ -26,15 +26,6 @@ export type StaffAccountRow = {
   current_character_name: string | null;
   character_count: number;
   roles: HeldRole[];
-};
-
-/** One news item, as the client shows it on the login screen. */
-export type NewsRow = {
-  id: number;
-  title: string;
-  body: string;
-  important: boolean;
-  time: Date;
 };
 
 /** One game master mail message, as it sits in a player's inbox. */
@@ -96,16 +87,6 @@ export async function listStaffAccounts(): Promise<StaffAccountRow[]> {
     left join characters main_character on main_character.id = account.main_character_id
     left join characters current_character on current_character.id = account.current_character_id
     order by account.display_name, account.id
-  `);
-}
-
-/** The most recent news items, newest first. */
-export async function listNews(limit: number): Promise<NewsRow[]> {
-  return readRows<NewsRow>(database()`
-    select news.id, news.title, news.body, news.important, news.time
-    from news
-    order by news.time desc nulls last, news.id desc
-    limit ${limit}
   `);
 }
 

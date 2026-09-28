@@ -1,28 +1,48 @@
-import { LayoutDashboard, Medal, Shield, type LucideIcon } from 'lucide-react';
+import {
+  Flag,
+  Gamepad2,
+  LayoutDashboard,
+  Medal,
+  Newspaper,
+  Shield,
+  Swords,
+  Trophy,
+  type LucideIcon,
+} from 'lucide-react';
 import type { ReactNode } from 'react';
 import { NavLink } from 'react-router-dom';
-import { type StaffRole } from '../session';
+import type { StaffRole } from '../session';
 import { AccountMenu } from './AccountMenu';
 
-/** One section of the player dashboard. */
+/**
+ * One section of the player dashboard.
+ *
+ * There is no role on it, and that is the definition of the frame: every section
+ * here is a read, and every one of them is a read any signed-in account may make.
+ */
 type Section = { path: string; label: string; icon: LucideIcon };
 
 /**
  * The sections, in the order they are offered.
  *
- * There are only two, and that is the point of the split rather than a shortfall:
- * everything an operator administers moved to the admin frame, which is reached from
- * the account card at the foot of this column. What is left is what a player comes
- * for — how many people are on, and where they stand on the boards.
+ * The order is the shape of a session rather than the shape of the schema: who is
+ * on, what the server has said, who they play with and where, what is running, the
+ * two event ladders, and finally where they stand on the boards. News sits second
+ * because it is the one section a player has no other way to read — the client
+ * shows it on the way in, and this is the same list without leaving the browser.
  *
- * The admin frame is offered on the account card rather than as a section here
- * because a signed-in player has no use for it. A moderator who has not opened the
- * admin frame yet should not find a section implying there is more of the dashboard
- * than there is; the card is where somebody who *is* staff already looking for it
- * will go, and it carries the same switch back.
+ * Nothing here writes. Everything that changes the server moved to the admin frame,
+ * which is reached from the account card at the foot of this column: a signed-in
+ * player has no use for it, so a section here implying there is more of the
+ * dashboard than there is would be a link to nothing.
  */
 const sections: Section[] = [
   { path: '/dashboard', label: 'Overview', icon: LayoutDashboard },
+  { path: '/dashboard/news', label: 'News', icon: Newspaper },
+  { path: '/dashboard/clans', label: 'Clans', icon: Flag },
+  { path: '/dashboard/games', label: 'Games', icon: Gamepad2 },
+  { path: '/dashboard/survival', label: 'Survival', icon: Swords },
+  { path: '/dashboard/tournament', label: 'Tournament', icon: Trophy },
   { path: '/dashboard/rankings', label: 'Rankings', icon: Medal },
 ];
 

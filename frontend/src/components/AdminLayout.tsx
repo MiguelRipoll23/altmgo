@@ -33,12 +33,16 @@ type Section = {
 /**
  * The sections, in the order they are offered.
  *
- * The order follows how an operator works rather than the shape of the schema:
- * who is here and what they are doing first, then the two public ladders they are
- * on, and only then the controls that change any of it. The staff sections sit at
- * the foot of the same list rather than in a group of their own, because an
- * operator moves between "what is running" and "change what is running" as one
+ * The order follows how an operator works rather than the shape of the schema: who
+ * is here, who they play with and what the server has said, then what is running,
+ * then the two public ladders, and only at the foot the controls that change any of
+ * it. The staff sections sit in the same list rather than under a heading, because
+ * an operator moves between "what is running" and "change what is running" as one
  * motion and a heading between them would only be something to scroll past.
+ *
+ * The read sections are the ones the player dashboard also carries, and the same
+ * components answer in both frames. An operator reading a clan roster wants it in
+ * the frame they are working in rather than one click and a frame change away.
  *
  * The role on a section is a hint about what to draw, not the permission: the
  * server checks the same role on every call, so a browser with an edited role list
@@ -47,6 +51,7 @@ type Section = {
 const sections: Section[] = [
   { path: '/admin', label: 'Overview', icon: LayoutDashboard },
   { path: '/admin/characters', label: 'Characters', icon: Users },
+  { path: '/admin/news', label: 'News', icon: Newspaper },
   { path: '/admin/clans', label: 'Clans', icon: Flag },
   { path: '/admin/games', label: 'Games', icon: Gamepad2 },
   { path: '/admin/survival', label: 'Survival', icon: Swords },

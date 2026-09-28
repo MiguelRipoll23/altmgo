@@ -1,8 +1,8 @@
-import { Panel, SectionHeading } from '../../components/DataDisplay';
-import { ScheduleList, type Schedule } from '../../components/ScheduleForm';
-import { StatusMessage } from '../../components/StatusMessage';
-import { TeamCard, type Team } from '../../components/TeamCard';
-import { useApiResource } from '../../components/useApiResource';
+import { Panel, SectionHeading } from '../components/DataDisplay';
+import { ScheduleList, type Schedule } from '../components/ScheduleForm';
+import { StatusMessage } from '../components/StatusMessage';
+import { TeamCard, type Team } from '../components/TeamCard';
+import { useApiResource } from '../components/useApiResource';
 
 type Survival = { teams: Team[]; schedules: Schedule[] };
 
