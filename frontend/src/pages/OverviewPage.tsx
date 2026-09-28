@@ -1,4 +1,4 @@
-import { DataTable, Panel, SectionHeading, StatTile, formatNumber } from '../components/DataDisplay';
+import { DataTable, FigureSkeletons, Panel, SectionHeading, StatTile, formatNumber } from '../components/DataDisplay';
 import { PublicAddressTile } from '../components/PublicAddressTile';
 import { RestrictionBadges, type Restrictions } from '../components/RestrictionBadges';
 import { StatusMessage } from '../components/StatusMessage';
@@ -49,25 +49,19 @@ export function OverviewPage() {
 
       {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatTile
-          label="Total players"
-          value={data === null ? '—' : formatNumber(data.totals.totalPlayers)}
-        />
-        <StatTile
-          label="Online players"
-          value={data === null ? '—' : formatNumber(data.totals.connectedPlayers)}
-        />
-        <StatTile
-          label="Total games"
-          value={data === null ? '—' : formatNumber(data.totals.totalGames)}
-        />
-        <PublicAddressTile
-          address={data === null ? null : (data.publishedAddress?.address ?? null)}
-          loading={loading}
-          onPublished={reload}
-        />
-      </div>
+      {data === null ? (
+        <FigureSkeletons />
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatTile label="Total players" value={formatNumber(data.totals.totalPlayers)} />
+          <StatTile label="Online players" value={formatNumber(data.totals.connectedPlayers)} />
+          <StatTile label="Total games" value={formatNumber(data.totals.totalGames)} />
+          <PublicAddressTile
+            address={data.publishedAddress?.address ?? null}
+            onPublished={reload}
+          />
+        </div>
+      )}
 
       <Panel title="Game lobbies">
         <DataTable

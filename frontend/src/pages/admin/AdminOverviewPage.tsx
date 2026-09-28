@@ -7,7 +7,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { DataTable, Panel, SectionHeading, StatTile, formatNumber } from '../../components/DataDisplay';
+import { DataTable, FigureSkeletons, Panel, SectionHeading, StatTile, formatNumber } from '../../components/DataDisplay';
 import { PublicAddressTile } from '../../components/PublicAddressTile';
 import { RestrictionBadges, type Restrictions } from '../../components/RestrictionBadges';
 import { formatEpoch, type Schedule } from '../../components/ScheduleForm';
@@ -125,33 +125,26 @@ export function AdminOverviewPage() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <StatTile
-          label="Total players"
-          value={
-            overview.data === null ? '—' : formatNumber(overview.data.totals.totalPlayers)
-          }
-        />
-        <StatTile
-          label="Online players"
-          value={
-            overview.data === null ? '—' : formatNumber(overview.data.totals.connectedPlayers)
-          }
-        />
-        <StatTile
-          label="Total games"
-          value={overview.data === null ? '—' : formatNumber(overview.data.totals.totalGames)}
-        />
-        <StatTile
-          label="Occupied lobbies"
-          value={(overview.data?.lobbies ?? []).filter((lobby) => lobby.players > 0).length}
-        />
-        <PublicAddressTile
-          address={overview.data === null ? null : (overview.data.publishedAddress?.address ?? null)}
-          loading={overview.loading}
-          onPublished={overview.reload}
-        />
-      </div>
+      {overview.data === null ? (
+        <FigureSkeletons count={5} className="lg:grid-cols-5" />
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <StatTile label="Total players" value={formatNumber(overview.data.totals.totalPlayers)} />
+          <StatTile
+            label="Online players"
+            value={formatNumber(overview.data.totals.connectedPlayers)}
+          />
+          <StatTile label="Total games" value={formatNumber(overview.data.totals.totalGames)} />
+          <StatTile
+            label="Occupied lobbies"
+            value={overview.data.lobbies.filter((lobby) => lobby.players > 0).length}
+          />
+          <PublicAddressTile
+            address={overview.data.publishedAddress?.address ?? null}
+            onPublished={overview.reload}
+          />
+        </div>
+      )}
 
       <StaffShortcuts />
 

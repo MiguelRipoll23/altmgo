@@ -65,10 +65,12 @@ export function Panel({ title, description, children, className }: {
  * and a count set in a monospace size small enough for an address reads as a
  * quantity that happens to be missing.
  *
- * The action, when there is one, is drawn inside the tile under a rule rather
- * than beside it: a figure with a control of its own is a figure and a control
- * that belong together, and a button floating in a row of tiles under the one it
- * acts on is a button somebody has to work out which tile it belongs to.
+ * The action, when there is one, is drawn inside the tile rather than beside it:
+ * a figure with a control of its own is a figure and a control that belong
+ * together, and a button floating in a row of tiles under the one it acts on is a
+ * button somebody has to work out which tile it belongs to. It is separated by
+ * space and not by a rule — a line inside a card splits it into two things, and
+ * this is one thing: a figure and the button that brings it up to date.
  */
 export function StatTile({
   label,
@@ -97,9 +99,38 @@ export function StatTile({
         <p className="mt-1 text-xs uppercase tracking-widest text-muted-foreground">{label}</p>
       </div>
 
-      {action === undefined ? null : (
-        <div className="mt-3 border-t border-border pt-3">{action}</div>
-      )}
+      {action === undefined ? null : <div className="mt-3">{action}</div>}
+    </div>
+  );
+}
+
+/**
+ * The figures, while they are still being read.
+ *
+ * A tile with an em dash in it is a figure that has not arrived, and a bordered
+ * card with a label under a dash says "this is a count, and it is zero" to anyone
+ * glancing at it — the label is the part that misleads, because there is nothing
+ * that says whether the dash is the answer or the absence of one. So the tiles are
+ * not drawn at all while there is nothing to put in them: a page of figures in
+ * flight is a row of quiet blocks, and the figures arrive as tiles.
+ *
+ * They are blocks rather than cards for the same reason. A card with a border and
+ * no content is an empty box, and an empty box repeated across the top of a page
+ * looks like something failed.
+ */
+export function FigureSkeletons({
+  count = 4,
+  className,
+}: {
+  count?: number;
+  /** The grid the tiles will be drawn in, so the blocks do not reflow on arrival. */
+  className?: string;
+}) {
+  return (
+    <div className={cn('grid grid-cols-1 gap-4 sm:grid-cols-2', className)}>
+      {Array.from({ length: count }, (_, index) => (
+        <div key={index} className="h-20 animate-pulse rounded-xl bg-muted/30" />
+      ))}
     </div>
   );
 }

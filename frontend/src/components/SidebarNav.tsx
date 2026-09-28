@@ -46,19 +46,35 @@ function subSectionClasses(isActive: boolean): string {
 }
 
 /**
- * Whether a section is the one being read.
+ * Whether a section row is the one being read.
  *
- * A frame's own root — `/dashboard`, `/admin` — is the only path every other path
- * in the column sits under, so it is matched exactly and the rest by prefix. A
- * section with sub-options is matched by prefix, which is what keeps it lit while
- * one of its own pages is open — the row that is not a link still has to say
- * where the reader is.
+ * A section that is a page of its own is matched by prefix, so News stays lit
+ * while one of its items is open. A section that is only a heading with a
+ * disclosure is matched exactly: it has no page, so there is nothing of its own
+ * for the reader to be on, and lighting it beside the sub-option that *is*
+ * selected says the reader is in two places at once. The sub-option carries that
+ * answer on its own.
  */
-function isSectionActive(section: SidebarSection, pathname: string): boolean {
+function isSectionSelected(section: SidebarSection, pathname: string): boolean {
+  if (section.children !== undefined) {
+    return pathname === section.path;
+  }
+
   if (section.path.split('/').filter(Boolean).length === 1) {
     return pathname === section.path;
   }
 
+  return pathname === section.path || pathname.startsWith(`${section.path}/`);
+}
+
+/**
+ * Whether a section holds the page being read, sub-options included.
+ *
+ * This is what opens a section's list by itself, and it is deliberately a
+ * different question from whether the row is selected: a heading opens because
+ * the reader is inside it, and is not lit because they are not on it.
+ */
+function containsPage(section: SidebarSection, pathname: string): boolean {
   return pathname === section.path || pathname.startsWith(`${section.path}/`);
 }
 
@@ -86,7 +102,9 @@ function subListId(section: SidebarSection): string {
  * have sub-options. A section holding the page being read opens itself, because a
  * closed list cannot say which of its pages is open; that is a default rather
  * than a rule, so a reader who closes the section they are standing in keeps it
- * closed.
+ * closed. Opening a section is not the same as being on it, so the heading does
+ * not light up when one of its sub-options is the page — the sub-option says so
+ * on its own, and two lit rows would say the reader was in two places.
  *
  * It is one component because both frames draw the same column over the same
  * pages, and two copies of this list is two things to keep correct: a sub-option
@@ -100,25 +118,27 @@ export function SidebarNav({ sections }: { sections: SidebarSection[] }) {
   return (
     <nav className="flex flex-1 flex-col gap-1">
       {sections.map((section) => {
-        const active = isSectionActive(section, pathname);
-
         if (section.children === undefined) {
           return (
-            <Link key={section.path} to={section.path} className={sectionClasses(active)}>
+            <Link
+              key={section.path}
+              to={section.path}
+              className={sectionClasses(isSectionSelected(section, pathname))}
+            >
               <section.icon className="size-4 shrink-0" />
               {section.label}
             </Link>
           );
         }
 
-        const open = opened[section.path] ?? active;
+        const open = opened[section.path] ?? containsPage(section, pathname);
 
         return (
           <div key={section.path} className="flex flex-col gap-1">
             <button
               type="button"
               onClick={() => setOpened((state) => ({ ...state, [section.path]: !open }))}
-              className={sectionClasses(active)}
+              className={sectionClasses(isSectionSelected(section, pathname))}
               aria-expanded={open}
               aria-controls={subListId(section)}
             >

@@ -21,16 +21,23 @@ import { Button } from './ui/button';
  * server-wide one. A server behind a single address has one figure that is the
  * same for everybody and worth nothing on a dashboard; the address that has to
  * be correct is the one another player would use to join this person's game.
+ *
+ * The port is not printed beside it. It is a client setting, the same figure on
+ * every host of a deployment, so showing it spends the width of the tile on a
+ * number that says nothing and pushes the address itself into a smaller size so
+ * the pair fits.
+ *
+ * This draws only once the figure has arrived. The page decides that, and keeps
+ * every tile back until it has: a reload after publishing is not a page that has
+ * lost its address, and a tile that emptied itself each time the button was
+ * pressed would be a worse answer than the one it is there to give.
  */
 export function PublicAddressTile({
   address,
-  loading,
   onPublished,
 }: {
   /** The published address, or nothing when the account has none to publish. */
   address: string | null;
-  /** Whether the figure is still being read. */
-  loading: boolean;
   /** Called after a successful publish, so the page can read the address again. */
   onPublished: () => void;
 }) {
@@ -56,14 +63,14 @@ export function PublicAddressTile({
     <StatTile
       label="Your public IP"
       textual
-      value={loading ? '—' : (address ?? 'Not published')}
+      value={address ?? 'Not published'}
       action={
         <div className="space-y-2">
           <Button
             size="sm"
             className="w-full"
             onClick={() => void publish()}
-            disabled={publishing || (address === null && !loading)}
+            disabled={publishing || address === null}
           >
             {publishing ? <RefreshCw className="animate-spin" /> : <Globe />}
             {publishing ? 'Publishing…' : 'Update my IP'}
@@ -81,7 +88,7 @@ export function PublicAddressTile({
             </p>
           )}
 
-          {address === null && !loading ? (
+          {address === null ? (
             <p className="text-xs text-muted-foreground">
               None of your characters has a connection row yet, so there is no address to publish.
               Open a game in the client first.

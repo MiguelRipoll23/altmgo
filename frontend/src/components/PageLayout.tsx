@@ -20,6 +20,13 @@ const widths: Record<PageLayoutWidth, string> = {
  * The background is carried by the body now that the stylesheet owns it, so the
  * glows are the only thing this has to draw: they are decoration that has no
  * token behind it, and a token would be a colour named after a decoration.
+ *
+ * The column is centred in the window rather than hung from the top, which is the
+ * whole of what a sign-in page is: a short form and nothing else to read, so it
+ * sits in the middle of the screen the way every other sign-in page does instead
+ * of leaving a column of empty space beneath it. The padding around it is the one
+ * place the breathing room is explicit, and it grows with the window for the same
+ * reason the column does.
  */
 export function PageLayout({
   children,
@@ -30,18 +37,25 @@ export function PageLayout({
 }) {
   return (
     <div className="flex min-h-screen flex-col bg-[radial-gradient(ellipse_at_top,rgba(56,189,248,0.12),transparent_55%),radial-gradient(ellipse_at_bottom_right,rgba(30,64,175,0.18),transparent_60%)] text-foreground antialiased">
-      <main className="flex flex-1 items-center justify-center px-4 py-12">
+      <main className="flex flex-1 items-center justify-center px-4 py-10 sm:px-6 sm:py-16">
         <div className={`w-full ${widths[width]}`}>{children}</div>
       </main>
     </div>
   );
 }
 
-/** The wordmark and the sentence under it. */
+/**
+ * The wordmark and the sentence under it.
+ *
+ * The gap under the heading is the only one drawn here; the gap above it belongs
+ * to the layout. A heading that also carries a margin of its own pushes the pair
+ * away from the card by a number nobody chose, which is the kind of thing that
+ * reads as the page being slightly wrong rather than as a margin.
+ */
 export function PageHeading({ subtitle }: { subtitle: ReactNode }) {
   return (
     <div className="mb-8 text-center">
-      <h1 className="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">
+      <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
         Welcome to <span className="text-primary">Alt</span>MGO
       </h1>
       <p className="mt-2 text-sm text-muted-foreground">{subtitle}</p>
