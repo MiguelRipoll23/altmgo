@@ -166,6 +166,7 @@ dashboardRoutes.get('/games', requireAccount, async (context) => {
       players: game.players,
       maximumPlayers: game.maximum_players,
       mode: game.current_game,
+      map: game.map,
       status: game.status,
       hasPassword: game.has_password,
       updatedAt: game.updated_at,

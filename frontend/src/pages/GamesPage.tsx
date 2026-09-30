@@ -1,9 +1,10 @@
-import { Gamepad2, RefreshCw } from 'lucide-react';
+import { Map as MapIcon, RefreshCw } from 'lucide-react';
 import { LoadingBlock, SectionHeading, formatDate, formatNumber } from '../components/DataDisplay';
 import { StatusMessage } from '../components/StatusMessage';
 import { useApiResource } from '../components/useApiResource';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
+import { mapImage, mapName } from '../lib/maps';
 
 type Game = {
   id: number;
@@ -14,6 +15,8 @@ type Game = {
   players: number;
   maximumPlayers: number;
   mode: number;
+  /** The client's map number for the map the room is on, zero when it names none. */
+  map: number;
   status: number;
   hasPassword: boolean;
   updatedAt: string;
@@ -87,20 +90,33 @@ export function GamesPage() {
  * room is one thing to look at, and the grid can be read down a column or across
  * a row depending on which of those the reader wants.
  *
- * The band at the top is the image that is not here yet. It is sized and placed
- * now, while there is only an icon in it, rather than when the image arrives —
- * an image dropped into a card that was laid out without one moves everything
- * under it, and every card on the page moves at once. Reserving the space is the
- * difference between the picture turning up and the page being rebuilt around it.
+ * The band at the top is the map, and the map is what most of somebody choosing
+ * a room is choosing: two rooms on the same rule differ by who is in them, and
+ * two rooms on different maps are not the same game at all. It is a fixed ratio
+ * so that a card is the same shape whether the picture is there or not, and the
+ * image covers the band rather than sitting in it, so a map photographed in a
+ * wider ratio is cropped rather than letterboxed into a strip.
  */
 function GameCard({ game }: { game: Game }) {
+  const picture = mapImage(game.map);
+
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card/50">
-      {/* The image goes here. It is a fixed ratio with the icon centred in it so
-          the card is already the shape it will be, and a real picture replaces
-          the icon without any of the text below it moving. */}
-      <div className="flex aspect-video w-full items-center justify-center border-b border-border bg-muted/20">
-        <Gamepad2 className="size-8 text-muted-foreground/50" aria-hidden="true" />
+      <div className="relative flex aspect-video w-full items-center justify-center border-b border-border bg-muted/20">
+        {picture === null ? (
+          <MapIcon className="size-8 text-muted-foreground/50" aria-hidden="true" />
+        ) : (
+          // The name is the alt text because the picture carries no text of its
+          // own, and a reader who cannot see it is left with the map's name
+          // rather than with nothing. The room's own name is the heading below,
+          // so the two are not read as one another's caption.
+          <img
+            src={picture}
+            alt={mapName(game.map)}
+            loading="lazy"
+            className="absolute inset-0 size-full object-cover"
+          />
+        )}
       </div>
 
       <div className="flex flex-1 flex-col gap-3 px-4 py-4">
@@ -110,6 +126,16 @@ function GameCard({ game }: { game: Game }) {
           </h2>
           {game.hasPassword ? <Badge variant="warning">password</Badge> : null}
         </div>
+
+        {/* The map's name, in words. The picture above is how the map is
+            recognised, but only by somebody who already knows it, and a card is
+            a card somebody reads rather than one they look at. It sits under the
+            room's own name because the room is what was searched for and the map
+            is what is being decided. */}
+        <p className="flex items-center gap-1.5 text-base text-muted-foreground">
+          <MapIcon className="size-4 shrink-0" aria-hidden="true" />
+          <span className="truncate">{mapName(game.map)}</span>
+        </p>
 
         <div className="flex items-baseline gap-2">
           <p className="text-2xl font-extrabold tracking-tight text-foreground tabular-nums">

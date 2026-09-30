@@ -31,6 +31,8 @@ export type GameSummaryRow = {
   /** The room's own `max_players`, aliased so the shape stays readable. */
   maximum_players: number;
   current_game: number;
+  /** The room's stored rotation, as the `[rule, map, flag]` JSON the host stored. */
+  games: string;
   status: number;
   has_password: boolean;
   updated_at: Date;
@@ -46,11 +48,21 @@ export type GameSummaryRow = {
  * reason it is there: the list is what somebody joins from, so a room that is
  * still shown is a room that can be joined, and a window any wider lists hosts
  * that stopped answering.
+ *
+ * The map is not a column of its own. A room stores a rotation of rounds as a
+ * JSON array of `[rule, map, flag]` triples and a `current_game` index into it,
+ * so the map the room is actually on is the map of the triple that index names —
+ * the same pair the game server itself reads. It is parsed here rather than
+ * selected, because the cast a SQL read would need raises on a rotation that is
+ * not valid JSON, and one such row would take the whole list down with it. A
+ * room whose rotation is empty, unparseable, or indexed past its end has no map
+ * to report and reads as zero: it is still a room somebody can join, and
+ * refusing to list it would hide a room that is up.
  */
 const GameStaleSeconds = 60;
 
 /** Lists the game rooms that are still current. */
-export async function listGames(): Promise<GameSummaryRow[]> {
+export async function listGames(): Promise<GameSummary[]> {
   const rows = await database()`
     select
       game.id,
@@ -65,6 +77,7 @@ export async function listGames(): Promise<GameSummaryRow[]> {
       ) as players,
       game.max_players as maximum_players,
       game.current_game,
+      game.games,
       game.status,
       (game.password <> '') as has_password,
       game.updated_at
@@ -75,7 +88,46 @@ export async function listGames(): Promise<GameSummaryRow[]> {
     order by game.updated_at desc
   `;
 
-  return rows as GameSummaryRow[];
+  return (rows as GameSummaryRow[]).map((game) => ({
+    ...game,
+    map: roomMap(game),
+  }));
+}
+
+/** One room as the list reports it, which is the row plus the map it is on. */
+export type GameSummary = GameSummaryRow & { map: number };
+
+/**
+ * The map a room is on, taken from the triple its current round names.
+ *
+ * A port of the game server's own `ResolveGameMode`, in `RoundStatisticsHandlers`:
+ * the rotation is a list of triples, `current_game` indexes it, and the map is
+ * the second entry of that triple. Zero is returned rather than thrown for every
+ * way the pair can fail to name a map, because a room the dashboard cannot read
+ * a map out of is a room that is still being hosted and still worth listing.
+ */
+function roomMap(game: GameSummaryRow): number {
+  try {
+    const rounds: unknown = JSON.parse(game.games);
+
+    if (!Array.isArray(rounds) || game.current_game < 0 || game.current_game >= rounds.length) {
+      return 0;
+    }
+
+    const entry: unknown = rounds[game.current_game];
+
+    if (!Array.isArray(entry) || entry.length < 2) {
+      return 0;
+    }
+
+    const map: unknown = entry[1];
+
+    return typeof map === 'number' && Number.isInteger(map) ? map : 0;
+  } catch {
+    // A rotation that is not JSON is a room whose map this page cannot name. It
+    // is not a reason to fail the list the room belongs to.
+    return 0;
+  }
 }
 
 /** One event team with the roster it holds. */

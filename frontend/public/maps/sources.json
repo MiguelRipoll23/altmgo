@@ -1,0 +1,149 @@
+{
+  "1": {
+    "slug": "forest-firefight",
+    "file": "forest-firefight.webp",
+    "type": "image/webp",
+    "bytes": 28250,
+    "source": "https://static.wikia.nocookie.net/metalgear/images/3/3d/ForestFirefight.jpg"
+  },
+  "2": {
+    "slug": "ambush-alley",
+    "file": "ambush-alley.webp",
+    "type": "image/webp",
+    "bytes": 28546,
+    "source": "https://static.wikia.nocookie.net/metalgear/images/5/54/AmbushAlley.jpg"
+  },
+  "3": {
+    "slug": "urban-ultimatum",
+    "file": "urban-ultimatum.webp",
+    "type": "image/webp",
+    "bytes": 34636,
+    "source": "https://static.wikia.nocookie.net/metalgear/images/2/2f/UrbanUltimatum.jpg"
+  },
+  "4": {
+    "slug": "gronznyj-grad",
+    "file": "gronznyj-grad.webp",
+    "type": "image/webp",
+    "bytes": 44182,
+    "source": "https://static.wikia.nocookie.net/metalgear/images/f/fc/Groznyj_Grad1.jpg"
+  },
+  "5": {
+    "slug": "coppertown-conflict",
+    "file": "coppertown-conflict.webp",
+    "type": "image/webp",
+    "bytes": 27990,
+    "source": "https://static.wikia.nocookie.net/metalgear/images/5/5e/CoppertownConflict.jpg"
+  },
+  "6": {
+    "slug": "hazard-house",
+    "file": "hazard-house.webp",
+    "type": "image/webp",
+    "bytes": 19862,
+    "source": "https://static.wikia.nocookie.net/metalgear/images/5/51/HazardHouse.jpg"
+  },
+  "7": {
+    "slug": "blood-bath",
+    "file": "blood-bath.webp",
+    "type": "image/webp",
+    "bytes": 125742,
+    "source": "https://static.wikia.nocookie.net/metalgear/images/e/e2/Bloodbath.jpg"
+  },
+  "8": {
+    "slug": "tomb-of-tubes",
+    "file": "tomb-of-tubes.webp",
+    "type": "image/webp",
+    "bytes": 18506,
+    "source": "https://static.wikia.nocookie.net/metalgear/images/5/50/TombOfTubes.jpg"
+  },
+  "9": {
+    "slug": "ravaged-riverfront",
+    "file": "ravaged-riverfront.webp",
+    "type": "image/webp",
+    "bytes": 17050,
+    "source": "https://static.wikia.nocookie.net/metalgear/images/1/1b/RavagedRiverfront.jpg"
+  },
+  "10": {
+    "slug": "silo-sunset",
+    "file": "silo-sunset.webp",
+    "type": "image/webp",
+    "bytes": 21740,
+    "source": "https://static.wikia.nocookie.net/metalgear/images/2/22/SiloSunset.jpg"
+  },
+  "11": {
+    "slug": "icebound-inferno",
+    "file": "icebound-inferno.webp",
+    "type": "image/webp",
+    "bytes": 14216,
+    "source": "https://static.wikia.nocookie.net/metalgear/images/3/36/Iceboundinferno.jpg"
+  },
+  "12": {
+    "slug": "midtown-maelstrom",
+    "file": "midtown-maelstrom.webp",
+    "type": "image/webp",
+    "bytes": 24514,
+    "source": "https://static.wikia.nocookie.net/metalgear/images/9/9e/MidtownMaelstorm.jpg"
+  },
+  "13": {
+    "slug": "winter-warehouse",
+    "file": "winter-warehouse.webp",
+    "type": "image/webp",
+    "bytes": 23330,
+    "source": "https://static.wikia.nocookie.net/metalgear/images/0/05/WinterWarehouse.jpg"
+  },
+  "14": {
+    "slug": "virtuous-vista",
+    "file": "virtuous-vista.webp",
+    "type": "image/webp",
+    "bytes": 38044,
+    "source": "https://static.wikia.nocookie.net/metalgear/images/3/37/VirtuousVista.jpg"
+  },
+  "15": {
+    "slug": "outer-outlet",
+    "file": "outer-outlet.webp",
+    "type": "image/webp",
+    "bytes": 28154,
+    "source": "https://static.wikia.nocookie.net/metalgear/images/d/d8/OuterOutlet.jpg"
+  },
+  "17": {
+    "slug": "desert-duel",
+    "file": "desert-duel.webp",
+    "type": "image/webp",
+    "bytes": 42322,
+    "source": "https://static.wikia.nocookie.net/metalgear/images/7/7e/Desert_Duelee.png"
+  },
+  "18": {
+    "slug": "lethal-leviathan",
+    "file": "lethal-leviathan.webp",
+    "type": "image/webp",
+    "bytes": 26556,
+    "source": "https://static.wikia.nocookie.net/metalgear/images/e/e4/Lethal_Leviathan.png"
+  },
+  "19": {
+    "slug": "perilous-palace",
+    "file": "perilous-palace.webp",
+    "type": "image/webp",
+    "bytes": 30686,
+    "source": "https://static.wikia.nocookie.net/metalgear/images/3/3c/Perilous_Palace.png"
+  },
+  "20": {
+    "slug": "quaint-quarrel",
+    "file": "quaint-quarrel.webp",
+    "type": "image/webp",
+    "bytes": 23310,
+    "source": "https://static.wikia.nocookie.net/metalgear/images/c/c1/Quaint_Quarrel.png"
+  },
+  "21": {
+    "slug": "jade-junction",
+    "file": "jade-junction.webp",
+    "type": "image/webp",
+    "bytes": 32962,
+    "source": "https://static.wikia.nocookie.net/metalgear/images/4/4b/JadeJunction.png"
+  },
+  "22": {
+    "slug": "eastern-europe",
+    "file": "eastern-europe.webp",
+    "type": "image/webp",
+    "bytes": 25048,
+    "source": "https://static.wikia.nocookie.net/metalgear/images/f/f8/E.E.png"
+  }
+}
