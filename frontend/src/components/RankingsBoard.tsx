@@ -162,7 +162,7 @@ export function RankingsBoard({ subject }: { subject: BoardSubject }) {
           below is three statements about one list that a reader has to reconcile. */}
       <Panel
         title={name}
-        description={describeBoard(data, loading, month)}
+        description={describeBoard(data, month)}
         footer={
           data === null || data.total === 0 ? null : (
             <div className="flex w-full flex-wrap items-center justify-between gap-3">
@@ -225,15 +225,13 @@ export function RankingsBoard({ subject }: { subject: BoardSubject }) {
 /**
  * The sentence above the rows: how many are ranked, and over what.
  *
- * While the board is being read it says so rather than counting the rows still on
- * screen from the board that was being read before, which is a count of a board the
- * reader has already been shown and one they are no longer looking at.
+ * It deliberately says nothing about the board being read. The table under it
+ * already says so, with a spinner beside the words and — once a window is on
+ * screen — underneath the rows rather than in place of them, and the two lines are
+ * read together as one panel: the same sentence twice, once moving and once not,
+ * is a panel that cannot tell which of its two lines is the current one.
  */
-function describeBoard(data: Page | null, loading: boolean, month: boolean): string {
-  if (loading) {
-    return 'Reading the board…';
-  }
-
+function describeBoard(data: Page | null, month: boolean): string {
   if (data === null) {
     return 'The boards the game shows, computed from the same data.';
   }

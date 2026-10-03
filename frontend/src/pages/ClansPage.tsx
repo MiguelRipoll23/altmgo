@@ -78,9 +78,12 @@ const statuses = [
  * which of the three filters they answered.
  *
  * A count with no filter beside it is a number nobody can act on — twelve clans is
- * only good news if you asked for the taking-applications ones. While the search is
- * being read the line says so rather than counting the rows that are already on
- * screen, which would be the previous search's answer.
+ * only good news if you asked for the taking-applications ones.
+ *
+ * It deliberately says nothing about the search being read. The list under it
+ * already says so, with a spinner beside the words, and the two lines are read
+ * together as one panel: the same sentence twice, once moving and once not, is a
+ * panel that cannot tell which of its two lines is the current one.
  */
 function describeSearch(
   clans: Clan[] | undefined,
@@ -88,12 +91,7 @@ function describeSearch(
   term: string,
   status: string,
   order: string,
-  loading: boolean,
 ): string {
-  if (loading) {
-    return 'Searching…';
-  }
-
   if (clans === undefined) {
     return 'Every clan on the server.';
   }
@@ -248,14 +246,7 @@ export function ClansPage({ basePath = '/dashboard' }: { basePath?: string }) {
 
       <Panel
         title="Clans"
-        description={describeSearch(
-          list.data?.clans,
-          filtered,
-          submitted,
-          status,
-          order,
-          list.loading,
-        )}
+        description={describeSearch(list.data?.clans, filtered, submitted, status, order)}
       >
         {clans.length === 0 ? (
           list.loading ? (
