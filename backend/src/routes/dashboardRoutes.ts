@@ -165,10 +165,11 @@ dashboardRoutes.get('/games', requireAccount, async (context) => {
       lobbyName: game.lobby_name,
       players: game.players,
       maximumPlayers: game.maximum_players,
-      mode: game.current_game,
+      rule: game.rule,
       map: game.map,
       status: game.status,
       hasPassword: game.has_password,
+      ping: game.ping,
       updatedAt: game.updated_at,
     })),
   });

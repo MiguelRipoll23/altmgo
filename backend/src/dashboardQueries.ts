@@ -42,6 +42,8 @@ export type GameSummaryRow = {
   games: string;
   status: number;
   has_password: boolean;
+  /** The ping the host's own client reported for itself. */
+  ping: number;
   updated_at: Date;
 };
 
@@ -137,6 +139,7 @@ export async function listGames(): Promise<GameSummary[]> {
       game.games,
       game.status,
       (game.password <> '') as has_password,
+      game.ping,
       game.updated_at
     from games game
     left join characters host on host.id = game.host_id
@@ -149,11 +152,12 @@ export async function listGames(): Promise<GameSummary[]> {
     ...game,
     players: playingCount(game),
     map: roomMap(game),
+    rule: roomRule(game),
   }));
 }
 
-/** One room as the list reports it, which is the row plus what it is playing on. */
-export type GameSummary = GameSummaryRow & { players: number; map: number };
+/** One room as the list reports it, which is the row plus what it is playing. */
+export type GameSummary = GameSummaryRow & { players: number; map: number; rule: number };
 
 /**
  * How many characters are playing in a room.
@@ -181,36 +185,63 @@ function playingCount(game: GameSummaryRow): number {
 }
 
 /**
- * The map a room is on, taken from the triple its current round names.
+ * The triple a room's current round names, or null when it names none.
  *
  * A port of the game server's own `ResolveGameMode`, in `RoundStatisticsHandlers`:
- * the rotation is a list of triples, `current_game` indexes it, and the map is
- * the second entry of that triple. Zero is returned rather than thrown for every
- * way the pair can fail to name a map, because a room the dashboard cannot read
- * a map out of is a room that is still being hosted and still worth listing.
+ * the rotation is a list of `[rule, map, flag]` triples and `current_game` is an
+ * index into it. Null rather than a throw for every way the pair can fail,
+ * because a room the dashboard cannot read its round out of is a room that is
+ * still being hosted and still worth listing.
+ *
+ * The two readers below share it because they read the same triple, and two
+ * copies of the same four checks is four checks that can drift into disagreeing
+ * about whether a room has a readable round.
  */
-function roomMap(game: GameSummaryRow): number {
+function currentRound(game: GameSummaryRow): unknown[] | null {
   try {
     const rounds: unknown = JSON.parse(game.games);
 
     if (!Array.isArray(rounds) || game.current_game < 0 || game.current_game >= rounds.length) {
-      return 0;
+      return null;
     }
 
     const entry: unknown = rounds[game.current_game];
 
-    if (!Array.isArray(entry) || entry.length < 2) {
-      return 0;
-    }
-
-    const map: unknown = entry[1];
-
-    return typeof map === 'number' && Number.isInteger(map) ? map : 0;
+    return Array.isArray(entry) ? entry : null;
   } catch {
-    // A rotation that is not JSON is a room whose map this page cannot name. It
+    // A rotation that is not JSON is a room whose round this page cannot read. It
     // is not a reason to fail the list the room belongs to.
-    return 0;
+    return null;
   }
+}
+
+/** Reads one integer out of the current round's triple, or zero for anything else. */
+function roundEntry(round: unknown[] | null, index: number): number {
+  const entry: unknown = round?.[index];
+
+  return typeof entry === 'number' && Number.isInteger(entry) ? entry : 0;
+}
+
+/** The map a room is on, which is the second entry of its current round. */
+function roomMap(game: GameSummaryRow): number {
+  return roundEntry(currentRound(game), 1);
+}
+
+/**
+ * The rule a room is playing, which is the first entry of its current round.
+ *
+ * This was not sent before, and the field that carried it in its place was
+ * `current_game` — the *index* of the round in the rotation, not the rule. A
+ * room on its first round therefore reported itself as Deathmatch whatever it
+ * was actually playing, which is why the index and the rule are kept apart here.
+ *
+ * Zero is both a real rule and the fallback for an unreadable one, exactly as it
+ * is for the map. The rotation stores the rule as a plain byte with no sentinel,
+ * so the stored data cannot tell "Deathmatch" from "no rule named" and the
+ * commoner reading is the one to fall back on.
+ */
+function roomRule(game: GameSummaryRow): number {
+  return roundEntry(currentRound(game), 0);
 }
 
 /** One event team with the roster it holds. */

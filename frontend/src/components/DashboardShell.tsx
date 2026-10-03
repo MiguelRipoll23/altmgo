@@ -1,4 +1,4 @@
-import { Menu, PanelLeftClose } from 'lucide-react';
+import { Menu, PanelLeft, PanelLeftClose } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { cn } from '../lib/utils';
@@ -14,9 +14,12 @@ function isWideWindow(): boolean {
   return window.matchMedia(WideWindow).matches;
 }
 
+/** How much of the navigation column is on screen. */
+type ColumnState = 'open' | 'reduced' | 'hidden';
+
 /**
  * The frame both dashboards are drawn in: a column of sections and the page
- * beside them, with the column able to be put away.
+ * beside them, with the column able to be reduced or put away.
  *
  * It is one component for both frames because the two shells were the same shell
  * twice over, and a responsive frame is exactly the sort of thing that goes wrong
@@ -26,17 +29,22 @@ function isWideWindow(): boolean {
  * where the account card leads out to — is passed in, and everything else is
  * drawn here once.
  *
- * The column is collapsed on a narrow window from the start rather than after a
+ * The column is hidden on a narrow window from the start rather than after a
  * first render, because a phone that opens on a 256-pixel column has no page
  * visible at all, and a dashboard whose first impression is a drawer is a
  * dashboard nobody has seen the dashboard of. It is open on a wide one, where the
  * column is part of the layout rather than something laid over it.
  *
- * Collapsing on a wide window is the same control doing the same thing: the
- * column is taken out of the layout and the page takes the whole width, and the
- * button that put it away is still on screen to put it back. The one thing that
- * is not the same is the backdrop, which is hidden on a wide window — a dimmed
- * page behind a column that is not covering anything is a page that looks broken.
+ * A wide window has three column states rather than two, and the third is the
+ * reduced one: the column narrows to its icons and stays on screen. It is a real
+ * state rather than a nicety because putting the column away entirely and
+ * narrowing it are different requests on a desktop. Away is right for a phone,
+ * where the column is a drawer over the page and the page needs the width. On a
+ * wide window the column is beside the page, and removing it buys the page about
+ * ten characters — not worth losing the reader's place in the frame to get, when
+ * the reader who asked for more room usually wants to see a wide table rather
+ * than to stop navigating. So the reduce control keeps the icons on screen and
+ * working, and only the drawer-style hide is the thing that takes the column off.
  *
  * Only the list of sections scrolls, not the column. A column that scrolls as one
  * piece takes the wordmark and the account card away with it, so a long list
@@ -57,9 +65,32 @@ export function DashboardShell({
   brand: ReactNode;
   children: ReactNode;
 }) {
-  const [open, setOpen] = useState(isWideWindow);
+  // A narrow window only ever has two states — the drawer out or away — because
+  // a reduced column on a phone is a column of icons with nothing under them and
+  // no page beside them, which is not a layout. The initial read is made once,
+  // before the first render, so a phone never flashes an open drawer.
+  const [column, setColumn] = useState<ColumnState>(isWideWindow() ? 'open' : 'hidden');
   const location = useLocation();
   const arrived = useRef(false);
+
+  /** Whether the column is on screen in any form. */
+  const shown = column !== 'hidden';
+
+  /**
+   * Narrows the column, or opens it back out.
+   *
+   * On a narrow window this is the drawer, so the two states are out and away and
+   * there is nothing between them. On a wide one it steps between the full column
+   * and the icon rail.
+   */
+  function toggleColumn() {
+    if (!isWideWindow()) {
+      setColumn(column === 'hidden' ? 'open' : 'hidden');
+      return;
+    }
+
+    setColumn(column === 'open' ? 'reduced' : 'open');
+  }
 
   // Following a link on a phone has to put the column away again: the page it
   // opened is behind the column, and a reader who tapped a section on a narrow
@@ -80,7 +111,7 @@ export function DashboardShell({
     }
 
     if (!isWideWindow()) {
-      setOpen(false);
+      setColumn('hidden');
     }
   }, [location.pathname, location.search]);
 
@@ -91,7 +122,7 @@ export function DashboardShell({
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setOpen(false);
+        setColumn('hidden');
       }
     };
 
@@ -106,7 +137,7 @@ export function DashboardShell({
     const query = window.matchMedia(WideWindow);
     const onChange = (event: MediaQueryListEvent) => {
       if (!event.matches) {
-        setOpen(false);
+        setColumn('hidden');
       }
     };
 
@@ -117,10 +148,10 @@ export function DashboardShell({
 
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
-      {open ? (
+      {shown ? (
         <div
           className="fixed inset-0 z-40 bg-background/70 backdrop-blur-sm lg:hidden"
-          onClick={() => setOpen(false)}
+          onClick={() => setColumn('hidden')}
           aria-hidden="true"
         />
       ) : null}
@@ -128,42 +159,70 @@ export function DashboardShell({
       <aside
         id="frame-navigation"
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col gap-6 border-r border-border bg-card/60 px-5 pb-6 pt-5 transition-transform duration-200 ease-out lg:w-64 lg:max-w-none',
-          open ? 'translate-x-0' : '-translate-x-full',
+          'fixed inset-y-0 left-0 z-50 flex max-w-[85vw] flex-col gap-6 border-r border-border bg-card/60 pb-6 pt-5 transition-transform duration-200 ease-out',
+          // The gutter and the width both move between the three states, so the
+          // column is padded when it has labels and not when it has only icons.
+          // Reducing the width alone would leave the icons floating in a wide
+          // empty box, which reads as a column that failed to draw.
+          column === 'open'
+            ? 'w-72 px-5 lg:w-64 lg:max-w-none'
+            : 'w-20 px-3 lg:max-w-none',
+          shown ? 'translate-x-0' : '-translate-x-full',
         )}
       >
-        <div className="flex items-center justify-between gap-2">
-          {brand}
+        {column === 'reduced' ? null : (
+          <div className="flex items-center justify-between gap-2">
+            {brand}
 
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setOpen(false)}
-            aria-label="Collapse the navigation"
-            aria-expanded={open}
-            aria-controls="frame-navigation"
-          >
-            <PanelLeftClose />
-          </Button>
-        </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => toggleColumn()}
+              aria-label="Collapse the navigation"
+              aria-expanded={shown}
+              aria-controls="frame-navigation"
+            >
+              <PanelLeftClose />
+            </Button>
+          </div>
+        )}
 
-        <SidebarNav sections={sections} />
+        <SidebarNav sections={sections} reduced={column === 'reduced'} />
 
         <AccountMenu accountName={accountName} />
       </aside>
 
-      {open ? null : (
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => setOpen(true)}
-          className="fixed left-3 top-3 z-30"
-          aria-label="Show the navigation"
-          aria-expanded={open}
-          aria-controls="frame-navigation"
-        >
-          <Menu />
-        </Button>
+      {shown && column === 'open' ? null : (
+        // In the reduced state the column is already on screen carrying the
+        // sections, so the control goes inside it rather than over the page: a
+        // floating button on top of the page beside a visible column is two
+        // controls for the same thing.
+        column === 'reduced' ? (
+          <div className="flex justify-center">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => toggleColumn()}
+              aria-label="Expand the navigation"
+              aria-expanded={shown}
+              aria-controls="frame-navigation"
+            >
+              <PanelLeft />
+            </Button>
+          </div>
+        ) : (
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => toggleColumn()}
+            className="fixed left-3 top-3 z-30"
+            aria-label="Show the navigation"
+            aria-expanded={shown}
+            aria-controls="frame-navigation"
+          >
+            <Menu />
+          </Button>
+        )
       )}
 
       {/* The page's own gutter follows the column, and moves with it rather than
@@ -171,7 +230,7 @@ export function DashboardShell({
       <main
         className={cn(
           'min-w-0 transition-[padding] duration-200 ease-out',
-          open ? 'lg:pl-64' : 'lg:pl-0',
+          column === 'open' ? 'lg:pl-64' : column === 'reduced' ? 'lg:pl-20' : 'lg:pl-0',
         )}
       >
         <div
@@ -179,7 +238,9 @@ export function DashboardShell({
             'mx-auto w-full max-w-5xl px-4 py-6 sm:px-8 sm:py-8',
             // The button that brings the column back is drawn over the top of the
             // page, so the page is given room for it rather than starting under it.
-            open ? undefined : 'pt-16 lg:pt-8',
+            // The reduced column does not need that room, because it sits beside
+            // the page rather than over it.
+            column === 'reduced' ? undefined : shown ? undefined : 'pt-16 lg:pt-8',
           )}
         >
           {children}
