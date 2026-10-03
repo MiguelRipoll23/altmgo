@@ -1,4 +1,4 @@
-import { ArrowRight, Gamepad2, Newspaper, UserRound } from 'lucide-react';
+import { ArrowRight, Newspaper } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { LoadingBlock, SectionHeading, formatDay, formatNumber } from '../components/DataDisplay';
 import { GameCard, type Game } from '../components/GameCard';
@@ -119,24 +119,27 @@ export function OverviewPage() {
             {/* Badges rather than bare figures, because a count on its own in a
                 line of prose is a number the reader has to stop and read, and
                 these two are the only numbers on the page. The badge says what
-                each one is without a word of labelling around them, and the icon
-                carries the meaning for a reader who does not read the text beside
-                it — a figure that moves when the server is busy is a different
-                shape from a figure that never does.
+                each one is without a word of labelling around them.
+
+                They are coloured apart because the two are not the same kind of
+                thing and a reader should not have to read them to know which is
+                which: green is how busy the server is right now, and it moves
+                while the page is open; blue is how much it has done, and it only
+                ever goes up. An icon was carrying that before, and it was a second
+                thing to decode on a line whose whole job is to be read at a
+                glance.
 
                 They are `verbatim` rather than shouted: a badge elsewhere on the
                 dashboard carries a state the dashboard worded for itself, and
                 these carry numbers the server counted. Shouting a count makes it
                 look like a status. */}
-            <Badge variant="secondary" verbatim>
-              <UserRound className="size-3 shrink-0" aria-hidden="true" />
+            <Badge variant="success" verbatim>
               <span className="tabular-nums">
                 {formatNumber(data.connectedPlayers)} online
               </span>
             </Badge>
 
-            <Badge variant="secondary" verbatim>
-              <Gamepad2 className="size-3 shrink-0" aria-hidden="true" />
+            <Badge variant="default" verbatim>
               <span className="tabular-nums">
                 {formatNumber(data.totalGames)}{' '}
                 {data.totalGames === 1 ? 'game' : 'games'}
