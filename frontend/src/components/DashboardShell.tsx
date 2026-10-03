@@ -115,13 +115,27 @@ export function DashboardShell({
     }
   }, [location.pathname, location.search]);
 
-  // Escape closes it, because a drawer with no keyboard way out is a drawer some
-  // people cannot use at all. It is a control the reader pressed, so it is honoured
-  // on a wide window too: a column left open on a desktop is a column they asked
-  // to have.
+  // Escape closes the drawer, and only the drawer.
+  //
+  // It was honoured on a wide window as well, on the reasoning that a column left
+  // open on a desktop is a column the reader asked to have and Escape is a way of
+  // changing that. That reasoning was wrong about what Escape means: the listener
+  // is on the window, so it fires for an Escape pressed anywhere on the page —
+  // closing a menu that had already closed itself, dismissing something that was
+  // not this, or arriving with a tab regaining focus after the reader pressed it
+  // before looking away. None of those are a request to take the navigation away,
+  // and there was no way back: the column went to `hidden` and stayed there for
+  // the rest of the session, with the floating button left on the page because
+  // that is the only way back to the column from that state.
+  //
+  // So it is now the drawer case only. A drawer laid over the page with no
+  // keyboard way out of it is a drawer some people cannot use at all, and that is
+  // a real problem. On a wide window the column is beside the page rather than
+  // over it, it has a control of its own at its head, and pressing Escape should
+  // mean whatever the thing that had focus meant by it.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === 'Escape' && !isWideWindow()) {
         setColumn('hidden');
       }
     };
@@ -195,10 +209,20 @@ export function DashboardShell({
 
         <SidebarNav sections={sections} reduced={column === 'reduced'} />
 
-        <AccountMenu accountName={accountName} />
+        <AccountMenu accountName={accountName} reduced={column === 'reduced'} />
       </aside>
 
       {shown ? null : (
+        // This is the affordance of the `hidden` state, and it is the only way
+        // back to the column from it: the column has been translated off the
+        // screen, so the control at its head has gone with it. It is drawn over
+        // the page for the same reason — there is no column left to put it in.
+        //
+        // Which means it is the thing a reader sees when the column has been put
+        // away rather than reduced, and the two are easy to confuse: both have an
+        // icon and both put one back. The reduced column keeps its icons on screen
+        // so it never needs this, and this one never shows a rail of icons, so the
+        // two cannot be mistaken for each other once either has been used.
         <Button
           variant="outline"
           size="icon"

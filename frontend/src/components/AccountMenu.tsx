@@ -1,5 +1,6 @@
 import { CircleUser, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { cn } from '../lib/utils';
 import { clearSessionToken } from '../session';
 import {
   DropdownMenu,
@@ -13,25 +14,27 @@ import {
 /**
  * Who is signed in, at the foot of the sidebar, and the way out.
  *
- * The trigger is an icon and nothing else, in every width of the column. The
- * account name was written across the foot of every page — a heading-sized line
- * above the sign-out, read once on arrival and then never again — and it crowded
- * out the last section in the column, which is the one somebody is more likely to
- * be reaching for. A figure on every page that nobody reads is space taken from
- * the page.
+ * The trigger says "My Account" beside the icon rather than the account's name. The
+ * name is in the popover, and it is the only thing in the popover that is a fact
+ * rather than a command, so that is where it is read: a reader opens this to sign
+ * out or to check who they are, and both are answered by opening it.
  *
- * The name has not been dropped so much as moved: the popover opens on the name in
- * full, which is where it is read — a reader opens this to sign out or to check
- * who they are, and both are answered by opening it. The trigger keeps the name
- * as its accessible name and as its tooltip in the meantime, so a screen reader
- * announces it and a pointer finds it on hover, and neither has to open anything
- * to learn whose session they are in.
+ * What the trigger needs to say is what the control *is*, and a name is the wrong
+ * answer to that. An account name is a string of whatever its owner typed, set at
+ * the width of that string: two accounts reading "Mike" and "mike_the_2004_gamer"
+ * put the control at two widths, and the one beside the column's other rows is a
+ * heading there, so a long name was reflowing the foot of every page. "My
+ * Account" is the same width every time and is the name of the thing rather than
+ * of the person.
  *
- * It is one control rather than two shapes of one, which is why it needs no
- * `reduced`: the reduced column was the icon and the open column was the name, so
- * the same control was drawn differently at two widths and a reader who had the
- * column open had a different thing under the pointer than one who had it closed.
- * An icon fits both, so there is one drawing.
+ * So the name moved rather than went. The trigger keeps it as its accessible name
+ * and as its tooltip, so a screen reader announces it and a pointer finds it on
+ * hover, and neither has to open anything to learn whose session they are in.
+ *
+ * In the reduced column it is the icon alone. There is no room for two words in
+ * eighty pixels, and "My Account" truncated to "My Acco…" is worse than no label
+ * at all: it is not a control anybody can recognise, and it is the one control on
+ * the page that opens onto the way out.
  *
  * It is a card that opens rather than a panel that is always there because the
  * name is read once and then never again. Leaving it in view spends the foot of
@@ -39,28 +42,36 @@ import {
  * control that has to be reachable from every screen rather than the one that
  * deserves permanent space.
  */
-export function AccountMenu({ accountName }: {
+export function AccountMenu({
+  accountName,
+  reduced = false,
+}: {
   /**
    * The name the account is signed in as, or nothing while the server is being
    * asked for it.
    *
-   * Nothing here shows it, so the only thing the absence changes is the tooltip
-   * and the accessible name, both of which fall back to the bare word "Account".
-   * There is no placeholder bar for it any more: the trigger has no text to hold
-   * open, so there is nothing for a placeholder to stand in for.
+   * It is not drawn on the trigger, so the only thing its absence changes is the
+   * tooltip and the accessible name, both of which fall back to "My Account".
    */
   accountName: string | null;
+  /** Whether the column has been reduced to icons, leaving no room for the label. */
+  reduced?: boolean;
 }) {
   const navigate = useNavigate();
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        className="flex w-full items-center justify-center rounded-lg border border-border bg-card/60 px-3 py-2.5 text-foreground transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        aria-label={accountName === null ? 'Account' : `${accountName}, account`}
-        title={accountName ?? 'Account'}
+        className={cn(
+          'flex w-full items-center rounded-lg border border-border bg-card/60 px-3 py-2.5 text-base font-medium text-foreground transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+          reduced ? 'justify-center' : 'gap-3',
+        )}
+        aria-label={accountName === null ? 'My Account' : `My Account, ${accountName}`}
+        title={accountName ?? 'My Account'}
       >
         <CircleUser className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+
+        {reduced ? null : <span className="truncate">My Account</span>}
       </DropdownMenuTrigger>
 
       {/* Opens upwards, over the page rather than off the foot of the window: it
