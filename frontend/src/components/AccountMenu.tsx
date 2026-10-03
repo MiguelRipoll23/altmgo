@@ -1,6 +1,5 @@
-import { ChevronUp, CircleUser, LogOut } from 'lucide-react';
+import { CircleUser, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { cn } from '../lib/utils';
 import { clearSessionToken } from '../session';
 import {
   DropdownMenu,
@@ -14,70 +13,61 @@ import {
 /**
  * Who is signed in, at the foot of the sidebar, and the way out.
  *
+ * The trigger is an icon and nothing else, in every width of the column. The
+ * account name was written across the foot of every page — a heading-sized line
+ * above the sign-out, read once on arrival and then never again — and it crowded
+ * out the last section in the column, which is the one somebody is more likely to
+ * be reaching for. A figure on every page that nobody reads is space taken from
+ * the page.
+ *
+ * The name has not been dropped so much as moved: the popover opens on the name in
+ * full, which is where it is read — a reader opens this to sign out or to check
+ * who they are, and both are answered by opening it. The trigger keeps the name
+ * as its accessible name and as its tooltip in the meantime, so a screen reader
+ * announces it and a pointer finds it on hover, and neither has to open anything
+ * to learn whose session they are in.
+ *
+ * It is one control rather than two shapes of one, which is why it needs no
+ * `reduced`: the reduced column was the icon and the open column was the name, so
+ * the same control was drawn differently at two widths and a reader who had the
+ * column open had a different thing under the pointer than one who had it closed.
+ * An icon fits both, so there is one drawing.
+ *
  * It is a card that opens rather than a panel that is always there because the
  * name is read once and then never again. Leaving it in view spends the foot of
  * every page on a heading nobody reads, and the sign-out button is the one
  * control that has to be reachable from every screen rather than the one that
  * deserves permanent space.
- *
- * The closed card carries the name and nothing else, set to the same measure as
- * the section links above it because the account name is a heading rather than a
- * figure.
- *
- * In the reduced column it carries an avatar glyph instead of the name. A
- * truncated five-character stub of an account name is worse than no name at all:
- * it is not enough to recognise the account by and it is the one control on the
- * page, so a reader who cannot tell whose session they are in has to expand the
- * column to find out. The dropdown carries the name in full, so it is still one
- * click away — and the trigger keeps the name as its accessible name either way,
- * so it is announced the same in both.
  */
-export function AccountMenu({
-  accountName,
-  reduced = false,
-}: {
+export function AccountMenu({ accountName }: {
   /**
-   * The name to show, or nothing while the server is being asked for it.
+   * The name the account is signed in as, or nothing while the server is being
+   * asked for it.
    *
-   * It is drawn as a placeholder bar rather than as words, because a control that
-   * briefly says "your account" to somebody who is signed in is a lie told in the
-   * one place on the page that is about who they are, and a blank one is only a
-   * moment of a request already in flight.
+   * Nothing here shows it, so the only thing the absence changes is the tooltip
+   * and the accessible name, both of which fall back to the bare word "Account".
+   * There is no placeholder bar for it any more: the trigger has no text to hold
+   * open, so there is nothing for a placeholder to stand in for.
    */
   accountName: string | null;
-  /** Whether the column has been reduced to icons, leaving no room for the name. */
-  reduced?: boolean;
 }) {
   const navigate = useNavigate();
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        className={cn(
-          'flex w-full items-center rounded-lg border border-border bg-card/60 text-left text-base font-medium text-foreground transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-          reduced ? 'justify-center px-3 py-2.5' : 'gap-3 px-3 py-2.5',
-        )}
+        className="flex w-full items-center justify-center rounded-lg border border-border bg-card/60 px-3 py-2.5 text-foreground transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label={accountName === null ? 'Account' : `${accountName}, account`}
-        title={reduced && accountName !== null ? accountName : undefined}
+        title={accountName ?? 'Account'}
       >
-        {reduced ? (
-          <CircleUser className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-        ) : accountName === null ? (
-          // `flex-1` rather than a fixed width, so the chevron is already where it
-          // is going to be and the card does not move under the reader's cursor as
-          // the name arrives.
-          <span
-            className="h-4 w-24 max-w-full flex-1 animate-pulse rounded bg-muted"
-            aria-hidden="true"
-          />
-        ) : (
-          <span className="min-w-0 flex-1 truncate">{accountName}</span>
-        )}
-        {reduced ? null : (
-          <ChevronUp className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-        )}
+        <CircleUser className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
       </DropdownMenuTrigger>
 
+      {/* Opens upwards, over the page rather than off the foot of the window: it
+          is pinned to the bottom of the column, and a menu that opened downwards
+          from the last control on a page is a menu with nowhere to go. It is
+          aligned to the trigger's start so the name sits over the column rather
+          than out in the middle of the page. */}
       <DropdownMenuContent align="start" side="top" className="w-56">
         <DropdownMenuLabel className="truncate font-medium text-foreground">
           {accountName ?? 'Signed in'}

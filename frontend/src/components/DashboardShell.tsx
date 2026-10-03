@@ -195,7 +195,7 @@ export function DashboardShell({
 
         <SidebarNav sections={sections} reduced={column === 'reduced'} />
 
-        <AccountMenu accountName={accountName} reduced={column === 'reduced'} />
+        <AccountMenu accountName={accountName} />
       </aside>
 
       {shown ? null : (

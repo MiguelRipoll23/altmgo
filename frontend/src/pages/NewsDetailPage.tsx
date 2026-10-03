@@ -1,6 +1,6 @@
-import { ArrowLeft, Newspaper } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
-import { LoadingBlock, Panel, SectionHeading, formatDate } from '../components/DataDisplay';
+import { LoadingBlock, Panel, SectionHeading, formatDay } from '../components/DataDisplay';
 import { StatusMessage } from '../components/StatusMessage';
 import { useApiResource } from '../components/useApiResource';
 import { Badge } from '../components/ui/badge';
@@ -70,18 +70,36 @@ export function NewsDetailPage({ listPath }: {
           ) : null
         ) : (
           <>
-            <div className="mb-4 flex flex-wrap items-center gap-3">
-              <Newspaper className="size-4 shrink-0 text-muted-foreground" />
-              {item.important ? <Badge variant="warning">important</Badge> : null}
-            </div>
-
-            <p className="mb-4 text-base uppercase tracking-widest text-muted-foreground">
-              Published {formatDate(item.publishedAt)}
-            </p>
+            {item.important ? (
+              <div className="mb-4">
+                <Badge variant="warning">important</Badge>
+              </div>
+            ) : null}
 
             <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground/90">
               {item.body}
             </p>
+
+            {/* The date is a stamp on the foot of the item, as it is on the card the
+                list draws, and for the same reason: news is read whenever a reader
+                arrives, so when it was published is not a fact about anything the
+                reader does with it, and the day is the only part worth keeping.
+                It carries no "Published" prefix either — the page is one item, and
+                the word said what the date under a title was already saying.
+
+                The icon went with the prefix. It sat above the paragraph on its own
+                line, taking a line to say "this is a news item" on a page whose
+                title, its badge and its sidebar section all say it already. An
+                important item still marks itself, which is the one thing the icon
+                was not doing. */}
+            <div className="mt-5 flex justify-end">
+              <time
+                dateTime={item.publishedAt}
+                className="text-base text-muted-foreground"
+              >
+                {formatDay(item.publishedAt)}
+              </time>
+            </div>
           </>
         )}
       </Panel>

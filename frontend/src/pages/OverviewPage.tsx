@@ -55,11 +55,17 @@ const UnnamedLobby = 'Unknown lobby';
  * reader publishes are the size of the thing and the reader's own place in it —
  * context to be read or skipped in one glance, not the weight a row of bordered
  * cards under a heading gives to what a reader looks at first. The two counts are
- * badges so that they read as figures rather than as words in a sentence, and
- * neither says "hosted": a game is a game whether or not it is up, and the count
- * is of every one the server has run. `total players` did not come back at all: it
- * is the one figure that only ever goes up and says nothing about whether the
- * server is being used.
+ * coloured text rather than badges — they are counts that only go up, not states
+ * of a thing, and a badge says the latter — and neither says "hosted": a game is a
+ * game whether or not it is up, and the count is of every one the server has run.
+ * `total players` did not come back at all: it is the one figure that only ever
+ * goes up and says nothing about whether the server is being used.
+ *
+ * The page says it is reading once, in one place. It was saying it three times —
+ * where the figures are, for the news, and for the games — which is a page that
+ * reads as though it were doing three things, and it is one request, so there is
+ * one moment of not knowing anything. Every other page says this once, in the
+ * place its content will be.
  *
  * The cards are not inside a panel, and they are not under a heading of their
  * own. They are the page's content, set in a grid under the lobby each belongs
@@ -80,7 +86,7 @@ const UnnamedLobby = 'Unknown lobby';
  * page, which this dashboard does not have.
  */
 export function OverviewPage() {
-  const { data, error, loading, reload } = useApiResource<Overview>('/api/overview');
+  const { data, error, reload } = useApiResource<Overview>('/api/overview');
 
   const latest = data?.news[0] ?? null;
   const games = data?.games ?? [];
@@ -107,50 +113,42 @@ export function OverviewPage() {
     <div className="space-y-6">
       <SectionHeading title="Overview" className="mb-2" />
 
-      {/* One line, holding every figure the page carries. It keeps its height while
-          the read is in flight rather than collapsing and pulling the news up when
-          the numbers land, so nothing below it moves after a wait that was
-          supposed to be still. */}
-      <div className="mb-8 flex flex-wrap items-center gap-2 text-base">
-        {data === null ? (
-          <span className="text-muted-foreground opacity-0">Reading the server…</span>
-        ) : (
-          <>
-            {/* Badges rather than bare figures, because a count on its own in a
-                line of prose is a number the reader has to stop and read, and
-                these two are the only numbers on the page. The badge says what
-                each one is without a word of labelling around them.
+      {error !== null ? (
+        <StatusMessage kind="error">{error}</StatusMessage>
+      ) : data === null ? (
+        // One reading for the whole page, because there is one request and so one
+        // moment of not knowing anything, and because every other page in the
+        // dashboard says this once in the place its content will be.
+        <LoadingBlock label="Reading the server…" />
+      ) : (
+        <>
+          {/* The figures. They sit directly under the heading with the news and the
+              games below them, so the page is one thing arriving rather than three
+              arriving at once. */}
+          <div className="mb-8 flex flex-wrap items-center gap-2 text-base">
+            {/* The figures are plain coloured text rather than badges. A badge is a shape
+                with a border and a fill, and it says "this is a state of some
+                thing"; two counts that go up and never come down are not states,
+                and a page that framed them as ones was drawing two empty boxes
+                above the news. The colour is enough to tell them apart, and it is
+                the part that carries the meaning anyway: green is how busy the
+                server is right now and moves while the page is open, blue is how
+                much it has done and only ever goes up.
 
-                They are coloured apart because the two are not the same kind of
-                thing and a reader should not have to read them to know which is
-                which: green is how busy the server is right now, and it moves
-                while the page is open; blue is how much it has done, and it only
-                ever goes up. An icon was carrying that before, and it was a second
-                thing to decode on a line whose whole job is to be read at a
-                glance.
+                Neither says "hosted". A game is a game whether or not it is up,
+                and the count is of every one the server has run. */}
+            <span className="font-semibold text-emerald-400 tabular-nums">
+              {formatNumber(data.connectedPlayers)} online
+            </span>
 
-                They are `verbatim` rather than shouted: a badge elsewhere on the
-                dashboard carries a state the dashboard worded for itself, and
-                these carry numbers the server counted. Shouting a count makes it
-                look like a status. */}
-            <Badge variant="success" verbatim>
-              <span className="tabular-nums">
-                {formatNumber(data.connectedPlayers)} online
-              </span>
-            </Badge>
-
-            <Badge variant="default" verbatim>
-              <span className="tabular-nums">
-                {formatNumber(data.totalGames)}{' '}
-                {data.totalGames === 1 ? 'game' : 'games'}
-              </span>
-            </Badge>
+            <span className="font-semibold text-primary tabular-nums">
+              {formatNumber(data.totalGames)} {data.totalGames === 1 ? 'game' : 'games'}
+            </span>
 
             {/* The address is a fact about the reader rather than about the server,
                 so it is set apart from the two counts with the rule between them
-                rather than by another separator: it is not a third number, and a
-                line of three badges followed by an IP would read as though it
-                were. */}
+                rather than by another separator: it is not a third number, and two
+                figures followed by an IP would read as though it were. */}
             <span aria-hidden="true" className="text-border">
               |
             </span>
@@ -158,110 +156,106 @@ export function OverviewPage() {
               address={data.publishedAddress?.address ?? null}
               onPublished={reload}
             />
-          </>
-        )}
-      </div>
-
-      {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
-
-      {/* The latest item only, as a card rather than a list. The whole news page is
-          one click away and this is the one a reader passing through the dashboard
-          is most likely to want — so it is the opening of the newest item and a
-          link onwards, not a shortened copy of the list, which would put the same
-          item on two pages and make the news page a page whose first row is
-          already on the one before it. */}
-      {loading ? (
-        <LoadingBlock label="Reading the news…" />
-      ) : latest === null ? (
-        <p className="text-base text-muted-foreground">
-          The server has not published any news.
-        </p>
-      ) : (
-        <Link
-          to={`/dashboard/news/${latest.id}`}
-          className="block rounded-xl border border-border bg-card/50 px-5 py-4 transition hover:border-primary/40 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <div className="flex flex-wrap items-center gap-3">
-            <Newspaper
-              className={cn(
-                'size-4 shrink-0',
-                latest.important ? 'text-amber-400' : 'text-muted-foreground',
-              )}
-            />
-            <h2 className="min-w-0 text-lg font-extrabold tracking-tight text-foreground">
-              {latest.title}
-            </h2>
-            {latest.important ? <Badge variant="warning">important</Badge> : null}
           </div>
 
-          <p className="mt-3 line-clamp-3 text-base leading-relaxed text-foreground/80">
-            {latest.body}
-          </p>
-
-          {/* The date is a stamp on the foot of the card rather than a line under
-              the title. Under the title it read as part of the item's heading —
-              a fourth thing there to get through before the paragraph — and it is
-              not: news is read whenever a reader arrives, so when it was published
-              is the least interesting thing about it, and the only thing worth
-              keeping is the day. It shares the foot with the link onwards because
-              both are what a reader does with the card after they have read it. */}
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-            <span className="inline-flex items-center gap-1.5 text-base font-medium text-primary">
-              Read the whole item
-              <ArrowRight className="size-3.5" />
-            </span>
-
-            <time dateTime={latest.publishedAt} className="text-base text-muted-foreground">
-              {formatDay(latest.publishedAt)}
-            </time>
-          </div>
-        </Link>
-      )}
-
-      {/* The games are the page, so there is no heading above them. "Games being
-          hosted" sat over a set of cards that each already name their map and
-          their mode, under headings that name the lobby they are in — a heading
-          whose only content was that the things below it were the things below
-          them. The lobby name is the heading now, and it is set at the size a
-          heading is set at rather than at the size a heading inside a heading is
-          set at, because there is no longer one above it.
-
-          The link to the games page went with it. The sidebar is a click away and
-          offers the same list with the filters on it, so a link here was a second
-          way to the same rooms for no gain, and it sat where the reader's eye
-          lands first. */}
-      {games.length === 0 ? (
-        loading ? (
-          <LoadingBlock label="Reading the games…" />
-        ) : (
-          <p className="text-base text-muted-foreground">
-            No game is being hosted right now.
-          </p>
-        )
-      ) : (
-        <div className="space-y-8">
-          {[...groups.entries()].map(([lobby, lobbyGames]) => (
-            <section key={lobby} className="space-y-3">
-              <div className="flex items-baseline gap-2">
-                <h2 className="text-lg font-extrabold tracking-tight text-foreground">
-                  {lobby}
+          {/* The latest item only, as a card rather than a list. The whole news page
+              is one click away and this is the one a reader passing through the
+              dashboard is most likely to want — so it is the opening of the newest
+              item and a link onwards, not a shortened copy of the list, which
+              would put the same item on two pages and make the news page a page
+              whose first row is already on the one before it. */}
+          {latest === null ? (
+            <p className="text-base text-muted-foreground">
+              The server has not published any news.
+            </p>
+          ) : (
+            <Link
+              to={`/dashboard/news/${latest.id}`}
+              className="block rounded-xl border border-border bg-card/50 px-5 py-4 transition hover:border-primary/40 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <div className="flex flex-wrap items-center gap-3">
+                <Newspaper
+                  className={cn(
+                    'size-4 shrink-0',
+                    latest.important ? 'text-amber-400' : 'text-muted-foreground',
+                  )}
+                />
+                <h2 className="min-w-0 text-lg font-extrabold tracking-tight text-foreground">
+                  {latest.title}
                 </h2>
-                <p className="text-base text-muted-foreground tabular-nums">
-                  {formatNumber(lobbyGames.length)}{' '}
-                  {lobbyGames.length === 1 ? 'game' : 'games'}
-                </p>
+                {latest.important ? <Badge variant="warning">important</Badge> : null}
               </div>
 
-              <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {lobbyGames.map((game) => (
-                  <li key={game.id} className="min-w-0">
-                    <GameCard game={game} />
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ))}
-        </div>
+              <p className="mt-3 line-clamp-3 text-base leading-relaxed text-foreground/80">
+                {latest.body}
+              </p>
+
+              {/* The date is a stamp on the foot of the card rather than a line
+                  under the title. Under the title it read as part of the item's
+                  heading — a fourth thing there to get through before the
+                  paragraph — and it is not: news is read whenever a reader
+                  arrives, so when it was published is the least interesting thing
+                  about it, and the only thing worth keeping is the day. It shares
+                  the foot with the link onwards because both are what a reader does
+                  with the card after they have read it. */}
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+                <span className="inline-flex items-center gap-1.5 text-base font-medium text-primary">
+                  Read the whole item
+                  <ArrowRight className="size-3.5" />
+                </span>
+
+                <time
+                  dateTime={latest.publishedAt}
+                  className="text-base text-muted-foreground"
+                >
+                  {formatDay(latest.publishedAt)}
+                </time>
+              </div>
+            </Link>
+          )}
+
+          {/* The games are the page, so there is no heading above them. "Games being
+              hosted" sat over a set of cards that each already name their map and
+              their mode, under headings that name the lobby they are in — a
+              heading whose only content was that the things below it were the
+              things below them. The lobby name is the heading now, and it is set at
+              the size a heading is set at rather than at the size a heading inside
+              a heading is set at, because there is no longer one above it.
+
+              The link to the games page went with it. The sidebar is a click away
+              and offers the same list with the filters on it, so a link here was a
+              second way to the same games for no gain, and it sat where the
+              reader's eye lands first. */}
+          {games.length === 0 ? (
+            <p className="text-base text-muted-foreground">
+              No game is being hosted right now.
+            </p>
+          ) : (
+            <div className="space-y-8">
+              {[...groups.entries()].map(([lobby, lobbyGames]) => (
+                <section key={lobby} className="space-y-3">
+                  <div className="flex items-baseline gap-2">
+                    <h2 className="text-lg font-extrabold tracking-tight text-foreground">
+                      {lobby}
+                    </h2>
+                    <p className="text-base text-muted-foreground tabular-nums">
+                      {formatNumber(lobbyGames.length)}{' '}
+                      {lobbyGames.length === 1 ? 'game' : 'games'}
+                    </p>
+                  </div>
+
+                  <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                    {lobbyGames.map((game) => (
+                      <li key={game.id} className="min-w-0">
+                        <GameCard game={game} />
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
