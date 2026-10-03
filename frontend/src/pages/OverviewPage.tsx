@@ -61,11 +61,12 @@ const UnnamedLobby = 'Unknown lobby';
  * is the one figure that only ever goes up and says nothing about whether the
  * server is being used.
  *
- * The cards are not inside a panel. They are the page's content, set in a grid
- * under their lobby headings, and a card inside a bordered box inside a bordered
- * box is two frames around one thing — the outer one saying "here is a section"
- * about a section the reader can already see is a set of games. The count stays
- * in the heading beside the lobby's name rather than becoming a panel of its own.
+ * The cards are not inside a panel, and they are not under a heading of their
+ * own. They are the page's content, set in a grid under the lobby each belongs
+ * to: a card inside a bordered box inside a bordered box is two frames around one
+ * thing, and a heading whose only content was that the things below it were the
+ * things below them is a third frame drawn in words. The lobby name is the
+ * heading, and it carries the count beside it.
  *
  * The lobby table this page used to carry went with that: it listed every lobby
  * the server runs including the empty ones, so a reader asking where the players
@@ -214,59 +215,51 @@ export function OverviewPage() {
         </Link>
       )}
 
-      {/* The heading carries the count, and the games sit in a plain grid under it.
-          A panel here would put a border around a set of cards that each already
-          carry one, which is the page saying the same thing about a game twice —
-          once as a card and once as a section it is inside. */}
-      <section className="space-y-3">
-        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-          <h2 className="text-lg font-extrabold tracking-tight text-foreground">
-            Games being hosted
-          </h2>
+      {/* The games are the page, so there is no heading above them. "Games being
+          hosted" sat over a set of cards that each already name their map and
+          their mode, under headings that name the lobby they are in — a heading
+          whose only content was that the things below it were the things below
+          them. The lobby name is the heading now, and it is set at the size a
+          heading is set at rather than at the size a heading inside a heading is
+          set at, because there is no longer one above it.
 
-          <Link
-            to="/dashboard/games"
-            className="inline-flex items-center gap-1.5 text-base font-medium text-primary hover:underline"
-          >
-            Browse the games
-            <ArrowRight className="size-3.5" />
-          </Link>
-        </div>
-
-        {games.length === 0 ? (
-          loading ? (
-            <LoadingBlock label="Reading the games…" />
-          ) : (
-            <p className="text-base text-muted-foreground">
-              No game is being hosted right now.
-            </p>
-          )
+          The link to the games page went with it. The sidebar is a click away and
+          offers the same list with the filters on it, so a link here was a second
+          way to the same rooms for no gain, and it sat where the reader's eye
+          lands first. */}
+      {games.length === 0 ? (
+        loading ? (
+          <LoadingBlock label="Reading the games…" />
         ) : (
-          <div className="space-y-8">
-            {[...groups.entries()].map(([lobby, lobbyGames]) => (
-              <section key={lobby} className="space-y-3">
-                <div className="flex items-baseline gap-2">
-                  <h3 className="text-base font-extrabold tracking-tight text-foreground">
-                    {lobby}
-                  </h3>
-                  <p className="text-base text-muted-foreground tabular-nums">
-                    {formatNumber(lobbyGames.length)}{' '}
-                    {lobbyGames.length === 1 ? 'game' : 'games'}
-                  </p>
-                </div>
+          <p className="text-base text-muted-foreground">
+            No game is being hosted right now.
+          </p>
+        )
+      ) : (
+        <div className="space-y-8">
+          {[...groups.entries()].map(([lobby, lobbyGames]) => (
+            <section key={lobby} className="space-y-3">
+              <div className="flex items-baseline gap-2">
+                <h2 className="text-lg font-extrabold tracking-tight text-foreground">
+                  {lobby}
+                </h2>
+                <p className="text-base text-muted-foreground tabular-nums">
+                  {formatNumber(lobbyGames.length)}{' '}
+                  {lobbyGames.length === 1 ? 'game' : 'games'}
+                </p>
+              </div>
 
-                <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                  {lobbyGames.map((game) => (
-                    <li key={game.id} className="min-w-0">
-                      <GameCard game={game} />
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ))}
-          </div>
-        )}
-      </section>
+              <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {lobbyGames.map((game) => (
+                  <li key={game.id} className="min-w-0">
+                    <GameCard game={game} />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
