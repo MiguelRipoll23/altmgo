@@ -2,7 +2,6 @@ import { Check, Globe, RefreshCw } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { apiRequest, describeError } from '../api';
 import { discoverableSecondsLeft, readSessionToken } from '../session';
-import { Button } from './ui/button';
 
 /** What the server answers a publish with. */
 type PublishResponse = {
@@ -60,6 +59,19 @@ const DiscoverableSeconds = 15;
  * The port is not printed. It is a client setting, the same figure on every host
  * of a deployment, so showing it spends the width on a number that says nothing
  * and pushes the address itself out of reading.
+ *
+ * The correction is a link rather than a button, and its own text is the report.
+ * There is nothing to navigate to — the thing it does is a write, not a journey —
+ * so a button's box would be a shape around a word that is really the last word
+ * of the address rather than a control beside it. "Update" becomes "Publishing…"
+ * while the write is in flight and "Discoverable" when it has been made, which
+ * means the reader is told what happened without a sentence appearing anywhere.
+ *
+ * It is a button drawn as a link rather than an anchor. An anchor with no `href`
+ * is not focusable without a tabindex, does not respond to the space bar, and
+ * cannot be disabled — so the fifteen seconds in which there is nothing to do
+ * again would be a link that looks live and does nothing. The element keeps the
+ * semantics and takes the appearance.
  *
  * The failure is written under the line rather than as a state on the control.
  * A control whose own label changed to an error would lose the address it is
@@ -148,26 +160,26 @@ export function PublishAddress({
   const discoverable = until !== null && until > now;
 
   return (
-    <span className="inline-flex flex-wrap items-center gap-2">
+    <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-1 text-base">
       <span className="font-mono text-foreground/90">
         {address ?? 'No address published'}
       </span>
 
-      <Button
-        size="sm"
-        variant={discoverable ? 'secondary' : 'ghost'}
+      <button
+        type="button"
         onClick={() => void publish()}
         disabled={publishing || discoverable}
+        className="inline-flex items-center gap-1 rounded text-primary underline-offset-4 transition hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-70 disabled:no-underline"
       >
         {publishing ? (
-          <RefreshCw className="animate-spin" />
+          <RefreshCw className="size-3.5 shrink-0 animate-spin" aria-hidden="true" />
         ) : discoverable ? (
-          <Check />
+          <Check className="size-3.5 shrink-0" aria-hidden="true" />
         ) : (
-          <Globe />
+          <Globe className="size-3.5 shrink-0" aria-hidden="true" />
         )}
         {publishing ? 'Publishing…' : discoverable ? 'Discoverable' : 'Update'}
-      </Button>
+      </button>
 
       {/* The two things that need saying are said under the line rather than in
           place of it, so the address stays on screen while the reader reads them. */}

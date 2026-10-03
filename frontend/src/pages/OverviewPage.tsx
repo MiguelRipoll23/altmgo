@@ -1,4 +1,4 @@
-import { ArrowRight, Newspaper } from 'lucide-react';
+import { ArrowRight, Gamepad2, Newspaper, UserRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { LoadingBlock, SectionHeading, formatDate, formatNumber } from '../components/DataDisplay';
 import { GameCard, type Game } from '../components/GameCard';
@@ -54,9 +54,12 @@ const UnnamedLobby = 'Unknown lobby';
  * players are on the server, how many games it has hosted and what address the
  * reader publishes are the size of the thing and the reader's own place in it —
  * context to be read or skipped in one glance, not the weight a row of bordered
- * cards under a heading gives to what a reader looks at first. `total players`
- * did not come back at all: it is the one figure that only ever goes up and says
- * nothing about whether the server is being used.
+ * cards under a heading gives to what a reader looks at first. The two counts are
+ * badges so that they read as figures rather than as words in a sentence, and
+ * neither says "hosted": a game is a game whether or not it is up, and the count
+ * is of every one the server has run. `total players` did not come back at all: it
+ * is the one figure that only ever goes up and says nothing about whether the
+ * server is being used.
  *
  * The cards are not inside a panel. They are the page's content, set in a grid
  * under their lobby headings, and a card inside a bordered box inside a bordered
@@ -107,24 +110,42 @@ export function OverviewPage() {
           the read is in flight rather than collapsing and pulling the news up when
           the numbers land, so nothing below it moves after a wait that was
           supposed to be still. */}
-      <p className="mb-8 flex flex-wrap items-center gap-x-2 gap-y-1 text-base text-muted-foreground">
+      <div className="mb-8 flex flex-wrap items-center gap-2 text-base">
         {data === null ? (
-          <span className="opacity-0">Reading the server…</span>
+          <span className="text-muted-foreground opacity-0">Reading the server…</span>
         ) : (
           <>
-            <span className="tabular-nums">
-              {formatNumber(data.connectedPlayers)} online
-            </span>
-            <span aria-hidden="true">·</span>
-            <span className="tabular-nums">
-              {formatNumber(data.totalGames)}{' '}
-              {data.totalGames === 1 ? 'game' : 'games'} hosted
-            </span>
+            {/* Badges rather than bare figures, because a count on its own in a
+                line of prose is a number the reader has to stop and read, and
+                these two are the only numbers on the page. The badge says what
+                each one is without a word of labelling around them, and the icon
+                carries the meaning for a reader who does not read the text beside
+                it — a figure that moves when the server is busy is a different
+                shape from a figure that never does.
+
+                They are `verbatim` rather than shouted: a badge elsewhere on the
+                dashboard carries a state the dashboard worded for itself, and
+                these carry numbers the server counted. Shouting a count makes it
+                look like a status. */}
+            <Badge variant="secondary" verbatim>
+              <UserRound className="size-3 shrink-0" aria-hidden="true" />
+              <span className="tabular-nums">
+                {formatNumber(data.connectedPlayers)} online
+              </span>
+            </Badge>
+
+            <Badge variant="secondary" verbatim>
+              <Gamepad2 className="size-3 shrink-0" aria-hidden="true" />
+              <span className="tabular-nums">
+                {formatNumber(data.totalGames)}{' '}
+                {data.totalGames === 1 ? 'game' : 'games'}
+              </span>
+            </Badge>
 
             {/* The address is a fact about the reader rather than about the server,
                 so it is set apart from the two counts with the rule between them
-                rather than by another middot: it is not the third number, and a
-                line of three figures followed by an IP would read as though it
+                rather than by another separator: it is not a third number, and a
+                line of three badges followed by an IP would read as though it
                 were. */}
             <span aria-hidden="true" className="text-border">
               |
@@ -135,7 +156,7 @@ export function OverviewPage() {
             />
           </>
         )}
-      </p>
+      </div>
 
       {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
 
