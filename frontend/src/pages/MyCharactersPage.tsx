@@ -68,7 +68,7 @@ export function MyCharactersPage() {
 
       {characters.length === 0 ? (
         loading ? (
-          <LoadingBlock label="Reading the characters…" />
+          <LoadingBlock />
         ) : (
           <p className="text-base text-muted-foreground">
             This account has no characters yet. Create one in the client.

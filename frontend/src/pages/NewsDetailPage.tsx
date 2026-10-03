@@ -64,7 +64,7 @@ export function NewsDetailPage({ listPath }: {
       <Panel>
         {item === null ? (
           loading ? (
-            <LoadingBlock label="Reading the item…" />
+            <LoadingBlock />
           ) : error === null ? (
             <p className="text-base text-muted-foreground">That news item could not be read.</p>
           ) : null
@@ -87,16 +87,19 @@ export function NewsDetailPage({ listPath }: {
                 It carries no "Published" prefix either — the page is one item, and
                 the word said what the date under a title was already saying.
 
+                It sits at the left rather than under the right corner because
+                there is nothing on this page for it to be opposite to. The card in
+                the list has the link onwards across from it; a single item read on
+                its own has no such pair, and a date pushed to the far corner of a
+                column of prose reads as belonging to something that is not there.
+
                 The icon went with the prefix. It sat above the paragraph on its own
                 line, taking a line to say "this is a news item" on a page whose
                 title, its badge and its sidebar section all say it already. An
                 important item still marks itself, which is the one thing the icon
                 was not doing. */}
-            <div className="mt-5 flex justify-end">
-              <time
-                dateTime={item.publishedAt}
-                className="text-base text-muted-foreground"
-              >
+            <div className="mt-5">
+              <time dateTime={item.publishedAt} className="text-base text-muted-foreground">
                 {formatDay(item.publishedAt)}
               </time>
             </div>

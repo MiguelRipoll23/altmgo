@@ -98,11 +98,22 @@ export function Panel({ title, description, footer, children, className }: {
  * page that shows the message outside the card has shown it somewhere the content is
  * not going to be.
  *
- * The words are the ones the page would have said, and a spinner rides beside them
- * because a sentence with nothing moving on it reads as a page that has settled on
- * an empty answer.
+ * It says one thing on every page. Each page used to word its own — "Reading the
+ * characters", "Reading the server", "Searching" — and the differences bought
+ * nothing: the reader is waiting on one thing at a time whatever it is called, so a
+ * row of pages that each announce themselves differently is a set of pages that
+ * between them have more words about waiting than most of them have about their
+ * contents. It is one line and one spinner now.
+ *
+ * `label` overrides the words for the one case that is not a plain wait. A page
+ * that has said something and is now doing something else — searching rather than
+ * arriving — can say so; nothing else needs it.
+ *
+ * A sentence with nothing moving on it reads as a page that has settled on an empty
+ * answer, which is why the spinner is the part that is always there and the words
+ * are the part that can go.
  */
-export function LoadingBlock({ label }: { label: string }) {
+export function LoadingBlock({ label = 'Loading…' }: { label?: string }) {
   return (
     <p role="status" className="flex items-center gap-2 py-1 text-base text-muted-foreground">
       <RefreshCw className="size-4 shrink-0 animate-spin" />

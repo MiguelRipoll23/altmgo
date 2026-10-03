@@ -75,7 +75,7 @@ export function MailDetailPage({ back, label }: {
       <Panel>
         {message === null ? (
           loading ? (
-            <LoadingBlock label="Reading the message…" />
+            <LoadingBlock />
           ) : error === null ? (
             <p className="text-base text-muted-foreground">That message could not be read.</p>
           ) : null

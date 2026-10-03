@@ -64,7 +64,7 @@ export function CharacterDetailPage() {
       <Panel title="Progress">
         {character === null ? (
           loading ? (
-            <LoadingBlock label="Reading the character…" />
+            <LoadingBlock />
           ) : error === null ? (
             <p className="text-base text-muted-foreground">That character could not be read.</p>
           ) : null

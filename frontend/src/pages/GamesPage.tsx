@@ -1,10 +1,8 @@
-import { RefreshCw } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { LoadingBlock, SectionHeading, formatNumber } from '../components/DataDisplay';
 import { GameCard, type Game } from '../components/GameCard';
 import { StatusMessage } from '../components/StatusMessage';
 import { useApiResource } from '../components/useApiResource';
-import { Button } from '../components/ui/button';
 import {
   Select,
   SelectContent,
@@ -17,6 +15,30 @@ import { mapName } from '../lib/maps';
 
 /** The word a game with no lobby named is filed under. */
 const UnnamedLobby = 'Unknown lobby';
+
+/**
+ * How often the list reads itself again while the page is open.
+ *
+ * A minute is the pace the page actually changes at. A game is written by its host
+ * on a heartbeat and the server's own staleness window is two of those beats, so
+ * anything faster than this is reading the same rows twice and anything much slower
+ * is showing a reader a list that has quietly gone stale while they looked at it —
+ * which is the failure this page is most prone to, because a host that closes a
+ * game without saying so leaves a card up that nobody can join.
+ *
+ * It is a timer on the page rather than a push from the server, because the server
+ * has nothing to push: it writes rows and is not watching who is reading them. The
+ * reader gets the same answer a refresh button gave them, without having to decide
+ * that they want it.
+ *
+ * The button is gone because this is it. A control that does the same thing as an
+ * automatic behaviour is a control that will be pressed anyway and is a control
+ * that cannot be pressed usefully — pressed while a refresh is already in flight,
+ * pressed in the half minute before the next one would have come. The count on the
+ * page is the feedback that a refresh happened, and the games moving is the
+ * feedback that anything changed.
+ */
+const RefreshSeconds = 60;
 
 /** The value a filter takes when nothing is being filtered. */
 const AnyValue = 'any';
@@ -143,10 +165,42 @@ function compareGames(left: Game, right: Game, order: string): number {
  * this page adds over it is the choosing: the filters and the order are for a
  * reader with a particular map or rule in mind, and the overview is for a reader
  * who has not decided yet.
+ *
+ * The list refreshes itself once a minute and there is no refresh button. A host
+ * that closes a game without saying so leaves a card up that nobody can join, so a
+ * reader sitting here is looking at a list that goes stale under them; a minute is
+ * the pace the server actually changes at. A button for the same thing would be a
+ * control that is pressed anyway and cannot be pressed usefully — pressed while a
+ * refresh is already in flight, or in the half minute before the next would have
+ * come on its own.
  */
 export function GamesPage() {
   const { data, error, loading, reload } = useApiResource<{ games: Game[] }>('/api/games');
   const games = data?.games ?? [];
+
+  // The list reads itself again while the page is open. The interval is armed once
+  // and never re-armed: `reload` changes an identity inside the hook rather than
+  // being a new function, so depending on it would restart the timer after every
+  // tick and the list would never refresh at all.
+  //
+  // Nothing is drawn from this — it is not a "last updated" line, because a reader
+  // who did not ask does not need to be told when the page last spoke to the
+  // server. The games moving is the only report worth making.
+  //
+  // A tab in the background stops being refreshed, because a browser throttles a
+  // timer in one to about once a minute anyway, and firing requests at a server
+  // nobody is looking at is work for nothing. The first tick after the tab comes
+  // back is a fresh read, so the list a reader returns to is current rather than
+  // whatever it was when they left.
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      if (!document.hidden) {
+        reload();
+      }
+    }, RefreshSeconds * 1000);
+
+    return () => window.clearInterval(timer);
+  }, [reload]);
 
   const [lobby, setLobby] = useState(AnyValue);
   const [map, setMap] = useState(AnyValue);
@@ -204,20 +258,15 @@ export function GamesPage() {
 
       {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
 
-      <div className="flex flex-wrap items-center gap-3">
-        <Button onClick={reload} disabled={loading}>
-          <RefreshCw className={loading ? 'animate-spin' : undefined} />
-          {loading ? 'Refreshing…' : 'Refresh'}
-        </Button>
-
-        {loading || data === null ? null : (
-          <p className="text-base text-muted-foreground">
-            {busy
-              ? `${formatNumber(filtered.length)} of ${formatNumber(games.length)} games shown`
-              : `${formatNumber(games.length)} ${games.length === 1 ? 'game' : 'games'} being hosted`}
-          </p>
-        )}
-      </div>
+      {/* The count, and nothing to press. The page refreshes itself; see
+          `RefreshSeconds`. */}
+      {loading || data === null ? null : (
+        <p className="text-base text-muted-foreground">
+          {busy
+            ? `${formatNumber(filtered.length)} of ${formatNumber(games.length)} games shown`
+            : `${formatNumber(games.length)} games being hosted`}
+        </p>
+      )}
 
       {/* The filters are drawn whenever the page has games to filter, including
           while a filter has narrowed the list to nothing — a filter row that
@@ -234,7 +283,7 @@ export function GamesPage() {
 
       {games.length === 0 ? (
         loading ? (
-          <LoadingBlock label="Reading the games…" />
+          <LoadingBlock />
         ) : (
           <p className="text-base text-muted-foreground">No game is being hosted right now.</p>
         )

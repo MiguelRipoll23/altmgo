@@ -1,4 +1,4 @@
-import { ArrowRight, Newspaper } from 'lucide-react';
+import { ArrowRight, Gamepad2, Newspaper, UserRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { LoadingBlock, SectionHeading, formatDay, formatNumber } from '../components/DataDisplay';
 import { GameCard, type Game } from '../components/GameCard';
@@ -58,6 +58,8 @@ const UnnamedLobby = 'Unknown lobby';
  * coloured text rather than badges — they are counts that only go up, not states
  * of a thing, and a badge says the latter — and neither says "hosted": a game is a
  * game whether or not it is up, and the count is of every one the server has run.
+ * The second is always plural, because a count that changes its noun as it crosses
+ * one is arithmetic the reader can do and a flicker they should not watch.
  * `total players` did not come back at all: it is the one figure that only ever
  * goes up and says nothing about whether the server is being used.
  *
@@ -119,7 +121,7 @@ export function OverviewPage() {
         // One reading for the whole page, because there is one request and so one
         // moment of not knowing anything, and because every other page in the
         // dashboard says this once in the place its content will be.
-        <LoadingBlock label="Reading the server…" />
+        <LoadingBlock />
       ) : (
         <>
           {/* The figures. They sit directly under the heading with the news and the
@@ -130,19 +132,31 @@ export function OverviewPage() {
                 with a border and a fill, and it says "this is a state of some
                 thing"; two counts that go up and never come down are not states,
                 and a page that framed them as ones was drawing two empty boxes
-                above the news. The colour is enough to tell them apart, and it is
-                the part that carries the meaning anyway: green is how busy the
-                server is right now and moves while the page is open, blue is how
-                much it has done and only ever goes up.
+                above the news. The colour is what tells them apart, and the icon
+                says what each one is for a reader who has not read the word yet.
 
-                Neither says "hosted". A game is a game whether or not it is up,
-                and the count is of every one the server has run. */}
-            <span className="font-semibold text-emerald-400 tabular-nums">
-              {formatNumber(data.connectedPlayers)} online
+                They are green and blue because the two are not the same kind of
+                thing: green is how busy the server is right now and moves while the
+                page is open, blue is how much it has done and only ever goes up.
+
+                Neither says "hosted", and the second is always plural. A game is a
+                game whether or not it is up, so the count is of every one the
+                server has run; and a figure that reads "1 game" beside a "0 online"
+                that is genuinely zero is a page switching between two words to say
+                whether a count happens to be one, which is arithmetic the reader
+                can do and a flicker they should not have to watch. */}
+            <span className="inline-flex items-center gap-1.5 font-semibold text-emerald-400">
+              <UserRound className="size-3.5 shrink-0" aria-hidden="true" />
+              <span className="tabular-nums">
+                {formatNumber(data.connectedPlayers)} online
+              </span>
             </span>
 
-            <span className="font-semibold text-primary tabular-nums">
-              {formatNumber(data.totalGames)} {data.totalGames === 1 ? 'game' : 'games'}
+            <span className="inline-flex items-center gap-1.5 font-semibold text-primary">
+              <Gamepad2 className="size-3.5 shrink-0" aria-hidden="true" />
+              <span className="tabular-nums">
+                {formatNumber(data.totalGames)} games
+              </span>
             </span>
 
             {/* The address is a fact about the reader rather than about the server,

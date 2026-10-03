@@ -60,12 +60,19 @@ const DiscoverableSeconds = 15;
  * of a deployment, so showing it spends the width on a number that says nothing
  * and pushes the address itself out of reading.
  *
- * The correction is a link rather than a button, and its own text is the report.
- * There is nothing to navigate to — the thing it does is a write, not a journey —
- * so a button's box would be a shape around a word that is really the last word
- * of the address rather than a control beside it. "Update" becomes "Publishing…"
- * while the write is in flight and "Discoverable" when it has been made, which
- * means the reader is told what happened without a sentence appearing anywhere.
+ * The correction is bracketed against the address rather than standing beside it,
+ * because it is a qualifier on the address rather than a thing in its own right —
+ * the way "(locked)" qualifies a row. Brackets say that without spending a rule or
+ * a middot on separating it from the two counts it is otherwise level with.
+ *
+ * It is a link rather than a button, and its own text is the report. There is
+ * nothing to navigate to — the thing it does is a write, not a journey — so a
+ * button's box would be a shape around a word that is really part of the address
+ * rather than a control beside it. "Update" becomes "Publishing…" while the write
+ * is in flight and "Discoverable" when it has been made, which means the reader is
+ * told what happened without a sentence appearing anywhere. The globe that used to
+ * ride on the link is now at the head of the address instead, where it labels the
+ * digits rather than the control.
  *
  * It is a button drawn as a link rather than an anchor. An anchor with no `href`
  * is not focusable without a tabindex, does not respond to the space bar, and
@@ -160,10 +167,23 @@ export function PublishAddress({
   const discoverable = until !== null && until > now;
 
   return (
-    <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-1 text-base">
+    <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-1 text-base">
+      {/* The icon says what the number beside it is before the number is read. An
+          address is the one figure on this line that needs it: four groups of digits
+          in a row look like any other four groups of digits, and a reader who does
+          not already know that this is where their game is reachable has nothing to
+          attach the digits to. */}
+      <Globe className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+
       <span className="font-mono text-foreground/90">
         {address ?? 'No address published'}
       </span>
+
+      {/* The correction is bracketed rather than separated. It is not a third
+          figure and not a second control of its own — it is a qualifier on the
+          address, the way "(locked)" qualifies a row, and the brackets say that
+          without spending a rule or a middot on it. */}
+      <span className="text-muted-foreground">(</span>
 
       <button
         type="button"
@@ -175,11 +195,11 @@ export function PublishAddress({
           <RefreshCw className="size-3.5 shrink-0 animate-spin" aria-hidden="true" />
         ) : discoverable ? (
           <Check className="size-3.5 shrink-0" aria-hidden="true" />
-        ) : (
-          <Globe className="size-3.5 shrink-0" aria-hidden="true" />
-        )}
+        ) : null}
         {publishing ? 'Publishing…' : discoverable ? 'Discoverable' : 'Update'}
       </button>
+
+      <span className="text-muted-foreground">)</span>
 
       {/* The two things that need saying are said under the line rather than in
           place of it, so the address stays on screen while the reader reads them. */}

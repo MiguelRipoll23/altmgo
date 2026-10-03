@@ -66,7 +66,7 @@ export function ClanDetailPage() {
       <Panel>
         {clan === null ? (
           loading ? (
-            <LoadingBlock label="Reading the clan…" />
+            <LoadingBlock />
           ) : error === null ? (
             <p className="text-base text-muted-foreground">That clan could not be read.</p>
           ) : null

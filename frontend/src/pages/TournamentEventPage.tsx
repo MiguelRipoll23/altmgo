@@ -140,7 +140,7 @@ function Registrations({ data, loading }: { data: Tournament | null; loading: bo
     return (
       <Panel>
         {loading ? (
-          <LoadingBlock label="Reading the registrations…" />
+          <LoadingBlock />
         ) : (
           <p className="text-base text-muted-foreground">Nobody has registered for this event.</p>
         )}
@@ -178,7 +178,7 @@ function BracketPanel({ data, loading }: { data: Tournament | null; loading: boo
     <Panel>
       {bracket === null ? (
         loading ? (
-          <LoadingBlock label="Reading the bracket…" />
+          <LoadingBlock />
         ) : (
           <p className="text-base text-muted-foreground">This event has not been drawn yet.</p>
         )
@@ -236,7 +236,7 @@ function Fixtures({ data, loading }: { data: Tournament | null; loading: boolean
     return (
       <Panel>
         {loading ? (
-          <LoadingBlock label="Reading the fixtures…" />
+          <LoadingBlock />
         ) : (
           <p className="text-base text-muted-foreground">No fixture has been played.</p>
         )}

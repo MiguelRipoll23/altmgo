@@ -49,7 +49,7 @@ export function SurvivalTeamsPage() {
 
       {teams.length === 0 ? (
         ladder.loading ? (
-          <LoadingBlock label="Reading the teams…" />
+          <LoadingBlock />
         ) : (
           <p className="text-base text-muted-foreground">No team has been formed on Survival.</p>
         )
