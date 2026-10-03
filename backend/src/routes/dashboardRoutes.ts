@@ -14,6 +14,7 @@ import {
 import { listNews, findNews } from '../newsQueries.js';
 import { findAccountMail, isMailBox, listAccountMail } from '../mailQueries.js';
 import { findAccountById } from '../accounts.js';
+import { readServerFigures } from '../statsQueries.js';
 import { isClanBoard, isPlayerBoard, readClanBoard, readPlayerBoard } from '../rankingsQueries.js';
 
 export const dashboardRoutes = new Hono<AppBindings>();
@@ -79,6 +80,25 @@ dashboardRoutes.get('/account', requireAccount, async (context) => {
 
   return context.json({
     account: { id: account.id, displayName: account.display_name },
+  });
+});
+
+/**
+ * The two figures the overview carries as a line rather than as cards.
+ *
+ * They are on a route of their own rather than folded into the news or the games
+ * read because they are the only two numbers on that page that are not about the
+ * moment: everything else on it is what the server has just said or is just
+ * running, and these are how big the server is. A page that fetched them as part
+ * of one of those reads would be asking for a whole list in order to draw a
+ * figure, and would fail the figure along with the list if either query threw.
+ */
+dashboardRoutes.get('/server-figures', requireAccount, async (context) => {
+  const figures = await readServerFigures();
+
+  return context.json({
+    connectedPlayers: figures.connectedPlayers,
+    totalGames: figures.totalGames,
   });
 });
 

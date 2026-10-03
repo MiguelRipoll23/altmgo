@@ -47,15 +47,9 @@ const boards: Record<BoardSubject, readonly [BoardOption, ...BoardOption[]]> = {
 };
 
 /** What each subject's page is called, since the two are separate pages. */
-const subjects: Record<BoardSubject, { title: string; subtitle: string }> = {
-  players: {
-    title: 'Player rankings',
-    subtitle: 'The boards the game shows for a character, computed the same way from the same data.',
-  },
-  clans: {
-    title: 'Clan rankings',
-    subtitle: 'The boards the game shows for a clan, computed the same way from the same data.',
-  },
+const subjects: Record<BoardSubject, { title: string }> = {
+  players: { title: 'Player rankings' },
+  clans: { title: 'Clan rankings' },
 };
 
 /** Rows one page of a board holds. */
@@ -116,7 +110,7 @@ export function RankingsBoard({ subject }: { subject: BoardSubject }) {
 
   return (
     <div className="space-y-6">
-      <SectionHeading title={subjects[subject].title} subtitle={subjects[subject].subtitle} />
+      <SectionHeading title={subjects[subject].title} />
 
       <Panel>
         <div className="flex flex-wrap items-end gap-3">

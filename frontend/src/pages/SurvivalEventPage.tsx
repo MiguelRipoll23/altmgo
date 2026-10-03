@@ -54,10 +54,7 @@ export function SurvivalEventPage() {
         All Survival events
       </Link>
 
-      <SectionHeading
-        title={schedule?.name ?? 'Survival event'}
-        subtitle="When it runs, and the ladder that would enter it."
-      />
+      <SectionHeading title={schedule?.name ?? 'Survival event'} />
 
       {schedules.error === null ? null : <StatusMessage kind="error">{schedules.error}</StatusMessage>}
 

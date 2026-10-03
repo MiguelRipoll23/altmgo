@@ -21,15 +21,13 @@ type AccountMessage = {
 };
 
 /** What each mailbox is called, and what it says when it is empty. */
-const mailboxes: Record<MailboxName, { title: string; subtitle: string; empty: string }> = {
+const mailboxes: Record<MailboxName, { title: string; empty: string }> = {
   inbox: {
     title: 'Inbox',
-    subtitle: 'What has been sent to your characters, newest first.',
     empty: 'Your inbox is empty.',
   },
   outbox: {
     title: 'Outbox',
-    subtitle: 'What your characters have sent, newest first.',
     empty: 'None of your characters has sent any mail.',
   },
 };
@@ -66,7 +64,7 @@ export function Mailbox({ mailbox }: { mailbox: MailboxName }) {
 
   return (
     <div className="space-y-6">
-      <SectionHeading title={copy.title} subtitle={copy.subtitle} />
+      <SectionHeading title={copy.title} />
 
       {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
 

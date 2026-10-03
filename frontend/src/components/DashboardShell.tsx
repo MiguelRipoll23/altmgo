@@ -170,59 +170,46 @@ export function DashboardShell({
           shown ? 'translate-x-0' : '-translate-x-full',
         )}
       >
-        {column === 'reduced' ? null : (
-          <div className="flex items-center justify-between gap-2">
-            {brand}
+        {/* The control that reduces the column sits at its head in both of the
+            states where there is a head, and it is the same button either way:
+            what changes is which way the panel points. It is inside the column
+            rather than over the page because it acts on the column — a control
+            floating on top of the page beside a visible column is two controls
+            for the same thing, and one of them is somewhere the reader has to
+            look for. */}
+        <div className="flex items-center justify-between gap-2">
+          {column === 'reduced' ? null : brand}
 
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => toggleColumn()}
-              aria-label="Collapse the navigation"
-              aria-expanded={shown}
-              aria-controls="frame-navigation"
-            >
-              <PanelLeftClose />
-            </Button>
-          </div>
-        )}
-
-        <SidebarNav sections={sections} reduced={column === 'reduced'} />
-
-        <AccountMenu accountName={accountName} />
-      </aside>
-
-      {shown && column === 'open' ? null : (
-        // In the reduced state the column is already on screen carrying the
-        // sections, so the control goes inside it rather than over the page: a
-        // floating button on top of the page beside a visible column is two
-        // controls for the same thing.
-        column === 'reduced' ? (
-          <div className="flex justify-center">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => toggleColumn()}
-              aria-label="Expand the navigation"
-              aria-expanded={shown}
-              aria-controls="frame-navigation"
-            >
-              <PanelLeft />
-            </Button>
-          </div>
-        ) : (
           <Button
-            variant="outline"
+            variant="ghost"
             size="icon"
             onClick={() => toggleColumn()}
-            className="fixed left-3 top-3 z-30"
-            aria-label="Show the navigation"
+            className={cn(column === 'reduced' && 'mx-auto')}
+            aria-label={column === 'reduced' ? 'Expand the navigation' : 'Collapse the navigation'}
             aria-expanded={shown}
             aria-controls="frame-navigation"
           >
-            <Menu />
+            {column === 'reduced' ? <PanelLeft /> : <PanelLeftClose />}
           </Button>
-        )
+        </div>
+
+        <SidebarNav sections={sections} reduced={column === 'reduced'} />
+
+        <AccountMenu accountName={accountName} reduced={column === 'reduced'} />
+      </aside>
+
+      {shown ? null : (
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => toggleColumn()}
+          className="fixed left-3 top-3 z-30"
+          aria-label="Show the navigation"
+          aria-expanded={shown}
+          aria-controls="frame-navigation"
+        >
+          <Menu />
+        </Button>
       )}
 
       {/* The page's own gutter follows the column, and moves with it rather than

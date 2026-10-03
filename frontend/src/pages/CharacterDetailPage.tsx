@@ -59,10 +59,7 @@ export function CharacterDetailPage() {
         All characters
       </Link>
 
-      <SectionHeading
-        title={character?.name ?? 'Character'}
-        subtitle="The character as the game stores it: its progress, its title and the address it publishes."
-      />
+      <SectionHeading title={character?.name ?? 'Character'} />
 
       {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
 

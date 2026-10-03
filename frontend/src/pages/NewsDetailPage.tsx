@@ -54,10 +54,7 @@ export function NewsDetailPage({ listPath }: {
         All news
       </Link>
 
-      <SectionHeading
-        title={item?.title ?? 'News'}
-        subtitle="One item, as it is drawn on the login screen."
-      />
+      <SectionHeading title={item?.title ?? 'News'} />
 
       {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
 

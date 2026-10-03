@@ -64,10 +64,7 @@ export function MailDetailPage({ back, label }: {
         {label}
       </Link>
 
-      <SectionHeading
-        title={message?.subject ?? 'Mail'}
-        subtitle="One message, in full."
-      />
+      <SectionHeading title={message?.subject ?? 'Mail'} />
 
       {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
 

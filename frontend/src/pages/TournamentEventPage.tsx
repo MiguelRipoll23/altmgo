@@ -42,20 +42,11 @@ type Tournament = { event: number; entries: Entry[]; bracket: Bracket | null; fi
 /** Which of the three views of an event is being read. */
 export type TournamentArea = 'registrations' | 'bracket' | 'fixtures';
 
-/** What each view is called, and the sentence the page opens with for it. */
-const areas: Record<TournamentArea, { label: string; summary: string }> = {
-  registrations: {
-    label: 'Registrations',
-    summary: 'Who registered, in the order they took their places.',
-  },
-  bracket: {
-    label: 'Bracket',
-    summary: 'How the field was seeded, and how far the tournament has gone.',
-  },
-  fixtures: {
-    label: 'Fixtures',
-    summary: 'Every match that has been played, newest first.',
-  },
+/** What each view is called, as the tab names it. */
+const areas: Record<TournamentArea, { label: string }> = {
+  registrations: { label: 'Registrations' },
+  bracket: { label: 'Bracket' },
+  fixtures: { label: 'Fixtures' },
 };
 
 /**
@@ -105,10 +96,7 @@ export function TournamentEventPage({ area = 'registrations' }: { area?: Tournam
         All Tournament events
       </Link>
 
-      <SectionHeading
-        title={`Tournament event ${identifier}`}
-        subtitle={areas[area].summary}
-      />
+      <SectionHeading title={`Tournament event ${identifier}`} />
 
       {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
       <PageTabs

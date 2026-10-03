@@ -59,10 +59,7 @@ export function ClanDetailPage() {
         All clans
       </Link>
 
-      <SectionHeading
-        title={clan?.name ?? 'Clan'}
-        subtitle="The clan as it stands in the game: its record, its roster and who is waiting to join."
-      />
+      <SectionHeading title={clan?.name ?? 'Clan'} />
 
       {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
 

@@ -50,10 +50,7 @@ export function NewsPage({ basePath = '/dashboard' }: { basePath?: string }) {
 
   return (
     <div className="space-y-6">
-      <SectionHeading
-        title="News"
-        subtitle="What the server has published, newest first."
-      />
+      <SectionHeading title="News" />
 
       {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
 

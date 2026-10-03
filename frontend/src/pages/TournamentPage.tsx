@@ -31,10 +31,7 @@ export function TournamentPage({ basePath = '/dashboard' }: { basePath?: string 
 
   return (
     <div className="space-y-6">
-      <SectionHeading
-        title="Tournament"
-        subtitle="The published events. Open one to see who is in it and how it has gone."
-      />
+      <SectionHeading title="Tournament" />
 
       {schedules.error === null ? null : (
         <StatusMessage kind="error">{schedules.error}</StatusMessage>

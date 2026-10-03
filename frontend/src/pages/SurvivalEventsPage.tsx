@@ -33,10 +33,7 @@ export function SurvivalEventsPage({ basePath = '/dashboard' }: { basePath?: str
 
   return (
     <div className="space-y-6">
-      <SectionHeading
-        title="Survival events"
-        subtitle="What is published on the Survival ladder. Open one to see its details."
-      />
+      <SectionHeading title="Survival events" />
 
       {schedules.error === null ? null : (
         <StatusMessage kind="error">{schedules.error}</StatusMessage>

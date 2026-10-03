@@ -20,12 +20,39 @@ import {
  * instead of growing a second style for the same thing.
  */
 
-/** The heading every dashboard section opens with. */
-export function SectionHeading({ title, subtitle }: { title: string; subtitle?: ReactNode }) {
+/**
+ * The heading every dashboard section opens with.
+ *
+ * It takes a title and nothing else, and it used to take a sentence under it as
+ * well. Every page carried one, and they were all the same kind of line: the
+ * title restated in a longer sentence, saying what the page is about to a reader
+ * who had just read what the page is called. The titles are already that
+ * sentence. What a page needs under its heading is its own content — a count, a
+ * description of the list below it — and that belongs in the panel it sits over,
+ * where it can be read as part of that panel rather than as a promise about the
+ * page.
+ *
+ * So the prop is gone rather than merely unused: leaving it would make putting a
+ * sentence back a one-word change on a page, and every page had one for a reason
+ * that turned out not to be a reason.
+ *
+ * `className` is for the page that needs the heading to sit tighter against
+ * something drawn immediately under it. The heading carries its own bottom margin
+ * because it is normally the first thing in a page and the gap below it is the
+ * page's; a page that puts its own line there would otherwise have to reach in
+ * and pull the heading up from outside, which is a coupling to the exact margin
+ * rather than a statement of the gap wanted here.
+ */
+export function SectionHeading({
+  title,
+  className,
+}: {
+  title: string;
+  className?: string;
+}) {
   return (
-    <div className="mb-6">
+    <div className={cn('mb-6', className)}>
       <h1 className="text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">{title}</h1>
-      {subtitle === undefined ? null : <p className="mt-2 text-base text-muted-foreground">{subtitle}</p>}
     </div>
   );
 }

@@ -1,5 +1,6 @@
-import { ChevronUp, LogOut } from 'lucide-react';
+import { ChevronUp, CircleUser, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { cn } from '../lib/utils';
 import { clearSessionToken } from '../session';
 import {
   DropdownMenu,
@@ -22,8 +23,19 @@ import {
  * The closed card carries the name and nothing else, set to the same measure as
  * the section links above it because the account name is a heading rather than a
  * figure.
+ *
+ * In the reduced column it carries an avatar glyph instead of the name. A
+ * truncated five-character stub of an account name is worse than no name at all:
+ * it is not enough to recognise the account by and it is the one control on the
+ * page, so a reader who cannot tell whose session they are in has to expand the
+ * column to find out. The dropdown carries the name in full, so it is still one
+ * click away — and the trigger keeps the name as its accessible name either way,
+ * so it is announced the same in both.
  */
-export function AccountMenu({ accountName }: {
+export function AccountMenu({
+  accountName,
+  reduced = false,
+}: {
   /**
    * The name to show, or nothing while the server is being asked for it.
    *
@@ -33,16 +45,24 @@ export function AccountMenu({ accountName }: {
    * moment of a request already in flight.
    */
   accountName: string | null;
+  /** Whether the column has been reduced to icons, leaving no room for the name. */
+  reduced?: boolean;
 }) {
   const navigate = useNavigate();
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        className="flex w-full items-center gap-3 rounded-lg border border-border bg-card/60 px-3 py-2.5 text-left text-base font-medium text-foreground transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className={cn(
+          'flex w-full items-center rounded-lg border border-border bg-card/60 text-left text-base font-medium text-foreground transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+          reduced ? 'justify-center px-3 py-2.5' : 'gap-3 px-3 py-2.5',
+        )}
         aria-label={accountName === null ? 'Account' : `${accountName}, account`}
+        title={reduced && accountName !== null ? accountName : undefined}
       >
-        {accountName === null ? (
+        {reduced ? (
+          <CircleUser className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+        ) : accountName === null ? (
           // `flex-1` rather than a fixed width, so the chevron is already where it
           // is going to be and the card does not move under the reader's cursor as
           // the name arrives.
@@ -53,7 +73,9 @@ export function AccountMenu({ accountName }: {
         ) : (
           <span className="min-w-0 flex-1 truncate">{accountName}</span>
         )}
-        <ChevronUp className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+        {reduced ? null : (
+          <ChevronUp className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+        )}
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="start" side="top" className="w-56">

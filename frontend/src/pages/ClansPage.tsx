@@ -156,10 +156,7 @@ export function ClansPage({ basePath = '/dashboard' }: { basePath?: string }) {
 
   return (
     <div className="space-y-6">
-      <SectionHeading
-        title="Clans"
-        subtitle="Every clan on the server. A clan's name opens its record."
-      />
+      <SectionHeading title="Clans" />
 
       <Panel>
         <form

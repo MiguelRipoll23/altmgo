@@ -62,10 +62,7 @@ export function MyCharactersPage() {
 
   return (
     <div className="space-y-6">
-      <SectionHeading
-        title="Characters"
-        subtitle="The characters on this account, with the level and title the game gives them."
-      />
+      <SectionHeading title="Characters" />
 
       {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
 
@@ -90,7 +87,13 @@ export function MyCharactersPage() {
                     {character.name}
                   </h2>
                   {character.clan === null ? null : (
-                    <Badge variant="secondary">{character.clan.name}</Badge>
+                    // `verbatim`: a clan names itself, so the badge shows the name
+                    // as its owner wrote it rather than shouting it. The badge's
+                    // uppercase is right for the states the dashboard words itself
+                    // and wrong for the one thing on this card a person typed.
+                    <Badge variant="secondary" verbatim>
+                      {character.clan.name}
+                    </Badge>
                   )}
                 </div>
 

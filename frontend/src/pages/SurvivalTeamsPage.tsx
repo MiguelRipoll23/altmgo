@@ -41,10 +41,7 @@ export function SurvivalTeamsPage() {
 
   return (
     <div className="space-y-6">
-      <SectionHeading
-        title="Survival teams"
-        subtitle="The teams on the Survival ladder, and who is on them."
-      />
+      <SectionHeading title="Survival teams" />
 
       {ladder.error === null ? null : (
         <StatusMessage kind="error">{ladder.error}</StatusMessage>
