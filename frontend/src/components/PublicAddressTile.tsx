@@ -28,15 +28,28 @@ type PublishResponse = {
 const DiscoverableSeconds = 15;
 
 /**
- * The address the caller's own last character publishes, with the button that
- * corrects it inside the same tile.
+ * The address a character publishes, with the button that corrects it inside the
+ * same tile.
  *
- * This is the one figure on the overview that is about the person reading rather
- * than the server, and it is the one that goes stale: a host whose network
- * changed still sees the address they had yesterday. The button therefore sits
- * inside the tile, under the value it acts on, rather than in a row of its own
- * below the figures — a control that belongs to one number and is drawn apart
- * from it is a control somebody presses for the wrong number.
+ * This is a figure about the person reading rather than about the server, and it
+ * is the one that goes stale: a host whose network changed still sees the address
+ * they had yesterday. The button therefore sits inside the tile, under the value
+ * it acts on, rather than in a row of its own below the figures — a control that
+ * belongs to one number and is drawn apart from it is a control somebody presses
+ * for the wrong number.
+ *
+ * It is drawn on the character page rather than on the overview. On the overview
+ * it had to name the character it belonged to by asking which of the account's
+ * characters had been active most recently, which is a guess, made by a page that
+ * otherwise said nothing about characters at all; on the character page the
+ * character is the subject of the page, so the figure and the control sit beside
+ * the thing they are about.
+ *
+ * The write is still account-wide even though the tile is about one character, and
+ * that is not a simplification. The connection row is written per character but
+ * every character of an account listens on the same network, so they all share
+ * the address and publishing one that was already right would leave the others
+ * stale. The button therefore corrects all of them or none.
  *
  * Signing in is what writes it, not this page, and the sign-in says so in its
  * answer: an account with a character that has a connection row is discoverable,
@@ -58,13 +71,24 @@ const DiscoverableSeconds = 15;
  * every tile back until it has: a reload after publishing is not a page that has
  * lost its address, and a tile that emptied itself each time the button was
  * pressed would be a worse answer than the one it is there to give.
+ *
+ * The tile is named by whatever draws it, through `label`, because the two places
+ * that use it already have a heading of their own above it and a tile repeating
+ * that heading as its own label says the same two words twice in a row.
  */
 export function PublicAddressTile({
   address,
+  label = 'Public IP',
   onPublished,
 }: {
   /** The published address, or nothing when the account has none to publish. */
   address: string | null;
+  /**
+   * What the tile calls the figure. It is settable because the tile sits inside a
+   * panel that already names the thing, and a tile repeating the panel's heading
+   * as its own label says the same two words twice in a row.
+   */
+  label?: string;
   /** Called after a successful publish, so the page can read the address again. */
   onPublished: () => void;
 }) {
@@ -144,7 +168,7 @@ export function PublicAddressTile({
 
   return (
     <StatTile
-      label="Public IP"
+      label={label}
       textual
       value={address ?? 'Not published'}
       action={

@@ -13,9 +13,7 @@ import {
 } from '../dashboardQueries.js';
 import { listNews, findNews } from '../newsQueries.js';
 import { findAccountMail, isMailBox, listAccountMail } from '../mailQueries.js';
-import { listLobbyPresence, readPresenceTotals, readServerTotals } from '../presence.js';
 import { findAccountById } from '../accounts.js';
-import { readAccountPublicAddress } from '../publicAddresses.js';
 import { isClanBoard, isPlayerBoard, readClanBoard, readPlayerBoard } from '../rankingsQueries.js';
 
 export const dashboardRoutes = new Hono<AppBindings>();
@@ -54,74 +52,6 @@ function readNumber(value: string | undefined, fallback: number, minimum: number
 function readFlag(value: string | undefined): boolean {
   return value === 'true';
 }
-
-/**
- * The overview: how many players the server has, how many are on it, how many
- * games it has hosted, the gameplay lobbies they are spread across, and the
- * address the caller's own last character publishes.
- *
- * The three counts are read as three questions rather than as one figure with two
- * faces. How many players exist says whether the server is being used, how many
- * are connected says whether it is busy right now, and how many games have been
- * hosted says whether it is being played at all — a server with a thousand
- * characters and nothing open is a very different server from a busy one, and the
- * three are only legible beside each other.
- *
- * The lobby breakdown is what makes the connected count actionable — a server with
- * forty players spread over one lobby and a server with forty spread over eight
- * are the same number and a very different afternoon — and it carries each
- * lobby's own restrictions, because "is this lobby one I can send a beginner to"
- * is the question the list exists to answer. The published address is the one
- * thing on this page that is about the person reading rather than the server: it
- * is what another player would connect to in order to join their game, and it
- * goes stale when their network changes.
- *
- * It is sent on its own, without the port the client is listening on. The port is
- * a client setting and is the same figure on every host of a deployment, so
- * printing it beside every address spends the width of the tile on a number that
- * says nothing and makes the address harder to read off the page.
- *
- * The address is deliberately not in the lobby list. Every lobby shows the same
- * host in a deployment behind one address, so a column of identical values
- * spends width on saying nothing, and the one address that has to be correct is
- * the caller's own — which is above the table for that reason.
- *
- * Both frames read this one route, so the admin overview and the player overview
- * cannot disagree about the figures: they are the same reading of the same
- * moment, drawn for a different reader.
- */
-dashboardRoutes.get('/overview', requireAccount, async (context) => {
-  const totals = await readPresenceTotals();
-  const server = await readServerTotals();
-  const lobbies = await listLobbyPresence();
-  const published = await readAccountPublicAddress(context.get('accountIdentifier'));
-
-  return context.json({
-    totals: {
-      totalPlayers: server.players,
-      connectedPlayers: totals.players,
-      totalGames: server.games,
-    },
-    lobbies: lobbies.map((lobby) => ({
-      id: lobby.id,
-      name: lobby.name,
-      players: lobby.players,
-      restrictions: {
-        beginnersOnly: lobby.beginnersOnly,
-        expansionRequired: lobby.expansionRequired,
-        noHeadshots: lobby.noHeadshots,
-        replaysOnly: lobby.replaysOnly,
-      },
-    })),
-    publishedAddress: published === undefined
-      ? null
-      : {
-          characterId: published.characterId,
-          characterName: published.characterName,
-          address: published.publicIp,
-        },
-  });
-});
 
 /**
  * Who the caller is.
