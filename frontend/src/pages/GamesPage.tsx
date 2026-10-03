@@ -1,5 +1,5 @@
 import { Map as MapIcon, RefreshCw } from 'lucide-react';
-import { LoadingBlock, SectionHeading, formatDate, formatNumber } from '../components/DataDisplay';
+import { LoadingBlock, SectionHeading, formatNumber } from '../components/DataDisplay';
 import { StatusMessage } from '../components/StatusMessage';
 import { useApiResource } from '../components/useApiResource';
 import { Badge } from '../components/ui/badge';
@@ -19,7 +19,6 @@ type Game = {
   map: number;
   status: number;
   hasPassword: boolean;
-  updatedAt: string;
 };
 
 /**
@@ -85,10 +84,10 @@ export function GamesPage() {
  *
  * A card and not a row, because a room is something a person joins rather than a
  * line to scan: the question the page is asked is "is anybody hosting what I want
- * to play", and a table answers it with seven columns of which three are the same
- * kind of thing — where, who, and when it was last touched. Set as cards, each
- * room is one thing to look at, and the grid can be read down a column or across
- * a row depending on which of those the reader wants.
+ * to play", and a table answers it with six columns of which two are the same
+ * kind of thing — where and who. Set as cards, each room is one thing to look at,
+ * and the grid can be read down a column or across a row depending on which of
+ * those the reader wants.
  *
  * The band at the top is the map, and the map is what most of somebody choosing
  * a room is choosing: two rooms on the same rule differ by who is in them, and
@@ -165,13 +164,14 @@ function GameCard({ game }: { game: Game }) {
         {/* The comment is the host's own sentence about the room, so it is given
             the room's width and the room's remaining height rather than one line
             in a column: it is the part a reader reads to choose between two
-            otherwise identical cards. */}
-        <p className="min-h-10 text-base text-muted-foreground">
+            otherwise identical cards. It carries the foot of the card rather than
+            sitting under a timestamp: the timestamp was a heartbeat that fires
+            every few seconds while the room is up, so it was the one line on the
+            card that was never the same twice and was never the reason anybody
+            picked the room. The card is about what the room is, not about when it
+            last blinked. */}
+        <p className="mt-auto min-h-10 text-base text-muted-foreground">
           {game.comment === '' ? 'No comment' : game.comment}
-        </p>
-
-        <p className="mt-auto text-base text-muted-foreground">
-          Updated {formatDate(game.updatedAt)}
         </p>
       </div>
     </article>
