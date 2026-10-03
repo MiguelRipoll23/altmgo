@@ -1,6 +1,6 @@
 import { ArrowRight, Newspaper } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { SectionHeading, formatDate } from '../components/DataDisplay';
+import { SectionHeading, formatDay } from '../components/DataDisplay';
 import { StatusMessage } from '../components/StatusMessage';
 import { useApiResource } from '../components/useApiResource';
 import { Badge } from '../components/ui/badge';
@@ -76,18 +76,29 @@ export function NewsPage({ basePath = '/dashboard' }: { basePath?: string }) {
                 {item.important ? <Badge variant="warning">important</Badge> : null}
               </div>
 
-              <p className="text-base uppercase tracking-widest text-muted-foreground">
-                {formatDate(item.publishedAt)}
-              </p>
-
               <p className="mt-3 text-base leading-relaxed text-foreground/80">
                 {preview(item.body)}
               </p>
 
-              <span className="mt-3 inline-flex items-center gap-1.5 text-base font-medium text-primary">
-                Read the whole item
-                <ArrowRight className="size-3.5" />
-              </span>
+              {/* The date is a stamp on the foot of the card rather than a line
+                  under the title, and it is the day and not the hour. News is read
+                  whenever a reader arrives, so the moment it was published is not a
+                  fact about anything the reader does with it, and a list of items
+                  carrying a time under each title spends the width of every card on
+                  the one figure none of them are read for. */}
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+                <span className="inline-flex items-center gap-1.5 text-base font-medium text-primary">
+                  Read the whole item
+                  <ArrowRight className="size-3.5" />
+                </span>
+
+                <time
+                  dateTime={item.publishedAt}
+                  className="text-base text-muted-foreground"
+                >
+                  {formatDay(item.publishedAt)}
+                </time>
+              </div>
             </Link>
           ))}
         </div>

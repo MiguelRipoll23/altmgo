@@ -312,3 +312,26 @@ export function formatDate(value: string | Date | null | undefined): string {
 
   return new Date(value).toLocaleString();
 }
+
+/**
+ * A date with no time on it, or the word that says there is not one.
+ *
+ * A second formatter rather than a flag on the first, because the two are asked
+ * for opposite reasons and a flag would leave every caller choosing. A time is
+ * wanted when the time is the answer — when a character was last seen, when a
+ * letter was sent — because two things on the same day are told apart by the hour
+ * they happened. A date alone is wanted when the day is the whole of it, which is
+ * the case for a news item: news is published when there is something to say and
+ * read whenever a reader arrives, so the hour it went up is not a fact about
+ * anything the reader does with it.
+ *
+ * It is the browser's own date formatting, so it reads in the reader's locale and
+ * their own order — the same choice `formatDate` makes, for the same reason.
+ */
+export function formatDay(value: string | Date | null | undefined): string {
+  if (value === null || value === undefined) {
+    return '—';
+  }
+
+  return new Date(value).toLocaleDateString();
+}

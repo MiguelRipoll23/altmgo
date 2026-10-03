@@ -1,6 +1,6 @@
 import { ArrowRight, Gamepad2, Newspaper, UserRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { LoadingBlock, SectionHeading, formatDate, formatNumber } from '../components/DataDisplay';
+import { LoadingBlock, SectionHeading, formatDay, formatNumber } from '../components/DataDisplay';
 import { GameCard, type Game } from '../components/GameCard';
 import { PublishAddress } from '../components/PublishAddress';
 import { StatusMessage } from '../components/StatusMessage';
@@ -190,18 +190,27 @@ export function OverviewPage() {
             {latest.important ? <Badge variant="warning">important</Badge> : null}
           </div>
 
-          <p className="mt-2 text-base uppercase tracking-widest text-muted-foreground">
-            {formatDate(latest.publishedAt)}
-          </p>
-
           <p className="mt-3 line-clamp-3 text-base leading-relaxed text-foreground/80">
             {latest.body}
           </p>
 
-          <span className="mt-3 inline-flex items-center gap-1.5 text-base font-medium text-primary">
-            Read the whole item
-            <ArrowRight className="size-3.5" />
-          </span>
+          {/* The date is a stamp on the foot of the card rather than a line under
+              the title. Under the title it read as part of the item's heading —
+              a fourth thing there to get through before the paragraph — and it is
+              not: news is read whenever a reader arrives, so when it was published
+              is the least interesting thing about it, and the only thing worth
+              keeping is the day. It shares the foot with the link onwards because
+              both are what a reader does with the card after they have read it. */}
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+            <span className="inline-flex items-center gap-1.5 text-base font-medium text-primary">
+              Read the whole item
+              <ArrowRight className="size-3.5" />
+            </span>
+
+            <time dateTime={latest.publishedAt} className="text-base text-muted-foreground">
+              {formatDay(latest.publishedAt)}
+            </time>
+          </div>
         </Link>
       )}
 
