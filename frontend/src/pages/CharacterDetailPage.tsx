@@ -1,7 +1,6 @@
-import { ArrowLeft, Link2 } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { LoadingBlock, Panel, SectionHeading, formatDate, formatNumber } from '../components/DataDisplay';
-import { PublicAddressTile } from '../components/PublicAddressTile';
 import { StatusMessage } from '../components/StatusMessage';
 import { useApiResource } from '../components/useApiResource';
 import {
@@ -21,7 +20,6 @@ type OwnedCharacter = {
   totalRewards: number;
   comment: string;
   lastSeenAt: string | null;
-  publicAddress: string | null;
   clan: { name: string; rank: number } | null;
 };
 
@@ -43,7 +41,7 @@ type OwnedCharacter = {
  */
 export function CharacterDetailPage() {
   const { identifier } = useParams();
-  const { data, error, loading, reload } = useApiResource<{ character: OwnedCharacter }>(
+  const { data, error, loading } = useApiResource<{ character: OwnedCharacter }>(
     `/api/account/characters/${identifier}`,
   );
 
@@ -105,37 +103,6 @@ export function CharacterDetailPage() {
               <p className="mt-1 text-base text-foreground/90">{character.comment}</p>
             </div>
           )}
-
-          <p className="mt-5 flex items-start gap-2 text-base text-muted-foreground">
-            <Link2 className="mt-0.5 size-3.5 shrink-0" />
-            The address is the one the game server last saw this character connect from. It is
-            corrected by publishing from the client, and it is the address another player joins
-            this character&apos;s game on.
-          </p>
-        </Panel>
-      )}
-
-      {/* The address and the control that corrects it, on the page that is about
-          one character. It was a tile on the overview, which named the character
-          it belonged to by asking which of the account's characters was active
-          most recently — a guess, answered by a page that otherwise said nothing
-          about characters at all. Here it is the character the page is already
-          about, so the tile says whose address it is rather than inferring it. */}
-      {character === null ? null : (
-        <Panel title="Address">
-          <div className="max-w-sm">
-            <PublicAddressTile
-              address={character.publicAddress}
-              label="Published address"
-              onPublished={reload}
-            />
-          </div>
-
-          <p className="mt-4 text-base text-muted-foreground">
-            Publishing writes this address to every character of yours that the game has seen
-            connect, because they all listen on the same network and a player joining one of your
-            games reaches them all at the same address.
-          </p>
         </Panel>
       )}
     </div>

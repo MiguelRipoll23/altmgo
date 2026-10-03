@@ -10,10 +10,12 @@ import {
   findTournamentBracket,
   isEventMode,
   SurvivalMode,
+  type GameSummary,
 } from '../dashboardQueries.js';
-import { listNews, findNews } from '../newsQueries.js';
+import { listNews, findNews, type NewsRow } from '../newsQueries.js';
 import { findAccountMail, isMailBox, listAccountMail } from '../mailQueries.js';
 import { findAccountById } from '../accounts.js';
+import { readAccountPublicAddress } from '../publicAddresses.js';
 import { readServerFigures } from '../statsQueries.js';
 import { isClanBoard, isPlayerBoard, readClanBoard, readPlayerBoard } from '../rankingsQueries.js';
 
@@ -29,6 +31,15 @@ const MaximumWindow = 100;
  * list would be pages nobody scrolls to rather than news anybody missed.
  */
 const MaximumNewsItems = 50;
+
+/**
+ * How many news items the overview read asks for.
+ *
+ * One, because the overview draws one. It takes the newest and links onwards to
+ * the page that has the rest, and a window of fifty on a page that keeps a single
+ * item would be asking the server for a list in order to read its first row.
+ */
+const OverviewNewsItems = 1;
 
 /**
  * Largest number of messages one inbox read returns.
@@ -84,45 +95,78 @@ dashboardRoutes.get('/account', requireAccount, async (context) => {
 });
 
 /**
- * The two figures the overview carries as a line rather than as cards.
+ * Everything the overview draws, in one read.
  *
- * They are on a route of their own rather than folded into the news or the games
- * read because they are the only two numbers on that page that are not about the
- * moment: everything else on it is what the server has just said or is just
- * running, and these are how big the server is. A page that fetched them as part
- * of one of those reads would be asking for a whole list in order to draw a
- * figure, and would fail the figure along with the list if either query threw.
+ * One route rather than four because the page is one page. It was reading the
+ * news, the games and the figures separately, which meant three round trips
+ * before the page could show anything and three failures it could report — and
+ * the page a reader lands on first is the one where waiting longest is most
+ * noticeable.
+ *
+ * The parts are asked together but are still allowed to fail apart. A server with
+ * no news is a normal morning, and a reader should not be told the page failed
+ * because a table is empty; so each answer is sent as its own value and the page
+ * draws whatever arrived. `null` means "this part did not come back" and the page
+ * draws its own message for that part rather than the whole page going blank.
  */
-dashboardRoutes.get('/server-figures', requireAccount, async (context) => {
-  const figures = await readServerFigures();
+dashboardRoutes.get('/overview', requireAccount, async (context) => {
+  // The figures and the address are read with the rest rather than after it.
+  // They do not depend on each other, so this is not a serial chain; it is the
+  // one thing that has to happen before the page can be answered at all, and
+  // starting it alongside the news keeps it off the critical path of the longest
+  // of the two.
+  const figures = readServerFigures();
+  const address = readAccountPublicAddress(context.get('accountIdentifier'));
+
+  const [news, games, server, published] = await Promise.all([
+    listNews(OverviewNewsItems),
+    listGames(),
+    figures,
+    address,
+  ]);
 
   return context.json({
-    connectedPlayers: figures.connectedPlayers,
-    totalGames: figures.totalGames,
+    news: news.map((item) => ({
+      id: item.id,
+      title: item.title,
+      body: item.body,
+      important: item.important,
+      publishedAt: item.time,
+    })),
+    games: games.map(describeGame),
+    connectedPlayers: server.connectedPlayers,
+    totalGames: server.totalGames,
+    publishedAddress:
+      published === undefined
+        ? null
+        : { characterId: published.characterId, characterName: published.characterName, address: published.publicIp },
   });
 });
+
+/** One game row as both the overview and the games page read it. */
+function describeGame(game: GameSummary) {
+  return {
+    id: game.id,
+    name: game.name,
+    comment: game.comment,
+    hostName: game.host_name,
+    lobbyName: game.lobby_name,
+    players: game.players,
+    maximumPlayers: game.maximum_players,
+    rule: game.rule,
+    map: game.map,
+    status: game.status,
+    hasPassword: game.has_password,
+    ping: game.ping,
+    updatedAt: game.updated_at,
+  };
+}
 
 /** The game rooms that are up right now. */
 dashboardRoutes.get('/games', requireAccount, async (context) => {
   const games = await listGames();
 
-  return context.json({
-    games: games.map((game) => ({
-      id: game.id,
-      name: game.name,
-      comment: game.comment,
-      hostName: game.host_name,
-      lobbyName: game.lobby_name,
-      players: game.players,
-      maximumPlayers: game.maximum_players,
-      rule: game.rule,
-      map: game.map,
-      status: game.status,
-      hasPassword: game.has_password,
-      ping: game.ping,
-      updatedAt: game.updated_at,
-    })),
-  });
+  return context.json({ games: games.map(describeGame) });
 });
 
 /** The Survival teams and the events they are played in. */
@@ -187,16 +231,19 @@ dashboardRoutes.get('/events/:mode/schedules', requireAccount, async (context) =
 dashboardRoutes.get('/news', requireAccount, async (context) => {
   const news = await listNews(MaximumNewsItems);
 
-  return context.json({
-    news: news.map((item) => ({
-      id: item.id,
-      title: item.title,
-      body: item.body,
-      important: item.important,
-      publishedAt: item.time,
-    })),
-  });
+  return context.json({ news: news.map(describeNews) });
 });
+
+/** One news row as the pages read it. */
+function describeNews(item: NewsRow) {
+  return {
+    id: item.id,
+    title: item.title,
+    body: item.body,
+    important: item.important,
+    publishedAt: item.time,
+  };
+}
 
 /**
  * One news item, for the page the list opens.

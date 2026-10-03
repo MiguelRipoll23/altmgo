@@ -1,7 +1,8 @@
 import { ArrowRight, Newspaper } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { LoadingBlock, Panel, SectionHeading, formatDate, formatNumber } from '../components/DataDisplay';
+import { LoadingBlock, SectionHeading, formatDate, formatNumber } from '../components/DataDisplay';
 import { GameCard, type Game } from '../components/GameCard';
+import { PublishAddress } from '../components/PublishAddress';
 import { StatusMessage } from '../components/StatusMessage';
 import { useApiResource } from '../components/useApiResource';
 import { Badge } from '../components/ui/badge';
@@ -16,134 +17,140 @@ type NewsItem = {
   publishedAt: string;
 };
 
-/** The two figures about the size of the server rather than the moment. */
-type ServerFigures = {
+/** The one request this page makes, and everything it draws. */
+type Overview = {
+  news: NewsItem[];
+  games: Game[];
+  /** Characters connected to the server right now. */
   connectedPlayers: number;
+  /** Every game the server has hosted, live or closed. */
   totalGames: number;
+  /** The address the account's most recently active character publishes. */
+  publishedAddress: { characterId: number; characterName: string; address: string } | null;
 };
 
-/** The word a room with no lobby named is filed under. */
+/** The word a game with no lobby named is filed under. */
 const UnnamedLobby = 'Unknown lobby';
 
 /**
  * The page the dashboard opens with: the latest thing the server has said, and
  * what it is running right now.
  *
- * It used to open with four figures on tiles — how many players the server had,
- * how many were on it, how many games it had hosted, and the reader's own
- * published address. Three of those four were properties of the server rather than
- * news about it, and the tiles gave them the weight of the page: a row of bordered
- * cards is what a reader looks at first, and it was spent on numbers that could
- * not change while they looked at them.
+ * It is one request. The page was reading the news, the games and the figures
+ * separately and had added the published address as a fourth, which meant four
+ * round trips before anything could be drawn and four ways for the page to fail.
+ * It is the page a reader lands on first, so it is the one where the wait is most
+ * visible and the one where a half-drawn page is most confusing. One route now
+ * answers all of it, and a reload after publishing — the only thing on this page
+ * that writes — re-reads that one route rather than three.
  *
- * Two of them came back, as a line under the heading rather than as tiles. How many
- * players are on the server and how many games it has hosted are worth knowing and
- * are worth very little prominence: they are the size of the thing, not what it is
- * doing, and a reader passing through to the rooms below does not need them in a
- * card of their own to find them. `total players` did not come back at all — it is
- * the one figure that only ever goes up and says nothing about whether the server
- * is being used.
+ * The page is also called "games" rather than "rooms" everywhere it names what it
+ * lists. A room is the word the game server's tables use, and it leaked into the
+ * page through the query rather than because the reader had ever heard it; the
+ * player-facing word for the thing is a game, and the sidebar already calls the
+ * page that shows them "Games".
  *
- * The page carries no sentence under its heading either. Every dashboard page
- * opened with one, and they were all the same kind of line: a restatement of the
- * title in a longer sentence, saying what the page is about to a reader who had
- * just read what the page is called. The titles are already the sentence — "Games",
- * "News", "Clans" — and a page that needs a second line to say what its own title
- * does not is one whose title is wrong. What was underneath is either already on
- * the page (a count, a description of the list) or is what the content is for.
+ * The figures sit in one line under the title rather than on tiles. How many
+ * players are on the server, how many games it has hosted and what address the
+ * reader publishes are the size of the thing and the reader's own place in it —
+ * context to be read or skipped in one glance, not the weight a row of bordered
+ * cards under a heading gives to what a reader looks at first. `total players`
+ * did not come back at all: it is the one figure that only ever goes up and says
+ * nothing about whether the server is being used.
  *
- * The published address moved to the character page, which knows which character
- * is being played rather than guessing by recency.
+ * The cards are not inside a panel. They are the page's content, set in a grid
+ * under their lobby headings, and a card inside a bordered box inside a bordered
+ * box is two frames around one thing — the outer one saying "here is a section"
+ * about a section the reader can already see is a set of games. The count stays
+ * in the heading beside the lobby's name rather than becoming a panel of its own.
  *
- * The lobby table went with the tiles, because it was answering a question the
- * rooms answer better. It listed every lobby the server runs with its player
- * count, including the lobbies with nobody in them, so a lobby's row was as likely
- * to be an empty one as a busy one — and a reader who wanted to know where the
- * players were had to count them out of a table. The rooms are already grouped by
- * the lobby they are in, so a lobby with activity in it is a heading on the page,
- * and one without is not on the page at all.
+ * The lobby table this page used to carry went with that: it listed every lobby
+ * the server runs including the empty ones, so a reader asking where the players
+ * were had to count them out of a table. The games already group by the lobby
+ * they are in, and a lobby with nothing in it is now simply not on the page.
  *
  * The four restriction flags each lobby carries went with the table, and nothing
- * else on the dashboard draws them: whether a lobby is beginners-only or needs
- * the expansion is a property of the lobby rather than of any room in it, so it
- * has no place on a list of rooms and a lobby with no rooms has nowhere to put it.
- * That question needs the lobby itself, which is a page this dashboard does not
- * have. Until it does, "can I send a beginner to this lobby" is not answerable
- * here, and the page says what mode and map a room is on rather than implying it
- * knows the rules of the place around it.
+ * on the dashboard draws them now: whether a lobby is beginners-only or needs the
+ * expansion is a property of the lobby rather than of any game in it, so a lobby
+ * with no games in it has nowhere to put the answer. That question needs a lobby
+ * page, which this dashboard does not have.
  */
 export function OverviewPage() {
-  const news = useApiResource<{ news: NewsItem[] }>('/api/news');
-  const games = useApiResource<{ games: Game[] }>('/api/games');
-  const figures = useApiResource<ServerFigures>('/api/server-figures');
+  const { data, error, loading, reload } = useApiResource<Overview>('/api/overview');
 
-  const latest = news.data?.news[0] ?? null;
-  const rooms = games.data?.games ?? [];
+  const latest = data?.news[0] ?? null;
+  const games = data?.games ?? [];
 
-  // Only lobbies with a room in them are drawn. The map is keyed by name because
+  // Only lobbies with a game in them are drawn. The map is keyed by name because
   // the name is what a reader recognises and the id is a row number from another
-  // table; a room whose lobby the server did not report is filed under a word
-  // rather than dropped, since it is still a room somebody can join and "we could
+  // table; a game whose lobby the server did not report is filed under a word
+  // rather than dropped, since it is still a game somebody can join and "we could
   // not read its lobby" is a different fact from "we are hiding it".
   const groups = new Map<string, Game[]>();
 
-  for (const room of rooms) {
-    const key = room.lobbyName ?? UnnamedLobby;
+  for (const game of games) {
+    const key = game.lobbyName ?? UnnamedLobby;
     const group = groups.get(key);
 
     if (group === undefined) {
-      groups.set(key, [room]);
+      groups.set(key, [game]);
     } else {
-      group.push(room);
+      group.push(game);
     }
   }
 
   return (
     <div className="space-y-6">
-      {/* The heading and the figures are one band rather than a heading and then a
-          row of tiles. The figures belong to the page rather than to anything on
-          it, so they sit directly under the title, where they are read or skipped
-          as one glance instead of being the first thing on the page and pushing
-          the news down beneath them. `mb-2` is the heading's own margin pulled in
-          so the two read as one block rather than as a heading with a line hung
-          off it. */}
       <SectionHeading title="Overview" className="mb-2" />
 
-      <p className="mb-6 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-base text-muted-foreground">
-        {figures.data === null ? (
-          // The line keeps its height while the figures are read rather than
-          // collapsing and pulling the news up when they land, so the page below
-          // it does not jump after a wait that was supposed to be still.
+      {/* One line, holding every figure the page carries. It keeps its height while
+          the read is in flight rather than collapsing and pulling the news up when
+          the numbers land, so nothing below it moves after a wait that was
+          supposed to be still. */}
+      <p className="mb-8 flex flex-wrap items-center gap-x-2 gap-y-1 text-base text-muted-foreground">
+        {data === null ? (
           <span className="opacity-0">Reading the server…</span>
         ) : (
           <>
             <span className="tabular-nums">
-              {formatNumber(figures.data.connectedPlayers)} online
+              {formatNumber(data.connectedPlayers)} online
             </span>
             <span aria-hidden="true">·</span>
             <span className="tabular-nums">
-              {formatNumber(figures.data.totalGames)} games hosted
+              {formatNumber(data.totalGames)}{' '}
+              {data.totalGames === 1 ? 'game' : 'games'} hosted
             </span>
+
+            {/* The address is a fact about the reader rather than about the server,
+                so it is set apart from the two counts with the rule between them
+                rather than by another middot: it is not the third number, and a
+                line of three figures followed by an IP would read as though it
+                were. */}
+            <span aria-hidden="true" className="text-border">
+              |
+            </span>
+            <PublishAddress
+              address={data.publishedAddress?.address ?? null}
+              onPublished={reload}
+            />
           </>
         )}
       </p>
 
-      {news.error === null ? null : <StatusMessage kind="error">{news.error}</StatusMessage>}
+      {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
 
-      {/* The latest item only, as a card rather than a list. The whole news page
-          is one click away and this is the one a reader passing through the
-          dashboard is most likely to want — so it is the opening of the newest
-          item and a link onwards, not a shortened copy of the list, which would
-          put the same item on two pages and make the news page a page whose first
-          row is already on the one before it. */}
-      {news.loading ? (
+      {/* The latest item only, as a card rather than a list. The whole news page is
+          one click away and this is the one a reader passing through the dashboard
+          is most likely to want — so it is the opening of the newest item and a
+          link onwards, not a shortened copy of the list, which would put the same
+          item on two pages and make the news page a page whose first row is
+          already on the one before it. */}
+      {loading ? (
         <LoadingBlock label="Reading the news…" />
       ) : latest === null ? (
-        <Panel title="Latest news">
-          <p className="text-base text-muted-foreground">
-            The server has not published anything.
-          </p>
-        </Panel>
+        <p className="text-base text-muted-foreground">
+          The server has not published any news.
+        </p>
       ) : (
         <Link
           to={`/dashboard/news/${latest.id}`}
@@ -177,63 +184,51 @@ export function OverviewPage() {
         </Link>
       )}
 
-      {/* The rooms are the games page's own cards rather than a compact list made
-          for this page. It is the same question the same way round: the reader
-          passes this page on the way somewhere else and the cards are there if
-          they want to look, which is what stops the overview from being a summary
-          that has to be visited to be believed. A shorter row here would have been
-          the cheaper drawing and it would have been the one place a room is shown
-          without its map, its picture and its ping — so a reader would learn the
-          room from the summary and be surprised by the real thing. */}
-      <Panel
-        title="Rooms being hosted"
-        description={
-          rooms.length === 0
-            ? undefined
-            : `${formatNumber(rooms.length)} ${rooms.length === 1 ? 'room' : 'rooms'}, grouped by lobby.`
-        }
-        footer={
+      {/* The heading carries the count, and the games sit in a plain grid under it.
+          A panel here would put a border around a set of cards that each already
+          carry one, which is the page saying the same thing about a game twice —
+          once as a card and once as a section it is inside. */}
+      <section className="space-y-3">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+          <h2 className="text-lg font-extrabold tracking-tight text-foreground">
+            Games being hosted
+          </h2>
+
           <Link
             to="/dashboard/games"
             className="inline-flex items-center gap-1.5 text-base font-medium text-primary hover:underline"
           >
-            Browse the rooms
+            Browse the games
             <ArrowRight className="size-3.5" />
           </Link>
-        }
-      >
-        {games.error === null ? null : <StatusMessage kind="error">{games.error}</StatusMessage>}
+        </div>
 
-        {rooms.length === 0 ? (
-          games.loading ? (
-            <LoadingBlock label="Reading the rooms…" />
+        {games.length === 0 ? (
+          loading ? (
+            <LoadingBlock label="Reading the games…" />
           ) : (
-            <p className="text-base text-muted-foreground">No game is being hosted right now.</p>
+            <p className="text-base text-muted-foreground">
+              No game is being hosted right now.
+            </p>
           )
         ) : (
-          // Each lobby is its own section rather than one table with a lobby
-          // column. A table repeats the lobby name down every row it has rooms in,
-          // and the column is the thing being sorted by, so the page spends its
-          // height on the least interesting fact about each room while the
-          // interesting one — which lobbies are busy — has to be read out of a
-          // sorted list of names.
           <div className="space-y-8">
-            {[...groups.entries()].map(([lobby, lobbyRooms]) => (
+            {[...groups.entries()].map(([lobby, lobbyGames]) => (
               <section key={lobby} className="space-y-3">
                 <div className="flex items-baseline gap-2">
                   <h3 className="text-base font-extrabold tracking-tight text-foreground">
                     {lobby}
                   </h3>
                   <p className="text-base text-muted-foreground tabular-nums">
-                    {formatNumber(lobbyRooms.length)}{' '}
-                    {lobbyRooms.length === 1 ? 'room' : 'rooms'}
+                    {formatNumber(lobbyGames.length)}{' '}
+                    {lobbyGames.length === 1 ? 'game' : 'games'}
                   </p>
                 </div>
 
                 <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                  {lobbyRooms.map((room) => (
-                    <li key={room.id} className="min-w-0">
-                      <GameCard game={room} />
+                  {lobbyGames.map((game) => (
+                    <li key={game.id} className="min-w-0">
+                      <GameCard game={game} />
                     </li>
                   ))}
                 </ul>
@@ -241,7 +236,7 @@ export function OverviewPage() {
             ))}
           </div>
         )}
-      </Panel>
+      </section>
     </div>
   );
 }
