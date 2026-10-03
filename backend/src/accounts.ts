@@ -7,12 +7,26 @@ export type AccountRow = {
   password: string;
 };
 
-/** Finds the account with a given login name. */
+/**
+ * Finds the account with a given login name.
+ *
+ * The comparison is case-insensitive because a name is a word rather than an
+ * identifier: somebody who types their name in the wrong case has still typed
+ * their name, and refusing them over the capitalisation of a letter is a login
+ * that works or does not depending on how carefully it was copied. The client
+ * sends the name as typed, so the row keeps the casing it was registered with
+ * and this is the only place the two are made equal.
+ *
+ * Both sides go through `lower` rather than relying on a case-insensitive
+ * collation, because the collation is the database's own configuration and the
+ * unique index on the column is built from the raw bytes: a name folded to lower
+ * case still has to reach exactly the one row that holds it.
+ */
 export async function findAccountByName(displayName: string): Promise<AccountRow | undefined> {
   const rows = await database()`
     select id, display_name, password
     from accounts
-    where display_name = ${displayName}
+    where lower(display_name) = lower(${displayName})
     limit 1
   `;
 
