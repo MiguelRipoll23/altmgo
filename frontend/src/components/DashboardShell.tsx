@@ -18,6 +18,35 @@ function isWideWindow(): boolean {
 type ColumnState = 'open' | 'reduced' | 'hidden';
 
 /**
+ * A wide window has no "away" state.
+ *
+ * Put away is a drawer idea. A drawer is a thing laid over a page that covers it,
+ * so taking it away gives the page back its whole width and the way back is a
+ * button floating where the drawer used to be. On a wide window the column is
+ * beside the page rather than over it, and taking it away there gives back about
+ * ten characters — while costing the reader the whole column and leaving them with
+ * a floating button and a page. That is a worse version of what the reduced
+ * column already does properly, so on a wide window the column reduces and never
+ * goes.
+ *
+ * So `hidden` is honoured only where it means something: a narrow window, where
+ * the column is a drawer over the page and the page genuinely needs the width
+ * back. A stored `hidden` on a wide window — however it got there, whether the
+ * reader was last on a phone, whether a window was resized, whether something
+ * asked for it and was refused — draws as reduced. The state can still be stored,
+ * because the same state has to mean the right thing on both kinds of window, but
+ * it cannot put a desktop into the one state the desktop does not have.
+ *
+ * This is also what a reader means by "it collapsed when I came back". Whether
+ * the column was put away while they were looking elsewhere or was already like
+ * that, what they want to come back to is a slimmed column they can click, not a
+ * button they have to click first.
+ */
+function drawnColumn(stored: ColumnState, wide: boolean): ColumnState {
+  return wide && stored === 'hidden' ? 'reduced' : stored;
+}
+
+/**
  * The frame both dashboards are drawn in: a column of sections and the page
  * beside them, with the column able to be reduced or put away.
  *
@@ -35,16 +64,16 @@ type ColumnState = 'open' | 'reduced' | 'hidden';
  * dashboard nobody has seen the dashboard of. It is open on a wide one, where the
  * column is part of the layout rather than something laid over it.
  *
- * A wide window has three column states rather than two, and the third is the
- * reduced one: the column narrows to its icons and stays on screen. It is a real
- * state rather than a nicety because putting the column away entirely and
- * narrowing it are different requests on a desktop. Away is right for a phone,
- * where the column is a drawer over the page and the page needs the width. On a
- * wide window the column is beside the page, and removing it buys the page about
- * ten characters — not worth losing the reader's place in the frame to get, when
- * the reader who asked for more room usually wants to see a wide table rather
- * than to stop navigating. So the reduce control keeps the icons on screen and
- * working, and only the drawer-style hide is the thing that takes the column off.
+ * A wide window draws two of the three states, not three. The reduced one is the
+ * column narrowed to its icons and left on screen, and it is a real state rather
+ * than a nicety: narrowing the column and removing it are different requests on a
+ * desktop. Away is right for a phone, where the column is a drawer over the page
+ * and the page needs the width back. On a wide window the column is beside the
+ * page, and removing it buys the page about ten characters — not worth losing the
+ * reader's place in the frame to get, when the reader who asked for more room
+ * usually wants to see a wide table rather than to stop navigating. So the reduce
+ * control keeps the icons on screen and working, and a wide window has no state
+ * that takes the column off at all. See `drawnColumn`.
  *
  * Only the list of sections scrolls, not the column. A column that scrolls as one
  * piece takes the wordmark and the account card away with it, so a long list
@@ -73,8 +102,12 @@ export function DashboardShell({
   const location = useLocation();
   const arrived = useRef(false);
 
+  // What is actually drawn, which is the stored state narrowed to what this kind
+  // of window can be. See `drawnColumn`.
+  const drawn = drawnColumn(column, isWideWindow());
+
   /** Whether the column is on screen in any form. */
-  const shown = column !== 'hidden';
+  const shown = drawn !== 'hidden';
 
   /**
    * Narrows the column, or opens it back out.
@@ -174,13 +207,11 @@ export function DashboardShell({
         id="frame-navigation"
         className={cn(
           'fixed inset-y-0 left-0 z-50 flex max-w-[85vw] flex-col gap-6 border-r border-border bg-card/60 pb-6 pt-5 transition-transform duration-200 ease-out',
-          // The gutter and the width both move between the three states, so the
-          // column is padded when it has labels and not when it has only icons.
-          // Reducing the width alone would leave the icons floating in a wide
-          // empty box, which reads as a column that failed to draw.
-          column === 'open'
-            ? 'w-72 px-5 lg:w-64 lg:max-w-none'
-            : 'w-20 px-3 lg:max-w-none',
+          // The gutter and the width both move between the states, so the column is
+          // padded when it has labels and not when it has only icons. Reducing the
+          // width alone would leave the icons floating in a wide empty box, which
+          // reads as a column that failed to draw.
+          drawn === 'open' ? 'w-72 px-5 lg:w-64 lg:max-w-none' : 'w-20 px-3 lg:max-w-none',
           shown ? 'translate-x-0' : '-translate-x-full',
         )}
       >
@@ -192,37 +223,35 @@ export function DashboardShell({
             for the same thing, and one of them is somewhere the reader has to
             look for. */}
         <div className="flex items-center justify-between gap-2">
-          {column === 'reduced' ? null : brand}
+          {drawn === 'reduced' ? null : brand}
 
           <Button
             variant="ghost"
             size="icon"
             onClick={() => toggleColumn()}
-            className={cn(column === 'reduced' && 'mx-auto')}
-            aria-label={column === 'reduced' ? 'Expand the navigation' : 'Collapse the navigation'}
+            className={cn(drawn === 'reduced' && 'mx-auto')}
+            aria-label={drawn === 'reduced' ? 'Expand the navigation' : 'Collapse the navigation'}
             aria-expanded={shown}
             aria-controls="frame-navigation"
           >
-            {column === 'reduced' ? <PanelLeft /> : <PanelLeftClose />}
+            {drawn === 'reduced' ? <PanelLeft /> : <PanelLeftClose />}
           </Button>
         </div>
 
-        <SidebarNav sections={sections} reduced={column === 'reduced'} />
+        <SidebarNav sections={sections} reduced={drawn === 'reduced'} />
 
-        <AccountMenu accountName={accountName} reduced={column === 'reduced'} />
+        <AccountMenu accountName={accountName} reduced={drawn === 'reduced'} />
       </aside>
 
       {shown ? null : (
-        // This is the affordance of the `hidden` state, and it is the only way
-        // back to the column from it: the column has been translated off the
-        // screen, so the control at its head has gone with it. It is drawn over
-        // the page for the same reason — there is no column left to put it in.
+        // The affordance of the away state, which is the only one that exists on a
+        // narrow window: the column has been translated off the screen and the
+        // control at its head went with it, so this is the only way back. It is
+        // drawn over the page because there is no column left to put it in.
         //
-        // Which means it is the thing a reader sees when the column has been put
-        // away rather than reduced, and the two are easy to confuse: both have an
-        // icon and both put one back. The reduced column keeps its icons on screen
-        // so it never needs this, and this one never shows a rail of icons, so the
-        // two cannot be mistaken for each other once either has been used.
+        // It cannot appear on a wide window at all — see `drawnColumn` — so a
+        // reader on a desktop never meets a page with a lone button where the
+        // navigation should be.
         <Button
           variant="outline"
           size="icon"
@@ -241,7 +270,7 @@ export function DashboardShell({
       <main
         className={cn(
           'min-w-0 transition-[padding] duration-200 ease-out',
-          column === 'open' ? 'lg:pl-64' : column === 'reduced' ? 'lg:pl-20' : 'lg:pl-0',
+          drawn === 'open' ? 'lg:pl-64' : drawn === 'reduced' ? 'lg:pl-20' : 'lg:pl-0',
         )}
       >
         <div
@@ -251,7 +280,7 @@ export function DashboardShell({
             // page, so the page is given room for it rather than starting under it.
             // The reduced column does not need that room, because it sits beside
             // the page rather than over it.
-            column === 'reduced' ? undefined : shown ? undefined : 'pt-16 lg:pt-8',
+            shown ? undefined : 'pt-16 lg:pt-8',
           )}
         >
           {children}

@@ -63,7 +63,9 @@ const DiscoverableSeconds = 15;
  * The correction is bracketed against the address rather than standing beside it,
  * because it is a qualifier on the address rather than a thing in its own right —
  * the way "(locked)" qualifies a row. Brackets say that without spending a rule or
- * a middot on separating it from the two counts it is otherwise level with.
+ * a middot on separating it from the two counts it is otherwise level with, and
+ * there is no space inside them: `(Update)` reads as one thing hung off the
+ * address, where `( Update )` reads as a fourth figure on a line of three.
  *
  * It is a link rather than a button, and its own text is the report. There is
  * nothing to navigate to — the thing it does is a write, not a journey — so a
@@ -172,34 +174,46 @@ export function PublishAddress({
           address is the one figure on this line that needs it: four groups of digits
           in a row look like any other four groups of digits, and a reader who does
           not already know that this is where their game is reachable has nothing to
-          attach the digits to. */}
-      <Globe className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+          attach the digits to.
 
-      <span className="font-mono text-foreground/90">
-        {address ?? 'No address published'}
+          Both it and the address are purple, which is the one colour on the page
+          that is used for nothing else. That is the whole of what it is for: the
+          counts beside it are green and blue because green and blue mean how busy
+          the server is and how much it has done, and an address is neither of
+          those. It is a thing about the reader, so it gets the colour that is not
+          a claim about the server. */}
+      <Globe className="size-3.5 shrink-0 text-purple-400" aria-hidden="true" />
+
+      {/* The address and its correction are one run with no gap in it. The outer
+          span exists only to switch the row's gap off between them, because a
+          flex row cannot have a gap on one side of a word and not the other, and
+          `172.226.116.12 (Update)` with the space inside the brackets reads as a
+          fourth figure on this line rather than as a qualifier on the third. */}
+      <span className="inline-flex items-center">
+        <span className="font-mono text-purple-400">
+          {address ?? 'No address published'}
+        </span>
+
+        {/* Brackets rather than a separator: the correction is a qualifier on the
+            address, the way "(locked)" qualifies a row. */}
+        <span className="text-purple-400">(</span>
+
+        <button
+          type="button"
+          onClick={() => void publish()}
+          disabled={publishing || discoverable}
+          className="inline-flex items-center gap-1 rounded text-primary underline-offset-4 transition hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-70 disabled:no-underline"
+        >
+          {publishing ? (
+            <RefreshCw className="size-3.5 shrink-0 animate-spin" aria-hidden="true" />
+          ) : discoverable ? (
+            <Check className="size-3.5 shrink-0" aria-hidden="true" />
+          ) : null}
+          {publishing ? 'Publishing…' : discoverable ? 'Discoverable' : 'Update'}
+        </button>
+
+        <span className="text-purple-400">)</span>
       </span>
-
-      {/* The correction is bracketed rather than separated. It is not a third
-          figure and not a second control of its own — it is a qualifier on the
-          address, the way "(locked)" qualifies a row, and the brackets say that
-          without spending a rule or a middot on it. */}
-      <span className="text-muted-foreground">(</span>
-
-      <button
-        type="button"
-        onClick={() => void publish()}
-        disabled={publishing || discoverable}
-        className="inline-flex items-center gap-1 rounded text-primary underline-offset-4 transition hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-70 disabled:no-underline"
-      >
-        {publishing ? (
-          <RefreshCw className="size-3.5 shrink-0 animate-spin" aria-hidden="true" />
-        ) : discoverable ? (
-          <Check className="size-3.5 shrink-0" aria-hidden="true" />
-        ) : null}
-        {publishing ? 'Publishing…' : discoverable ? 'Discoverable' : 'Update'}
-      </button>
-
-      <span className="text-muted-foreground">)</span>
 
       {/* The two things that need saying are said under the line rather than in
           place of it, so the address stays on screen while the reader reads them. */}
