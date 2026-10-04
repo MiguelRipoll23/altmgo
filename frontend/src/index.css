@@ -49,6 +49,21 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
+  /*
+   * The three colours a badge or a status line can be, alongside the primary and
+   * the destructive that were already here.
+   *
+   * They were Tailwind's own `emerald-300`, `amber-300` and `purple-300` written
+   * into the components that used them, which is a colour that only works on a
+   * dark page: a 300 step is a pale tint chosen to read against near-black, and
+   * the same tint on a white card is unreadable. A component naming a palette
+   * step also fixes that step for every theme the site will ever have, so the
+   * step becomes a token and the token is chosen per palette.
+   */
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
@@ -83,6 +98,13 @@
   --ring: oklch(0.79 0.13 230);
   --radius: 0.75rem;
 
+  /* The pale ends of the three status hues, which are the ends that read against
+     a near-black card. See the light block below for the other ends of the same
+     three hues. */
+  --success: oklch(0.87 0.09 165);
+  --warning: oklch(0.88 0.12 85);
+  --info: oklch(0.79 0.13 302);
+
   /* The two soft glows behind the pages that sit outside the dashboard frame.
      They are decoration rather than content, so they have no token of their own
      beyond these two: a colour named after a decoration is a colour nothing else
@@ -96,9 +118,10 @@
  * The light palette, which the site draws whenever the reader's system asks for
  * light. It is the same hues as the dark one at the other end of the scale, so
  * a page does not change its accent between themes — only how much light is
- * behind it. The two exceptions are deliberate: the primary darkens so that both
- * `text-primary` on the page background and the primary button's own foreground
- * keep their contrast once the background behind them is white.
+ * behind it. The exceptions are deliberate: the primary and the destructive darken,
+ * and the three status colours drop to their dark ends, because each of them is
+ * text as often as it is a fill and 16px text on white is a harder test than a
+ * button on near-black.
  */
 @media (prefers-color-scheme: light) {
   :root {
@@ -117,11 +140,19 @@
     --muted-foreground: oklch(0.46 0.02 255);
     --accent: oklch(0.93 0.03 238);
     --accent-foreground: oklch(0.28 0.02 260);
-    --destructive: oklch(0.55 0.2 25);
+    --destructive: oklch(0.5 0.2 25);
     --destructive-foreground: oklch(0.99 0.005 250);
     --border: oklch(0.9 0.012 250);
     --input: oklch(0.88 0.012 250);
     --ring: oklch(0.52 0.15 234);
+
+    /* The same three hues at the other end of the scale, where a badge's text has
+       to clear a white card rather than a black one — hence seven hundred rather
+       than three hundred. The tint behind each badge is the same colour at a
+       tenth, so the two cannot drift apart. */
+    --success: oklch(0.52 0.13 162);
+    --warning: oklch(0.52 0.12 65);
+    --info: oklch(0.52 0.19 300);
 
     --glow-top: rgba(14, 165, 233, 0.16);
     --glow-bottom: rgba(37, 99, 235, 0.1);

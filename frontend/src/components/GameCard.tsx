@@ -104,7 +104,7 @@ export function GameCard({ game }: { game: Game }) {
               for a reader who cannot see the icon. */}
           {game.hasPassword ? (
             <span title="Password protected">
-              <LockKeyhole className="size-4 shrink-0 text-amber-400" aria-hidden="true" />
+              <LockKeyhole className="size-4 shrink-0 text-warning" aria-hidden="true" />
               <span className="sr-only">Password protected</span>
             </span>
           ) : null}

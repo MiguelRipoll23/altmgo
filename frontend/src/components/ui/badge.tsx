@@ -9,6 +9,11 @@ import { cn } from '../../lib/utils';
  * A badge is a fact about a row rather than an action, so it carries no border
  * of its own beyond the tint that separates it from the row behind it.
  *
+ * The three state colours are tokens rather than palette steps, because the step
+ * that reads as a bright tint on a dark card is the step that disappears on a
+ * light one, and a badge is 16px text — the thing least able to afford it. See
+ * `index.css`.
+ *
  * It is uppercased because almost everything a badge says here is a state the
  * dashboard chose the word for — `password`, `important`, `closed`, `replays
  * only` — and those read as labels rather than as text somebody typed. The one
@@ -25,8 +30,8 @@ const badgeVariants = cva(
         default: 'border-primary/30 bg-primary/10 text-primary',
         secondary: 'border-border bg-muted text-muted-foreground',
         outline: 'border-border text-foreground/80',
-        success: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300',
-        warning: 'border-amber-500/30 bg-amber-500/10 text-amber-300',
+        success: 'border-success/30 bg-success/10 text-success',
+        warning: 'border-warning/30 bg-warning/10 text-warning',
         destructive: 'border-destructive/40 bg-destructive/10 text-destructive',
       },
     },

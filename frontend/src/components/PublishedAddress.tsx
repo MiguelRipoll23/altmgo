@@ -22,15 +22,16 @@ import { Badge } from './ui/badge';
  * on the page used for nothing else: the counts are green and blue because green and
  * blue mean how busy the server is and how much it has done, and an address is a
  * thing about the reader, so it takes the colour that is not a claim about the
- * server. It is `verbatim` because the address is the reader's own data rather than
- * a label the dashboard chose — an uppercased address is the page rewriting the
- * thing it is reporting.
+ * server — `info`, a token rather than a palette step, so the badge is readable on
+ * either palette. It is `verbatim` because the address is the reader's own data
+ * rather than a label the dashboard chose — an uppercased address is the page
+ * rewriting the thing it is reporting.
  */
 export function PublishedAddress({ address }: { address: string | null }) {
   return (
     <Badge
       verbatim
-      className="gap-1.5 border-purple-500/30 bg-purple-500/10 tracking-normal text-purple-300"
+      className="gap-1.5 border-info/30 bg-info/10 tracking-normal text-info"
     >
       {/* The globe says what the digits beside it are before they are read: four
           groups of digits in a row look like any other four groups of digits, and a

@@ -188,7 +188,7 @@ export function OverviewPage() {
                 <Newspaper
                   className={cn(
                     'size-4 shrink-0',
-                    latest.important ? 'text-amber-400' : 'text-muted-foreground',
+                    latest.important ? 'text-warning' : 'text-muted-foreground',
                   )}
                 />
                 <h2 className="min-w-0 text-lg font-extrabold tracking-tight text-foreground">

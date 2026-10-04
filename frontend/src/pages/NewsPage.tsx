@@ -68,7 +68,7 @@ export function NewsPage({ basePath = '/dashboard' }: { basePath?: string }) {
             >
               <div className="mb-2 flex flex-wrap items-center gap-3">
                 <Newspaper
-                  className={`size-4 shrink-0 ${item.important ? 'text-amber-400' : 'text-muted-foreground'}`}
+                  className={`size-4 shrink-0 ${item.important ? 'text-warning' : 'text-muted-foreground'}`}
                 />
                 <h2 className="text-lg font-extrabold tracking-tight text-foreground">
                   {item.title}

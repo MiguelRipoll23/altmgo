@@ -9,7 +9,7 @@ export type StatusKind = 'success' | 'error' | 'progress';
 /** The icon each kind of status wears, and the words that go with it. */
 const appearances: Record<StatusKind, { className: string; icon: LucideIcon }> = {
   success: {
-    className: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300',
+    className: 'border-success/30 bg-success/10 text-success',
     icon: CheckCircle2,
   },
   error: {
