@@ -1,6 +1,6 @@
 import { Menu, PanelLeft, PanelLeftClose } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigationType } from 'react-router-dom';
 import { cn } from '../lib/utils';
 import { AccountMenu } from './AccountMenu';
 import { SidebarNav, type SidebarSection } from './SidebarNav';
@@ -144,6 +144,7 @@ export function DashboardShell({
   const [column, setColumn] = useState<ColumnState>(isWideWindow() ? 'open' : 'hidden');
   const wide = useWideWindow();
   const location = useLocation();
+  const navigationType = useNavigationType();
   const arrived = useRef(false);
 
   // What is actually drawn, which is the stored state narrowed to what this kind
@@ -186,16 +187,24 @@ export function DashboardShell({
   //
   // The first arrival is not a change of page either, and treating it as one would
   // put the column away on every load, on a wide window above all.
+  //
+  // Back and forward are not a change of page in this sense either. The browser
+  // restores the previous view from its own history, and a reader who had the
+  // drawer open and stepped back to the page they came from is still reading the
+  // same session — closing the navigation over them is the frame deciding they are
+  // somewhere new. Only a push — a link followed forward — is the reader moving on,
+  // and that is the one that puts the drawer away. React Router reports which of
+  // the two it was, so the effect does not have to guess from the path.
   useEffect(() => {
     if (!arrived.current) {
       arrived.current = true;
       return;
     }
 
-    if (!wide) {
+    if (!wide && navigationType !== 'POP') {
       setColumn('hidden');
     }
-  }, [location.pathname, location.search, wide]);
+  }, [location.pathname, location.search, wide, navigationType]);
 
   // Escape closes the drawer, and only the drawer.
   //
