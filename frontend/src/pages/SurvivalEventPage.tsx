@@ -110,7 +110,7 @@ export function SurvivalEventPage() {
 
       {teams.data?.teams.length === 0 ? (
         teams.loading ? (
-          <LoadingBlock />
+          <LoadingBlock centered />
         ) : (
           <p className="text-base text-muted-foreground">No team has been formed on Survival.</p>
         )

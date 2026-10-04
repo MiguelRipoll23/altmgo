@@ -55,7 +55,7 @@ export function NewsPage({ basePath = '/dashboard' }: { basePath?: string }) {
       {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
 
       {loading ? (
-        <LoadingBlock />
+        <LoadingBlock centered />
       ) : (data?.news ?? []).length === 0 ? (
         <p className="text-base text-muted-foreground">No news has been published.</p>
       ) : (

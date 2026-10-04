@@ -446,7 +446,7 @@ export function GamesPage() {
 
       {games.length === 0 ? (
         loading ? (
-          <LoadingBlock />
+          <LoadingBlock centered />
         ) : (
           <p className="text-base text-muted-foreground">No game is being hosted right now.</p>
         )

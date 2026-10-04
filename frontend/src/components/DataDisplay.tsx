@@ -113,7 +113,39 @@ export function Panel({ title, description, footer, children, className }: {
  * answer, which is why the spinner is the part that is always there and the words
  * are the part that can go.
  */
-export function LoadingBlock({ label = 'Loading…' }: { label?: string }) {
+export function LoadingBlock({
+  label = 'Loading…',
+  centered = false,
+}: {
+  label?: string;
+  /**
+   * Whether the reading is the page rather than a part of it.
+   *
+   * A page with nothing on it yet draws its waiting in the middle of the room it
+   * is about to fill, so every page that is read the same way says it from the
+   * same place — a reader moving between sections is not hunting the top-left of
+   * each one for the line. Inside a card the reading belongs to the card and is
+   * drawn in it, where the content will land; that one stays a line, because a
+   * card is the same shape whether or not it is full.
+   *
+   * The centred form stacks the turning mark over the word, which is what makes it
+   * the thing the page is waiting on rather than a sentence that happens to have a
+   * spinner at its head.
+   */
+  centered?: boolean;
+}) {
+  if (centered) {
+    return (
+      <div
+        role="status"
+        className="flex min-h-[50vh] flex-col items-center justify-center gap-3 text-base text-muted-foreground"
+      >
+        <RefreshCw className="size-6 shrink-0 animate-spin" />
+        <span>{label}</span>
+      </div>
+    );
+  }
+
   return (
     <p role="status" className="flex items-center gap-2 py-1 text-base text-muted-foreground">
       <RefreshCw className="size-4 shrink-0 animate-spin" />
