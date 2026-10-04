@@ -239,28 +239,18 @@ export function DashboardShell({
     }
   }, [wide]);
 
-  /**
-   * Whether the page has been scrolled off its first screenful.
-   *
-   * The button that brings the column back floats over the page, so the page has
-   * to start clear of it — but only at the top. A gutter held open for the whole
-   * length of a long page is a stripe of nothing down the left of every screen
-   * the reader scrolls through, to protect a corner they scrolled past long ago;
-   * and the button is the reader's own way out of the drawer, so once they have
-   * moved into the page it is over the page on purpose. Re-read on every scroll
-   * because the question is asked of the window, not of the page.
-   */
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 0);
-
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-
-    return () => window.removeEventListener('scroll', onScroll);
-  }, [location.pathname, location.search]);
-
+  // The room the page keeps for the floating button is a padding on the content
+  // itself, in CSS, and it is not taken back on scroll.
+  //
+  // It used to be: a scroll listener toggled the top padding off the moment the
+  // page moved, so the button was over the content for the rest of the page. That
+  // traded a scroll listener and a re-render for a layout shift in the middle of
+  // every scroll — the content jumped up 40 pixels under the reader the instant
+  // they started to scroll, which on a phone is the jank the whole page is judged
+  // by. The padding only has to exist at the top of the document; the reader
+  // scrolls past it in the first flick and it never held a stripe open anywhere
+  // else, so leaving it in place costs nothing and the page now moves only as far
+  // as the reader moves it.
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
       {shown ? (
@@ -348,18 +338,14 @@ export function DashboardShell({
           drawn === 'open' ? 'lg:pl-64' : drawn === 'reduced' ? 'lg:pl-20' : 'lg:pl-0',
         )}
       >
-        <div
-          className={cn(
-            'mx-auto w-full max-w-5xl px-4 py-6 sm:px-8 sm:py-8',
-            // The button that brings the column back is drawn over the top of the
-            // page, so the page starts clear of it rather than under it — and
-            // gives the room back as soon as the reader has scrolled, because
-            // after that the button is over the page on purpose. The reduced
-            // column needs none of it: it sits beside the page rather than over
-            // it, and the button it carries is inside the column.
-            shown || scrolled ? undefined : 'pt-16 lg:pt-8',
-          )}
-        >
+        {/* The top padding clears the floating button, and it is a single set of
+            CSS classes rather than a condition on a scroll position. `pt-16`
+            applies below `lg`, which is exactly where the floating button exists;
+            from `lg` up there is no floating button — the column is beside the page
+            — so the padding drops back to the page's own `pt-8`. Both are written
+            as top/bottom paddings rather than `py`, so a responsive `py` cannot
+            quietly override the top one at some widths. */}
+        <div className="mx-auto w-full max-w-5xl px-4 pb-6 pt-16 sm:px-8 sm:pb-8 lg:pt-8">
           {children}
         </div>
       </main>
