@@ -1,8 +1,22 @@
+import { ArrowUpDown, RefreshCw, Search, SlidersHorizontal } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { LoadingBlock, SectionHeading, formatNumber } from '../components/DataDisplay';
 import { GameCard, type Game } from '../components/GameCard';
 import { StatusMessage } from '../components/StatusMessage';
 import { useApiResource } from '../components/useApiResource';
+import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/button';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '../components/ui/dialog';
+import { Input } from '../components/ui/input';
 import {
   Select,
   SelectContent,
@@ -12,6 +26,7 @@ import {
 } from '../components/ui/select';
 import { KnownRules, ruleName } from '../lib/gameModes';
 import { mapName } from '../lib/maps';
+import { cn } from '../lib/utils';
 
 /** The word a game with no lobby named is filed under. */
 const UnnamedLobby = 'Unknown lobby';
@@ -30,13 +45,6 @@ const UnnamedLobby = 'Unknown lobby';
  * has nothing to push: it writes rows and is not watching who is reading them. The
  * reader gets the same answer a refresh button gave them, without having to decide
  * that they want it.
- *
- * The button is gone because this is it. A control that does the same thing as an
- * automatic behaviour is a control that will be pressed anyway and is a control
- * that cannot be pressed usefully — pressed while a refresh is already in flight,
- * pressed in the half minute before the next one would have come. The count on the
- * page is the feedback that a refresh happened, and the games moving is the
- * feedback that anything changed.
  */
 const RefreshSeconds = 60;
 
@@ -80,8 +88,32 @@ const OrderOptions = [
  * each one narrows the same list and none of them overrides another. `any` is the
  * only value that does not narrow, which is what lets one predicate serve both
  * the unfiltered page and every filtered one.
+ *
+ * The search is the one filter that reads text rather than a chosen value, so it
+ * matches a substring and ignores case. It looks at the game's name and its
+ * host's, because either is what a reader who has a name in mind has: somebody
+ * looking for a particular game types the game, and somebody looking for who is
+ * hosting types the host. A name that matches one of them is enough; searching
+ * for both at once is a query a reader would have to know to write.
  */
-function matchesFilters(game: Game, lobby: string, map: string, rule: string): boolean {
+function matchesFilters(
+  game: Game,
+  query: string,
+  lobby: string,
+  map: string,
+  rule: string,
+): boolean {
+  const needle = query.trim().toLowerCase();
+
+  if (needle !== '') {
+    const inName = game.name.toLowerCase().includes(needle);
+    const inHost = (game.hostName ?? '').toLowerCase().includes(needle);
+
+    if (!inName && !inHost) {
+      return false;
+    }
+  }
+
   if (lobby === 'open' && game.hasPassword) {
     return false;
   }
@@ -153,6 +185,17 @@ function compareGames(left: Game, right: Game, order: string): number {
  * whether somebody can join. Each group keeps its own count, because the count
  * that matters is how busy a lobby is, not how busy the server is.
  *
+ * The controls are one line above the list: the button that opens the filters,
+ * the order the list is read in, the button that reads it again, and the number
+ * of games there are. The filters themselves are behind the button rather than
+ * set out as a row of four dropdowns, because they are the exception — a reader
+ * arrives at the page to look at games and only sometimes arrives to narrow
+ * them, and four controls always on screen spend the top of the page on the case
+ * that is not the usual one. The order-by stayed out of the modal with the
+ * refresh and the count, because it is a way of reading the list rather than a
+ * way of hiding part of it, and a reader who wants the list sorted should not have
+ * to open a dialog to say so.
+ *
  * Nothing here writes, which is a decision rather than an oversight. A game row
  * belongs to the host, who rewrites it on every heartbeat, so anything corrected
  * from here lasts until the host saves its own — and the host, the lobby, the
@@ -166,13 +209,13 @@ function compareGames(left: Game, right: Game, order: string): number {
  * reader with a particular map or rule in mind, and the overview is for a reader
  * who has not decided yet.
  *
- * The list refreshes itself once a minute and there is no refresh button. A host
- * that closes a game without saying so leaves a card up that nobody can join, so a
- * reader sitting here is looking at a list that goes stale under them; a minute is
- * the pace the server actually changes at. A button for the same thing would be a
- * control that is pressed anyway and cannot be pressed usefully — pressed while a
- * refresh is already in flight, or in the half minute before the next would have
- * come on its own.
+ * The list refreshes itself once a minute, and there is also a button that reads
+ * it again on demand. The two are not the same request: the timer keeps a list
+ * that is being watched from going stale without the reader doing anything, and
+ * the button is for the moment a reader wants the current answer now — having
+ * just closed a game, or reading over somebody's shoulder. Neither makes the
+ * other redundant, and the button reports the read it starts by spinning until
+ * the same answer comes back.
  */
 export function GamesPage() {
   const { data, error, loading, reload } = useApiResource<{ games: Game[] }>('/api/games');
@@ -202,14 +245,15 @@ export function GamesPage() {
     return () => window.clearInterval(timer);
   }, [reload]);
 
+  const [query, setQuery] = useState('');
   const [lobby, setLobby] = useState(AnyValue);
   const [map, setMap] = useState(AnyValue);
   const [rule, setRule] = useState(AnyValue);
   const [order, setOrder] = useState('players');
 
   const filtered = useMemo(
-    () => games.filter((game) => matchesFilters(game, lobby, map, rule)),
-    [games, lobby, map, rule],
+    () => games.filter((game) => matchesFilters(game, query, lobby, map, rule)),
+    [games, query, lobby, map, rule],
   );
 
   // The groups are built once per filter change rather than per render, because
@@ -250,7 +294,24 @@ export function GamesPage() {
       );
   }, [filtered, order]);
 
-  const busy = lobby !== AnyValue || map !== AnyValue || rule !== AnyValue;
+  // How many of the filters are narrowing the list, which is what the button's
+  // badge counts. The search counts as one however many words are in it: the
+  // reader set one thing, and a badge that counted characters would say the page
+  // is filtered more as they type.
+  const activeFilters =
+    (query.trim() === '' ? 0 : 1) +
+    (lobby === AnyValue ? 0 : 1) +
+    (map === AnyValue ? 0 : 1) +
+    (rule === AnyValue ? 0 : 1);
+
+  const busy = activeFilters > 0;
+
+  function clearFilters() {
+    setQuery('');
+    setLobby(AnyValue);
+    setMap(AnyValue);
+    setRule(AnyValue);
+  }
 
   return (
     <div className="space-y-6">
@@ -258,26 +319,110 @@ export function GamesPage() {
 
       {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
 
-      {/* The count, and nothing to press. The page refreshes itself; see
-          `RefreshSeconds`. */}
-      {loading || data === null ? null : (
-        <p className="text-base text-muted-foreground">
-          {busy
-            ? `${formatNumber(filtered.length)} of ${formatNumber(games.length)} games shown`
-            : `${formatNumber(games.length)} games being hosted`}
-        </p>
-      )}
+      {/* The controls, in one line, once there is a list to control. While the
+          first read is in flight there is nothing to filter, sort or count, so
+          the line is not drawn rather than drawn from a count of zero. */}
+      {data === null ? null : (
+        <div className="flex flex-wrap items-center gap-2">
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <SlidersHorizontal aria-hidden="true" />
+                Filters
+                {activeFilters === 0 ? null : (
+                  <Badge variant="secondary" className="ml-1">
+                    {formatNumber(activeFilters)}
+                  </Badge>
+                )}
+              </Button>
+            </DialogTrigger>
 
-      {/* The filters are drawn whenever the page has games to filter, including
-          while a filter has narrowed the list to nothing — a filter row that
-          disappears when its own filters are empty is a filter row that cannot be
-          undone without reloading the page. */}
-      {games.length === 0 ? null : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <FilterSelect label="Lobby" value={lobby} options={LobbyOptions} onChange={setLobby} />
-          <FilterSelect label="Map" value={map} options={MapOptions} onChange={setMap} />
-          <FilterSelect label="Mode" value={rule} options={RuleOptions} onChange={setRule} />
-          <FilterSelect label="Order by" value={order} options={OrderOptions} onChange={setOrder} />
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Filters</DialogTitle>
+                <DialogDescription>
+                  Narrow the games by name, lobby, map or mode.
+                </DialogDescription>
+              </DialogHeader>
+
+              {/* The search field, with its label above it rather than beside it
+                  like the dropdowns': it is the one control here a reader types
+                  into, and a typed field wants the full width of the frame. */}
+              <label className="flex flex-col gap-1.5">
+                <span className="text-base text-muted-foreground">Search</span>
+                <span className="relative">
+                  <Search
+                    className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                  <Input
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder="Game or host name"
+                    className="pl-9"
+                  />
+                </span>
+              </label>
+
+              <div className="flex flex-col gap-3">
+                <FilterSelect label="Lobby" value={lobby} options={LobbyOptions} onChange={setLobby} />
+                <FilterSelect label="Map" value={map} options={MapOptions} onChange={setMap} />
+                <FilterSelect label="Mode" value={rule} options={RuleOptions} onChange={setRule} />
+              </div>
+
+              <DialogFooter>
+                <Button variant="ghost" onClick={clearFilters} disabled={!busy}>
+                  Clear filters
+                </Button>
+                <DialogClose asChild>
+                  <Button>Done</Button>
+                </DialogClose>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* The order the list is read in. It carries the icon rather than a
+              written label: it sits beside a button whose whole word is "Filters"
+              and a count that says what it counts, so a second word here would be
+              the longest thing on a line that is otherwise controls. The icon says
+              it is a sort and the trigger says which one is chosen. */}
+          <Select value={order} onValueChange={setOrder}>
+            <SelectTrigger aria-label="Order by" className="w-auto justify-start">
+              <ArrowUpDown className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+              <SelectValue className="flex-1 text-left" />
+            </SelectTrigger>
+            <SelectContent>
+              {OrderOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* The read the reader asked for. It spins while the answer is in
+              flight and is disabled for that moment, so a second press cannot
+              start a second read of the same list. */}
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={reload}
+            disabled={loading}
+            aria-label="Read the games again"
+          >
+            <RefreshCw className={cn(loading && 'animate-spin')} aria-hidden="true" />
+          </Button>
+
+          {/* The count of the whole list, at the far end of the line so the
+              controls stay together on the left. The total is always the second
+              number, and while a filter is narrowing the list the first number
+              says how much of that total the cards below are showing — so the
+              reader can tell at a glance what the filter did to the list. */}
+          <p className="ml-auto text-base text-muted-foreground tabular-nums">
+            {busy
+              ? `${formatNumber(filtered.length)} of ${formatNumber(games.length)} games`
+              : `${formatNumber(games.length)} games`}
+          </p>
         </div>
       )}
 
@@ -339,7 +484,7 @@ function FilterSelect({
 }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="shrink-0 text-base text-muted-foreground">{label}</span>
+      <span className="w-16 shrink-0 text-base text-muted-foreground">{label}</span>
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger className="w-full" aria-label={label}>
           <SelectValue />
