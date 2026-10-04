@@ -332,7 +332,7 @@ function ClanCard({ clan, basePath }: { clan: Clan; basePath: string }) {
             {clan.name}
           </h2>
           <Badge variant={clan.open ? 'success' : 'secondary'}>
-            {clan.open ? 'taking applications' : 'closed'}
+            {clan.open ? 'open' : 'closed'}
           </Badge>
         </div>
 
