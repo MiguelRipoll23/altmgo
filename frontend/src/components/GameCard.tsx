@@ -56,7 +56,7 @@ export function GameCard({ game }: { game: Game }) {
 
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card/50">
-      <div className="relative flex aspect-video w-full items-center justify-center border-b border-border bg-muted/20">
+      <div className="relative flex aspect-video w-full items-center justify-center overflow-hidden border-b border-border bg-muted/20">
         {picture === null ? (
           <MapIcon className="size-8 text-muted-foreground/50" aria-hidden="true" />
         ) : (
@@ -71,6 +71,26 @@ export function GameCard({ game }: { game: Game }) {
             className="absolute inset-0 size-full object-cover"
           />
         )}
+
+        {/* The map's name, over the foot of the picture rather than under it. The
+            picture is how a map is recognised by somebody who knows it, and the
+            name is how it is recognised by everybody else, so the name belongs on
+            the thing it names rather than on a line below the card's frame — where
+            it was an extra band of height for every card and read as a caption to
+            the room's name rather than to the picture.
+
+            Text on a photograph is unreadable wherever the photograph is bright,
+            so it is given the treatment a video player gives its controls: a scrim
+            that darkens towards the foot of the frame and a shadow on the letters,
+            so the words keep their contrast over a pale map as well as a dark one.
+            The scrim is the gradient rather than a solid bar because a bar would
+            cut the picture in two, and the map is the part of the card that is
+            looked at. */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end bg-gradient-to-t from-black/80 via-black/40 to-transparent px-3 pb-2.5 pt-12">
+          <p className="truncate text-base font-semibold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
+            {mapName(game.map)}
+          </p>
+        </div>
       </div>
 
       <div className="flex flex-1 flex-col gap-3 px-4 py-4">
@@ -90,16 +110,6 @@ export function GameCard({ game }: { game: Game }) {
             </span>
           ) : null}
         </div>
-
-        {/* The map's name, in words. The picture above is how the map is
-            recognised, but only by somebody who already knows it, and a card is
-            a card somebody reads rather than one they look at. It sits under the
-            room's own name because the room is what was searched for and the map
-            is what is being decided. */}
-        <p className="flex items-center gap-1.5 text-base text-muted-foreground">
-          <MapIcon className="size-4 shrink-0" aria-hidden="true" />
-          <span className="truncate">{mapName(game.map)}</span>
-        </p>
 
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-baseline gap-2">
