@@ -2,6 +2,7 @@ import { Check, Globe, RefreshCw } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { apiRequest, describeError } from '../api';
 import { discoverableSecondsLeft, readSessionToken } from '../session';
+import { Badge } from './ui/badge';
 
 /** What the server answers a publish with. */
 type PublishResponse = {
@@ -172,64 +173,61 @@ export function PublishAddress({
   const discoverable = until !== null && until > now;
 
   return (
-    <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-1 text-base">
-      {/* The icon says what the number beside it is before the number is read. An
-          address is the one figure on this line that needs it: four groups of digits
-          in a row look like any other four groups of digits, and a reader who does
-          not already know that this is where their game is reachable has nothing to
-          attach the digits to.
+    <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-1 text-base">
+      {/* The address is a badge, like the two counts beside it: a shape with a
+          border and a fill that says "this is a figure the page is reporting".
+          Its colour is purple, the one colour on the page used for nothing else —
+          the counts are green and blue because green and blue mean how busy the
+          server is and how much it has done, and an address is a thing about the
+          reader, so it gets the colour that is not a claim about the server.
 
-          Both it and the address are purple, which is the one colour on the page
-          that is used for nothing else. That is the whole of what it is for: the
-          counts beside it are green and blue because green and blue mean how busy
-          the server is and how much it has done, and an address is neither of
-          those. It is a thing about the reader, so it gets the colour that is not
-          a claim about the server. */}
-      <Globe className="size-3.5 shrink-0 text-purple-400" aria-hidden="true" />
+          It is `verbatim` because the address is not a label the dashboard gives
+          it: an uppercased address or an uppercased "Update" is the page rewriting
+          the reader's own data to look like one of its states. */}
+      <Badge
+        verbatim
+        className="gap-1.5 border-purple-500/30 bg-purple-500/10 tracking-normal text-purple-300"
+      >
+        {/* The icon says what the number beside it is before the number is read. An
+            address is the one figure on this badge that needs it: four groups of
+            digits in a row look like any other four groups of digits, and a reader
+            who does not already know that this is where their game is reachable has
+            nothing to attach the digits to. */}
+        <Globe className="size-3.5 shrink-0" aria-hidden="true" />
 
-      {/* The address is set in the page's own face, like the two counts beside it.
-          It was monospaced, which is the right face for a number being compared
-          with another number and the wrong one here: this line has three items on
-          it rather than a column of figures, so the address set in a second
-          typeface read as a different kind of thing from the two counts when it
-          is the same kind of thing. The globe, not the face, is what says which
-          of the three this is. */}
-      {/* The address and its correction hang off one run: a space before the
-          bracket so the correction does not run into the digits, and no space
-          inside the brackets, so `172.226.116.12 (Update)` reads as the address
-          with a qualifier on it rather than as a fourth figure on this line. The
-          outer span exists only to hold that margin, because a flex row cannot
-          have a gap on one side of a word and not the other. */}
-      <span className="inline-flex items-center">
-        <span className="text-purple-400">
-          {address ?? 'No address published'}
+        {/* The address and its correction hang off one run: a space before the
+            bracket so the correction does not run into the digits, and no space
+            inside the brackets, so `172.226.116.12 (Update)` reads as the address
+            with a qualifier on it rather than as a fourth figure. The span exists
+            only to hold that margin, because the badge's own gap is on both sides
+            of it and cannot be on one side only. */}
+        <span className="inline-flex items-center">
+          <span>{address ?? 'No address published'}</span>
+
+          {/* Brackets rather than a separator: the correction is a qualifier on the
+              address, the way "(locked)" qualifies a row. They are the colour of
+              the correction they wrap rather than the colour of the address — the
+              pair is one thing to read, and brackets in the address's colour made
+              the address look like it ended in three stray glyphs. */}
+          <span className="ml-1.5 text-primary">(</span>
+
+          <button
+            type="button"
+            onClick={() => void publish()}
+            disabled={publishing || discoverable}
+            className="inline-flex items-center gap-1 rounded text-primary underline-offset-4 transition hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-70 disabled:no-underline"
+          >
+            {publishing ? (
+              <RefreshCw className="size-3.5 shrink-0 animate-spin" aria-hidden="true" />
+            ) : discoverable ? (
+              <Check className="size-3.5 shrink-0" aria-hidden="true" />
+            ) : null}
+            {publishing ? 'Publishing…' : discoverable ? 'Discoverable' : 'Update'}
+          </button>
+
+          <span className="text-primary">)</span>
         </span>
-
-        {/* Brackets rather than a separator: the correction is a qualifier on the
-            address, the way "(locked)" qualifies a row. They are the colour of the
-            correction they wrap rather than the colour of the address — the
-            pair is one thing to read, and brackets in the address's colour made
-            the address look like it ended in three stray glyphs. The gap in front
-            of them is the same as the run's own gap above, so the address is set
-            off by one width whichever side of it the reader is looking. */}
-        <span className="ml-1.5 text-primary">(</span>
-
-        <button
-          type="button"
-          onClick={() => void publish()}
-          disabled={publishing || discoverable}
-          className="inline-flex items-center gap-1 rounded text-primary underline-offset-4 transition hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-70 disabled:no-underline"
-        >
-          {publishing ? (
-            <RefreshCw className="size-3.5 shrink-0 animate-spin" aria-hidden="true" />
-          ) : discoverable ? (
-            <Check className="size-3.5 shrink-0" aria-hidden="true" />
-          ) : null}
-          {publishing ? 'Publishing…' : discoverable ? 'Discoverable' : 'Update'}
-        </button>
-
-        <span className="text-primary">)</span>
-      </span>
+      </Badge>
 
       {/* The two things that need saying are said under the line rather than in
           place of it, so the address stays on screen while the reader reads them. */}

@@ -127,13 +127,15 @@ export function OverviewPage() {
           {/* The figures. They sit directly under the heading with the news and the
               games below them, so the page is one thing arriving rather than three
               arriving at once. */}
-          <div className="mb-8 flex flex-wrap items-center gap-2 text-base">
-            {/* The figures are plain coloured text rather than badges. A badge is a shape
-                with a border and a fill, and it says "this is a state of some
-                thing"; two counts that go up and never come down are not states,
-                and a page that framed them as ones was drawing two empty boxes
-                above the news. The colour is what tells them apart, and the icon
-                says what each one is for a reader who has not read the word yet.
+          <div className="mb-4 flex flex-wrap items-center gap-2 text-base">
+            {/* The figures are badges: a shape with a border and a fill. The page
+                drew them as plain coloured text, on the reasoning that a badge says
+                "this is a state of some thing" and a count that only goes up is not
+                a state. What a badge actually says is "this is a figure the page is
+                reporting", which is what both of these are — and where a line of
+                coloured words runs together into a sentence, a badge keeps its edge,
+                so the row reads as the facts it holds rather than as prose with
+                numbers in it.
 
                 They are green and blue because the two are not the same kind of
                 thing: green is how busy the server is right now and moves while the
@@ -145,28 +147,20 @@ export function OverviewPage() {
                 that is genuinely zero is a page switching between two words to say
                 whether a count happens to be one, which is arithmetic the reader
                 can do and a flicker they should not have to watch. */}
-            <span className="inline-flex items-center gap-1.5 font-semibold text-emerald-400">
+            <Badge variant="success" className="gap-1.5">
               <UserRound className="size-3.5 shrink-0" aria-hidden="true" />
-              <span className="tabular-nums">
-                {formatNumber(data.connectedPlayers)} online
-              </span>
-            </span>
+              <span className="tabular-nums">{formatNumber(data.connectedPlayers)} online</span>
+            </Badge>
 
-            <span className="inline-flex items-center gap-1.5 font-semibold text-primary">
+            <Badge variant="default" className="gap-1.5">
               <Gamepad2 className="size-3.5 shrink-0" aria-hidden="true" />
-              <span className="tabular-nums">
-                {formatNumber(data.totalGames)} games
-              </span>
-            </span>
+              <span className="tabular-nums">{formatNumber(data.totalGames)} games</span>
+            </Badge>
 
             {/* The address is a fact about the reader rather than about the server,
-                so it keeps the colour that says so — but it takes the row's own gap
-                rather than a margin of its own. The margin that used to stand there
-                was 24 pixels on a line whose other items sit 8 apart, and once the
-                row wrapped on a narrow window it indented the address under the two
-                counts as though the address belonged to them. One gap for the whole
-                line is a separation the reader can see, whether it is written beside
-                the counts or under them. */}
+                so it takes the purple badge — the one colour on the page that is
+                not a claim about the server. It shares the row's gap with the two
+                counts, whether it is written beside them or wrapped under them. */}
             <PublishAddress
               address={data.publishedAddress?.address ?? null}
               onPublished={reload}
