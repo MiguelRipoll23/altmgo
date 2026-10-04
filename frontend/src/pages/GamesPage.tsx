@@ -413,12 +413,14 @@ export function GamesPage() {
             <RefreshCw className={cn(loading && 'animate-spin')} aria-hidden="true" />
           </Button>
 
-          {/* The count of the whole list, at the far end of the line so the
-              controls stay together on the left. The total is always the second
+          {/* The count sits beside the last button rather than pushed to the far
+              end of the line: the controls are one block the reader reads left to
+              right, and a count flung to the opposite edge is a figure separated
+              from the controls that change it. The total is always the second
               number, and while a filter is narrowing the list the first number
               says how much of that total the cards below are showing — so the
               reader can tell at a glance what the filter did to the list. */}
-          <p className="ml-auto text-base text-muted-foreground tabular-nums">
+          <p className="text-base text-muted-foreground tabular-nums">
             {busy
               ? `${formatNumber(filtered.length)} of ${formatNumber(games.length)} games`
               : `${formatNumber(games.length)} games`}

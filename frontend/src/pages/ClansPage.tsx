@@ -1,14 +1,22 @@
+import { ArrowUpDown, ChevronRight, RefreshCw, Search, SlidersHorizontal } from 'lucide-react';
 import { useState } from 'react';
-import { ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ClanEmblem } from '../components/ClanEmblem';
-import { LoadingBlock, Panel, SectionHeading, formatNumber } from '../components/DataDisplay';
+import { LoadingBlock, SectionHeading, formatNumber } from '../components/DataDisplay';
 import { StatusMessage } from '../components/StatusMessage';
 import { useApiResource } from '../components/useApiResource';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '../components/ui/dialog';
 import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
 import {
   Select,
   SelectContent,
@@ -16,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../components/ui/select';
+import { cn } from '../lib/utils';
 
 /**
  * One clan as the directory lists it.
@@ -74,42 +83,6 @@ const statuses = [
 ] as const;
 
 /**
- * What the list panel says above the rows: how many clans answered, and under
- * which of the three filters they answered.
- *
- * A count with no filter beside it is a number nobody can act on — twelve clans is
- * only good news if you asked for the taking-applications ones.
- *
- * It deliberately says nothing about the search being read. The list under it
- * already says so, with a spinner beside the words, and the two lines are read
- * together as one panel: the same sentence twice, once moving and once not, is a
- * panel that cannot tell which of its two lines is the current one.
- */
-function describeSearch(
-  clans: Clan[] | undefined,
-  filtered: boolean,
-  term: string,
-  status: string,
-  order: string,
-): string {
-  if (clans === undefined) {
-    return 'Every clan on the server.';
-  }
-
-  const count = `${formatNumber(clans.length)} ${clans.length === 1 ? 'clan' : 'clans'}`;
-
-  if (!filtered) {
-    return `${count}, ordered by ${order.toLowerCase()}.`;
-  }
-
-  const side = statuses.find((option) => option.value === status)?.label ?? 'All clans';
-
-  return term.length === 0
-    ? `${count} · ${side.toLowerCase()}, ordered by ${order.toLowerCase()}.`
-    : `${count} matching “${term}” · ${side.toLowerCase()}, ordered by ${order.toLowerCase()}.`;
-}
-
-/**
  * Every clan on the server, as a directory of them.
  *
  * The page draws what the game already stores and writes nothing: a roster, a
@@ -128,24 +101,38 @@ function describeSearch(
  * through, on a page that grew with every clan that was opened, and it had no
  * address of its own to be sent to anybody. It is a page now, and this is the
  * directory it is reached from.
+ *
+ * The filter fields are behind a Filters button and the order is on the control line
+ * above the list, the way the games page is laid out. The form they used to sit in
+ * was a panel of its own above the directory, so a reader who had come to look at
+ * clans met two headings, a search field, two dropdowns and two buttons before the
+ * first clan. The list is the page; the controls are one line above it, and the
+ * count sits beside them rather than inside a panel title of its own.
+ *
+ * The cards themselves are not inside a panel either. A card inside a bordered box
+ * is two frames around one thing, and the games page had already dropped the outer
+ * one — the grid of cards is the content, and a panel around it was a third frame
+ * that said the things below it were the things below it.
  */
 export function ClansPage({ basePath = '/dashboard' }: { basePath?: string }) {
   const [term, setTerm] = useState('');
   const [sort, setSort] = useState<string>('name');
   const [status, setStatus] = useState<string>('all');
   const [submitted, setSubmitted] = useState('');
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const list = useApiResource<{ clans: Clan[] }>(
     `/api/clans?term=${encodeURIComponent(submitted)}&sort=${sort}&status=${status}`,
   );
 
-  // The name is searched on submit rather than on every keystroke, so a reader who
-  // is halfway through typing an unfamiliar name does not watch the list change under
-  // the field they are typing in. The other two are dropdowns: a filter that has been
-  // chosen has been chosen.
-  const filtered = submitted.length > 0 || status !== 'all';
-  const order = sorts.find((option) => option.value === sort)?.label ?? 'Name';
   const clans = list.data?.clans ?? [];
+
+  // How many of the filters are applied, which is what the button's badge counts.
+  // The typed term counts only once it has been submitted, because until then it
+  // has not narrowed anything — a badge that counted a word the reader was still
+  // typing would say the list is filtered before the list agrees.
+  const activeFilters = (submitted.length > 0 ? 1 : 0) + (status !== 'all' ? 1 : 0);
+  const busy = activeFilters > 0;
 
   function clearFilters() {
     setTerm('');
@@ -158,109 +145,153 @@ export function ClansPage({ basePath = '/dashboard' }: { basePath?: string }) {
     <div className="space-y-6">
       <SectionHeading title="Clans" />
 
-      <Panel>
-        <form
-          // The three fields share a row and the buttons get one of their own,
-          // rather than all four competing for the same line. A field that grows to
-          // fill what is left beside two fixed-width dropdowns ends up a different
-          // width on every window, and the buttons land wherever the remaining space
-          // ran out — which on a wide screen is the far edge of the panel, so
-          // "Search" is a long way from the field it searches.
-          className="space-y-4"
-          onSubmit={(event) => {
-            event.preventDefault();
-            setSubmitted(term.trim());
-          }}
-        >
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="space-y-2 lg:col-span-2">
-              <Label htmlFor="clan-term">Search</Label>
-              <Input
-                id="clan-term"
-                type="text"
-                value={term}
-                onChange={(event) => setTerm(event.target.value)}
-                placeholder="Clan name"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="clan-status">Applications</Label>
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger id="clan-status">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {statuses.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="clan-sort">Order by</Label>
-              <Select value={sort} onValueChange={setSort}>
-                <SelectTrigger id="clan-sort">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {sorts.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="flex gap-2">
-            {/* The accent, not the secondary weight: Search is the action this
-                form exists to perform, and it is the only submit button on any
-                page that was not already drawn that way. Clear keeps the ghost
-                weight beside it, which is the whole difference between the two —
-                one does the thing, the other undoes it. */}
-            <Button type="submit">
-              Search
-            </Button>
-
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={clearFilters}
-              disabled={!filtered && sort === 'name'}
-            >
-              Clear
-            </Button>
-          </div>
-        </form>
-      </Panel>
-
       {list.error === null ? null : <StatusMessage kind="error">{list.error}</StatusMessage>}
 
-      <Panel
-        title="Clans"
-        description={describeSearch(list.data?.clans, filtered, submitted, status, order)}
-      >
-        {clans.length === 0 ? (
-          list.loading ? (
-            <LoadingBlock label="Searching…" />
-          ) : (
-            <p className="text-base text-muted-foreground">No clan matched that search.</p>
-          )
+      {/* The controls, in one line, once there is a list to control. While the
+          first read is in flight there is nothing to filter, sort or count, so
+          the line is not drawn rather than drawn from an empty list. */}
+      {list.data === null ? null : (
+        <div className="flex flex-wrap items-center gap-2">
+          <Dialog open={filtersOpen} onOpenChange={setFiltersOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <SlidersHorizontal aria-hidden="true" />
+                Filters
+                {activeFilters === 0 ? null : (
+                  <Badge variant="secondary" className="ml-1">
+                    {formatNumber(activeFilters)}
+                  </Badge>
+                )}
+              </Button>
+            </DialogTrigger>
+
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Filters</DialogTitle>
+                <DialogDescription>Narrow the clans by name or applications.</DialogDescription>
+              </DialogHeader>
+
+              {/* The fields are a form because the name is searched on submit
+                  rather than on every keystroke: a reader halfway through typing an
+                  unfamiliar name should not watch the list change under the field
+                  they are typing in. The Applications dropdown is not submitted
+                  with it — a filter that has been chosen has been chosen — so
+                  choosing one filters the list straight away. */}
+              <form
+                className="flex flex-col gap-4"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  setSubmitted(term.trim());
+                  // The search has been asked for, so the dialog it was asked in
+                  // has nothing left to say; the list behind it is the answer.
+                  setFiltersOpen(false);
+                }}
+              >
+                <label className="flex flex-col gap-1.5">
+                  <span className="text-base text-muted-foreground">Search</span>
+                  <span className="relative">
+                    <Search
+                      className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                      aria-hidden="true"
+                    />
+                    <Input
+                      id="clan-term"
+                      type="text"
+                      value={term}
+                      onChange={(event) => setTerm(event.target.value)}
+                      placeholder="Clan name"
+                      className="pl-9"
+                    />
+                  </span>
+                </label>
+
+                <div className="flex items-center gap-2">
+                  <span className="w-24 shrink-0 text-base text-muted-foreground">Applications</span>
+                  <Select value={status} onValueChange={setStatus}>
+                    <SelectTrigger className="w-full" aria-label="Applications">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {statuses.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={clearFilters}
+                    disabled={!busy && sort === 'name'}
+                  >
+                    Clear filters
+                  </Button>
+
+                  <Button type="submit">Search</Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+
+          {/* The order the list is read in. It carries the icon rather than a
+              written label, like the games page: the trigger says which order is
+              chosen, and a second word would be the longest thing on a line that is
+              otherwise controls. */}
+          <Select value={sort} onValueChange={setSort}>
+            <SelectTrigger aria-label="Order by" className="w-auto justify-start">
+              <ArrowUpDown className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+              <SelectValue className="flex-1 text-left" />
+            </SelectTrigger>
+            <SelectContent>
+              {sorts.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* The read the reader asked for. It spins while the answer is in
+              flight and is disabled for that moment, so a second press cannot
+              start a second read of the same list. */}
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={list.reload}
+            disabled={list.loading}
+            aria-label="Read the clans again"
+          >
+            <RefreshCw className={cn(list.loading && 'animate-spin')} aria-hidden="true" />
+          </Button>
+
+          {/* How many clans answered, beside the controls that asked. The list is
+              filtered by the server, so this is the count of what came back rather
+              than of everything the server holds. */}
+          <p className="text-base text-muted-foreground tabular-nums">
+            {formatNumber(clans.length)} clans
+          </p>
+        </div>
+      )}
+
+      {clans.length === 0 ? (
+        list.loading ? (
+          <LoadingBlock label="Searching…" />
         ) : (
-          <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {clans.map((clan) => (
-              <li key={clan.id} className="min-w-0">
-                <ClanCard clan={clan} basePath={basePath} />
-              </li>
-            ))}
-          </ul>
-        )}
-      </Panel>
+          <p className="text-base text-muted-foreground">No clan matched that search.</p>
+        )
+      ) : (
+        <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {clans.map((clan) => (
+            <li key={clan.id} className="min-w-0">
+              <ClanCard clan={clan} basePath={basePath} />
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
