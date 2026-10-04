@@ -389,8 +389,16 @@ export function DashboardShell({
             from `lg` up there is no floating button — the column is beside the page
             — so the padding drops back to the page's own `pt-8`. Both are written
             as top/bottom paddings rather than `py`, so a responsive `py` cannot
-            quietly override the top one at some widths. */}
-        <div className="mx-auto w-full max-w-5xl px-4 pb-6 pt-16 sm:px-8 sm:pb-8 lg:pt-8">
+            quietly override the top one at some widths.
+
+            The column hangs off the left gutter rather than being centred in what
+            is left of the window. Centring centres it in the *remaining* width, so
+            on a wide monitor it drifts away from the navigation that is its own
+            context and leaves the same empty band on both sides of it — width that
+            is bought and not used. Hung off the left it keeps a straight edge down
+            the frame, and the empty space is all on one side, where a reader who
+            wants it has something to put in it. */}
+        <div className="w-full max-w-5xl px-4 pb-6 pt-16 sm:px-8 sm:pb-8 lg:pt-8">
           {children}
         </div>
       </main>
