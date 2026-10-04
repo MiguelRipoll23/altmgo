@@ -340,7 +340,7 @@ function ClanCard({ clan, basePath }: { clan: Clan; basePath: string }) {
           <span className="font-semibold tabular-nums text-foreground">
             {formatNumber(clan.memberCount)}
           </span>{' '}
-          {clan.memberCount === 1 ? 'member' : 'members'} · Leader {clan.leaderName ?? 'unknown'}
+          {clan.memberCount === 1 ? 'member' : 'members'}
         </p>
 
         <p className="truncate text-base text-muted-foreground">

@@ -132,7 +132,6 @@ function ClanFacts({ clan }: { clan: Clan }) {
         <Detail label="Leader" value={clan.leaderName} />
         <Detail label="Members" value={formatNumber(clan.memberCount)} />
         <Detail label="Taking applications" value={clan.open ? 'Yes' : 'No'} />
-        <Detail label="Created" value={formatDate(clan.createdAt)} />
         <Detail label="Notice published" value={formatDate(clan.noticeAt)} />
       </dl>
 
