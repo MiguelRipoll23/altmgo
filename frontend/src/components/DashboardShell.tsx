@@ -90,6 +90,24 @@ function drawnColumn(stored: ColumnState, wide: boolean): ColumnState {
 }
 
 /**
+ * Where the column's state is written down between visits to the document.
+ *
+ * The frame remembers what the reader left it as, so a document that is reloaded,
+ * restored from the browser's cache or reopened in the same tab comes back to the
+ * column they were using rather than folding it away by itself. The session store
+ * rather than the local one: this is a fact about the reader's place in one tab's
+ * history, not a preference that should follow them into every later one.
+ */
+const ColumnStorageKey = 'altmgo.navigation-column';
+
+/** The stored state, or nothing when there is none or it is not one of the three. */
+function readStoredColumn(): ColumnState | null {
+  const stored = window.sessionStorage.getItem(ColumnStorageKey);
+
+  return stored === 'open' || stored === 'reduced' || stored === 'hidden' ? stored : null;
+}
+
+/**
  * The frame both dashboards are drawn in: a column of sections and the page
  * beside them, with the column able to be reduced or put away.
  *
@@ -139,9 +157,13 @@ export function DashboardShell({
 }) {
   // A narrow window only ever has two states — the drawer out or away — because
   // a reduced column on a phone is a column of icons with nothing under them and
-  // no page beside them, which is not a layout. The initial read is made once,
-  // before the first render, so a phone never flashes an open drawer.
-  const [column, setColumn] = useState<ColumnState>(isWideWindow() ? 'open' : 'hidden');
+  // no page beside them, which is not a layout. The reader's last choice is
+  // restored from the session store, so a document that comes back opens on the
+  // frame it was left on; with nothing stored, the read is made once, before the
+  // first render, so a phone never flashes an open drawer.
+  const [column, setColumn] = useState<ColumnState>(
+    () => readStoredColumn() ?? (isWideWindow() ? 'open' : 'hidden'),
+  );
   const wide = useWideWindow();
   const location = useLocation();
   const navigationType = useNavigationType();
@@ -248,6 +270,11 @@ export function DashboardShell({
     }
   }, [wide]);
 
+  // The state is written down as it changes, so the next document opens on it.
+  useEffect(() => {
+    window.sessionStorage.setItem(ColumnStorageKey, column);
+  }, [column]);
+
   // The room the page keeps for the floating button is a padding on the content
   // itself, in CSS, and it is not taken back on scroll.
   //
@@ -299,17 +326,26 @@ export function DashboardShell({
         <div className="flex items-center justify-between gap-2">
           {drawn === 'reduced' ? null : brand}
 
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => toggleColumn()}
-            className={cn(drawn === 'reduced' && 'mx-auto')}
-            aria-label={drawn === 'reduced' ? 'Expand the navigation' : 'Collapse the navigation'}
-            aria-expanded={shown}
-            aria-controls="frame-navigation"
-          >
-            {drawn === 'reduced' ? <PanelLeft /> : <PanelLeftClose />}
-          </Button>
+          {/* The control at the head of the column is for a wide window, where the
+              column is beside the page and can be narrowed to its icons. On a narrow
+              window the column is a drawer laid over the page: its way out is the
+              floating button when it is away, and a tap on the page behind it when it
+              is out. A control at the drawer's own head would be a second way out of
+              a thing with two states, and the one a thumb on a phone is least likely
+              to reach for. */}
+          {wide ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => toggleColumn()}
+              className={cn(drawn === 'reduced' && 'mx-auto')}
+              aria-label={drawn === 'reduced' ? 'Expand the navigation' : 'Collapse the navigation'}
+              aria-expanded={shown}
+              aria-controls="frame-navigation"
+            >
+              {drawn === 'reduced' ? <PanelLeft /> : <PanelLeftClose />}
+            </Button>
+          ) : null}
         </div>
 
         <SidebarNav sections={sections} reduced={drawn === 'reduced'} />
