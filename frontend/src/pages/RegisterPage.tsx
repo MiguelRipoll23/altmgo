@@ -62,8 +62,10 @@ export function RegisterPage() {
           <form onSubmit={handleSubmit} className="space-y-8" noValidate>
             {status === null ? null : <StatusMessage kind={status.kind}>{status.message}</StatusMessage>}
 
-            <div className="space-y-4">
-              <Label htmlFor="username">Username</Label>
+            <div>
+              <Label htmlFor="username" className="mb-5 block">
+                Username
+              </Label>
               <Input
                 id="username"
                 name="username"
@@ -77,13 +79,15 @@ export function RegisterPage() {
                 value={username}
                 onChange={(event) => setUsername(event.target.value)}
               />
-              <p className="text-base text-muted-foreground">
+              <p className="mt-1.5 text-base text-muted-foreground">
                 This is the ID you sign into the game with.
               </p>
             </div>
 
-            <div className="space-y-4">
-              <Label htmlFor="password">Password</Label>
+            <div>
+              <Label htmlFor="password" className="mb-5 block">
+                Password
+              </Label>
               <Input
                 id="password"
                 name="password"
@@ -95,7 +99,7 @@ export function RegisterPage() {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
               />
-              <p className="text-base text-muted-foreground">
+              <p className="mt-1.5 text-base text-muted-foreground">
                 Use a unique password that you don't use anywhere else.
               </p>
             </div>
