@@ -195,27 +195,21 @@ export function PublishAddress({
             nothing to attach the digits to. */}
         <Globe className="size-3.5 shrink-0" aria-hidden="true" />
 
-        {/* The address and its correction hang off one run: a space before the
-            bracket so the correction does not run into the digits, and no space
-            inside the brackets, so `172.226.116.12 (Update)` reads as the address
-            with a qualifier on it rather than as a fourth figure. The span exists
-            only to hold that margin, because the badge's own gap is on both sides
-            of it and cannot be on one side only. */}
+        {/* The address and its correction hang off one run: a margin in front of
+            the correction so it does not run into the digits. The correction used
+            to be wrapped in brackets, which read as `172.226.116.12 (Update)` —
+            the brackets said "qualifier" in the way `(locked)` qualifies a row, but
+            they also spent two glyphs saying it and made the address look like it
+            ended in punctuation. The word `Update` in the address's own colour says
+            the same thing by being a verb. */}
         <span className="inline-flex items-center">
           <span>{address ?? 'No address published'}</span>
-
-          {/* Brackets rather than a separator: the correction is a qualifier on the
-              address, the way "(locked)" qualifies a row. They are the colour of
-              the correction they wrap rather than the colour of the address — the
-              pair is one thing to read, and brackets in the address's colour made
-              the address look like it ended in three stray glyphs. */}
-          <span className="ml-1.5 text-primary">(</span>
 
           <button
             type="button"
             onClick={() => void publish()}
             disabled={publishing || discoverable}
-            className="inline-flex items-center gap-1 rounded text-primary underline-offset-4 transition hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-70 disabled:no-underline"
+            className="ml-1.5 inline-flex items-center gap-1 rounded text-primary underline-offset-4 transition hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-70 disabled:no-underline"
           >
             {publishing ? (
               <RefreshCw className="size-3.5 shrink-0 animate-spin" aria-hidden="true" />
@@ -224,8 +218,6 @@ export function PublishAddress({
             ) : null}
             {publishing ? 'Publishing…' : discoverable ? 'Discoverable' : 'Update'}
           </button>
-
-          <span className="text-primary">)</span>
         </span>
       </Badge>
 

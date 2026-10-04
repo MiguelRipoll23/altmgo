@@ -141,18 +141,23 @@ export function OverviewPage() {
                 thing: green is how busy the server is right now and moves while the
                 page is open, blue is how much it has done and only ever goes up.
 
+                They are `verbatim`, so they read as written rather than as labels:
+                a count the page is stating is not a word the dashboard chose, and
+                "0 online" is a sentence about the server where "0 ONLINE" is a
+                chip somebody has to decode.
+
                 Neither says "hosted", and the second is always plural. A game is a
                 game whether or not it is up, so the count is of every one the
                 server has run; and a figure that reads "1 game" beside a "0 online"
                 that is genuinely zero is a page switching between two words to say
                 whether a count happens to be one, which is arithmetic the reader
                 can do and a flicker they should not have to watch. */}
-            <Badge variant="success" className="gap-1.5">
+            <Badge verbatim variant="success" className="gap-1.5">
               <UserRound className="size-3.5 shrink-0" aria-hidden="true" />
               <span className="tabular-nums">{formatNumber(data.connectedPlayers)} online</span>
             </Badge>
 
-            <Badge variant="default" className="gap-1.5">
+            <Badge verbatim variant="default" className="gap-1.5">
               <Gamepad2 className="size-3.5 shrink-0" aria-hidden="true" />
               <span className="tabular-nums">{formatNumber(data.totalGames)} games</span>
             </Badge>
