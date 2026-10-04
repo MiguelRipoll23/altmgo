@@ -1,4 +1,3 @@
-import { Mail } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { DataTable, Panel, SectionHeading, formatDate } from './DataDisplay';
 import { StatusMessage } from './StatusMessage';
@@ -83,7 +82,6 @@ export function Mailbox({ mailbox }: { mailbox: MailboxName }) {
                   to={`/dashboard/mail/${mailbox}/${row.id}`}
                   className="flex items-center gap-2 font-medium text-primary hover:underline"
                 >
-                  <Mail className="size-3.5 shrink-0" />
                   {row.subject}
                   {row.received && !row.isRead ? <Badge>new</Badge> : null}
                 </Link>
