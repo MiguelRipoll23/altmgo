@@ -279,7 +279,7 @@ export function ClansPage({ basePath = '/dashboard' }: { basePath?: string }) {
 
       {clans.length === 0 ? (
         list.loading ? (
-          <LoadingBlock label="Searching…" />
+          <LoadingBlock centered label="Searching…" />
         ) : (
           <p className="text-base text-muted-foreground">No clan matched that search.</p>
         )
@@ -331,7 +331,9 @@ function ClanCard({ clan, basePath }: { clan: Clan; basePath: string }) {
           <h2 className="min-w-0 truncate text-base font-extrabold tracking-tight text-foreground">
             {clan.name}
           </h2>
-          {clan.open ? null : <Badge variant="secondary">closed</Badge>}
+          <Badge variant={clan.open ? 'success' : 'secondary'}>
+            {clan.open ? 'taking applications' : 'closed'}
+          </Badge>
         </div>
 
         <p className="truncate text-base text-muted-foreground">
@@ -339,11 +341,6 @@ function ClanCard({ clan, basePath }: { clan: Clan; basePath: string }) {
             {formatNumber(clan.memberCount)}
           </span>{' '}
           {clan.memberCount === 1 ? 'member' : 'members'} · Leader {clan.leaderName ?? 'unknown'}
-        </p>
-
-        <p className="truncate text-base text-muted-foreground">
-          Waiting on {formatNumber(clan.applicationCount)}{' '}
-          {clan.applicationCount === 1 ? 'character' : 'characters'}
         </p>
 
         <p className="truncate text-base text-muted-foreground">

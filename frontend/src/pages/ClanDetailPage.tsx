@@ -15,10 +15,10 @@ import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import type { Clan, ClanMember, ClanApplication, ClanProfile } from './ClansPage';
+import type { Clan, ClanMember, ClanProfile } from './ClansPage';
 
 /**
- * One clan: its record, its roster and the characters waiting to be let in.
+ * One clan: its record and its roster.
  *
  * It is a page rather than a panel that appeared at the foot of the directory, for
  * the same reason the news and mail details are pages: a clan is something a player
@@ -112,23 +112,6 @@ export function ClanDetailPage() {
           />
         </Panel>
       )}
-
-      {data === null ? null : (
-        <Panel title="Waiting to join, oldest first">
-          <DataTable
-            rows={[...data.applications].sort(
-              (left, right) =>
-                new Date(left.appliedAt).getTime() - new Date(right.appliedAt).getTime(),
-            )}
-            rowKey={(row: ClanApplication) => row.id}
-            empty="Nobody is waiting to join this clan."
-            columns={[
-              { header: 'Character', cell: (row: ClanApplication) => row.characterName },
-              { header: 'Applied', cell: (row: ClanApplication) => formatDate(row.appliedAt) },
-            ]}
-          />
-        </Panel>
-      )}
     </div>
   );
 }
@@ -148,7 +131,6 @@ function ClanFacts({ clan }: { clan: Clan }) {
       <dl className="grid gap-4 sm:grid-cols-2">
         <Detail label="Leader" value={clan.leaderName} />
         <Detail label="Members" value={formatNumber(clan.memberCount)} />
-        <Detail label="Applications" value={formatNumber(clan.applicationCount)} />
         <Detail label="Taking applications" value={clan.open ? 'Yes' : 'No'} />
         <Detail label="Created" value={formatDate(clan.createdAt)} />
         <Detail label="Notice published" value={formatDate(clan.noticeAt)} />
