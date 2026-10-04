@@ -1,4 +1,4 @@
-import { ArrowLeft, Mail } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { LoadingBlock, Panel, SectionHeading, formatDate } from '../components/DataDisplay';
 import { StatusMessage } from '../components/StatusMessage';
@@ -90,22 +90,22 @@ export function MailDetailPage({ back, label }: {
                 true of the letter and not of the writer, and it belongs below the
                 words rather than in the header above them. */}
             <div className="mb-4 flex flex-col gap-1">
-              <div className="flex items-center gap-2">
-                <Mail className="size-4 shrink-0 text-muted-foreground" />
-                <p className="text-base uppercase tracking-widest text-muted-foreground">
-                  {/*
-                    A letter in the game masters' mailbox carries the name of the
-                    character that wrote it as well as the signature the writer chose,
-                    and the character is the one a manager is answering: two players
-                    may have signed themselves the same name.
-                  */}
-                  From {message.senderCharacterName ?? message.senderName}
-                </p>
-              </div>
+              <p className="text-base uppercase tracking-widest text-muted-foreground">
+                {/*
+                  A letter in the game masters' mailbox carries the name of the
+                  character that wrote it as well as the signature the writer chose,
+                  and the character is the one a manager is answering: two players
+                  may have signed themselves the same name.
+                */}
+                From{' '}
+                <span className="text-foreground">
+                  {message.senderCharacterName ?? message.senderName}
+                </span>
+              </p>
 
               {message.recipientName === undefined ? null : (
-                <p className="pl-6 text-base uppercase tracking-widest text-muted-foreground">
-                  To {message.recipientName}
+                <p className="text-base uppercase tracking-widest text-muted-foreground">
+                  To <span className="text-foreground">{message.recipientName}</span>
                 </p>
               )}
             </div>
