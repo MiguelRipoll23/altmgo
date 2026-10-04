@@ -81,13 +81,12 @@ export function GameCard({ game }: { game: Game }) {
 
             Text on a photograph is unreadable wherever the photograph is bright,
             so it is given the treatment a video player gives its controls: a scrim
-            that darkens towards the foot of the frame and a shadow on the letters,
-            so the words keep their contrast over a pale map as well as a dark one.
-            The scrim is the gradient rather than a solid bar because a bar would
-            cut the picture in two, and the map is the part of the card that is
-            looked at. */}
+            that darkens towards the foot of the frame, so the words keep their
+            contrast over a pale map as well as a dark one. The scrim is the
+            gradient rather than a solid bar because a bar would cut the picture
+            in two, and the map is the part of the card that is looked at. */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end bg-gradient-to-t from-black/80 via-black/40 to-transparent px-3 pb-2.5 pt-12">
-          <p className="truncate text-base font-semibold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
+          <p className="truncate text-base font-semibold text-white">
             {mapName(game.map)}
           </p>
         </div>

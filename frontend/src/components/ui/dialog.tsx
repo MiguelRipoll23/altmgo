@@ -60,7 +60,7 @@ function DialogContent({
           // The whole window on a narrow one. The border and rounding arrive with
           // the centred card at `sm`, where there is page visible around the frame
           // for them to separate it from.
-          'fixed inset-0 z-50 flex flex-col gap-4 overflow-y-auto bg-card p-6 shadow-2xl focus:outline-none',
+          'fixed inset-0 z-50 flex flex-col gap-4 overflow-y-auto bg-card p-6 focus:outline-none',
           'sm:inset-auto sm:left-1/2 sm:top-1/2 sm:max-h-[85vh] sm:w-full sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:border sm:border-border',
           className,
         )}

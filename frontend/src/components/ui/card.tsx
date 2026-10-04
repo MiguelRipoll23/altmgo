@@ -13,7 +13,7 @@ function Card({ className, ...props }: ComponentProps<'div'>) {
   return (
     <div
       className={cn(
-        'rounded-xl border border-border bg-card text-card-foreground shadow-lg backdrop-blur',
+        'rounded-xl border border-border bg-card text-card-foreground backdrop-blur',
         className,
       )}
       {...props}
