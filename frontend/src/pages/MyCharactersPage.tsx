@@ -1,6 +1,6 @@
 import { ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { LoadingBlock, SectionHeading, formatDate, formatNumber } from '../components/DataDisplay';
+import { LoadingBlock, SectionHeading, formatNumber } from '../components/DataDisplay';
 import { StatusMessage } from '../components/StatusMessage';
 import { useApiResource } from '../components/useApiResource';
 import { Badge } from '../components/ui/badge';
@@ -68,7 +68,7 @@ export function MyCharactersPage() {
 
       {characters.length === 0 ? (
         loading ? (
-          <LoadingBlock />
+          <LoadingBlock centered />
         ) : (
           <p className="text-base text-muted-foreground">
             This account has no characters yet. Create one in the client.
@@ -114,10 +114,6 @@ export function MyCharactersPage() {
                     {formatNumber(character.totalRewards)} rewards
                   </span>
                 </div>
-
-                <p className="text-base text-muted-foreground">
-                  Last seen {formatDate(character.lastSeenAt)}
-                </p>
 
                 <span className="mt-auto inline-flex items-center gap-1.5 text-base font-medium text-primary">
                   See the character
