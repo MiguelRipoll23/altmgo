@@ -52,23 +52,6 @@ function railSectionClasses(isActive: boolean): string {
 }
 
 /**
- * The classes a sub-option carries in the reduced column's flyout.
- *
- * The expanded column indents sub-options under a rule to show they belong to the
- * section above. A flyout has no such column to indent within — it opens beside
- * the icon rather than under it — so the belonging is carried by the flyout's own
- * heading instead, and the rows go back to the plain label shape.
- */
-function railSubSectionClasses(isActive: boolean): string {
-  return [
-    'flex items-center whitespace-nowrap rounded-md px-3 py-2 text-left text-base transition',
-    isActive
-      ? 'bg-primary/10 font-semibold text-primary'
-      : 'font-medium text-muted-foreground hover:bg-muted hover:text-foreground',
-  ].join(' ');
-}
-
-/**
  * The classes a sub-option carries: the same shape as its section, set smaller
  * and indented under a rule, so a reader sees that it belongs to the section
  * above rather than reading it as a section of its own.
@@ -249,120 +232,47 @@ export function SidebarNav({
  * the same string either way — one row cannot have a name for a reader and a
  * different one for a hover.
  *
- * A section with sub-options cannot be a link here, for the reason it is not a
- * link in the expanded column either: the bare section path is a redirect to the
- * first sub-option, and clicking it to reach the second one is a click that goes
- * nowhere and then another. So the icon opens a flyout instead, which is the
- * expanded column's disclosure drawn somewhere it fits. Opening one is by hover
- * as well as by click, because a flyout that needs a click is not a flyout to a
- * reader aiming for it with the pointer — they arrive over the icon and the list
- * is what they wanted. It stays open while the pointer is over either the icon or
- * the flyout, so moving across the gap between them does not dismiss it under the
- * pointer.
+ * Every row is a link, sub-options and all. A section with sub-options used to
+ * open a flyout of them beside the icon, on hover as well as on click, because the
+ * bare section path is a redirect to the first sub-option and the second one would
+ * otherwise be unreachable without expanding the column. The flyout was the wrong
+ * trade: it covered the page the reader was looking at to offer a menu they had
+ * not asked for, it opened on hover under a pointer that was only passing over the
+ * rail, and on a touch screen — where there is no hover — it turned the first tap
+ * into "show me some choices" instead of the navigation the tap looked like. The
+ * icons are the navigation; a reader who wants the sub-options opens the column,
+ * which is one click away at its head. So the tap goes where the section goes, and
+ * `Escape` and the column's own control are the only things the rail has to
+ * dismiss.
  *
- * The flyout is also reachable by keyboard, and that is why the icon is a button
- * rather than a plain image: `Enter` and `Space` open it, `Escape` closes it, and
- * a flyout that only hover can open is a flyout some readers cannot open at all.
- * The same state drives both, so the two cannot disagree about what is open.
- *
- * It is drawn in the same order and with the same selected rows as the expanded
- * column, because they are the same navigation: the reader who is standing on
- * the Survival teams and collapses the column has to find the same row lit.
+ * It is drawn in the same order as the expanded column, because they are the same
+ * navigation: the reader who is standing on the Survival teams and collapses the
+ * column has to find the same row lit. A section with sub-options lights when the
+ * page is anywhere inside it, because the rail has no sub-option rows to carry
+ * that answer — the section is the only row that can, so it does.
  */
 function SidebarRail({ sections }: { sections: SidebarSection[] }) {
   const { pathname } = useLocation();
-  const [flyingOut, setFlyingOut] = useState<string | null>(null);
 
   return (
-    <nav
-      className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain pb-1"
-      // Escape closes an open flyout. It is the same key the shell listens for to
-      // put the column away, so closing the flyout first is what a reader pressing
-      // it once expects — and both handlers run, which is correct: a reader who
-      // wanted the column away gets it, and one who only wanted the list closed
-      // has already expanded the column back rather than being left in a column
-      // they cannot leave.
-      onKeyDown={(event) => {
-        if (event.key === 'Escape') {
-          setFlyingOut(null);
-        }
-      }}
-    >
+    <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain pb-1">
       {sections.map((section) => {
-        if (section.children === undefined) {
-          return (
-            <Link
-              key={section.path}
-              to={section.path}
-              className={railSectionClasses(isSectionSelected(section, pathname))}
-              title={section.label}
-              aria-label={section.label}
-              aria-current={isSectionSelected(section, pathname) ? 'page' : undefined}
-            >
-              <section.icon className="size-4 shrink-0" aria-hidden="true" />
-            </Link>
-          );
-        }
-
-        const open = flyingOut === section.path;
+        const active =
+          section.children === undefined
+            ? isSectionSelected(section, pathname)
+            : containsPage(section, pathname);
 
         return (
-          <div
+          <Link
             key={section.path}
-            className="relative"
-            // Hovering the row opens the flyout, and so does hovering the flyout
-            // itself. The handler clears the state on leave, so the gap between
-            // the icon and the panel needs closing — hence `pt-1` on the panel
-            // below, which is what makes the two one hover target rather than two
-            // that each end the other's.
-            onMouseEnter={() => setFlyingOut(section.path)}
-            onMouseLeave={() => setFlyingOut(null)}
+            to={section.path}
+            className={railSectionClasses(active)}
+            title={section.label}
+            aria-label={section.label}
+            aria-current={active ? 'page' : undefined}
           >
-            <button
-              type="button"
-              onClick={() => setFlyingOut(open ? null : section.path)}
-              className={railSectionClasses(isSectionSelected(section, pathname))}
-              title={section.label}
-              aria-label={section.label}
-              aria-expanded={open}
-              aria-haspopup="true"
-            >
-              <section.icon className="size-4 shrink-0" aria-hidden="true" />
-            </button>
-
-            {open ? (
-              // `pt-1` is the hover bridge described above: it makes the space
-              // between the icon and this panel part of the row, so the pointer
-              // crossing it is still inside the thing that is open.
-              <div
-                className="absolute left-full top-0 z-50 ml-2 w-max pt-1"
-                role="group"
-                aria-label={section.label}
-              >
-                <div className="min-w-40 rounded-lg border border-border bg-popover p-1 shadow-lg">
-                  <p className="px-3 py-1.5 text-base font-semibold text-muted-foreground">
-                    {section.label}
-                  </p>
-
-                  {section.children.map((subSection) => {
-                    const active = isSubSectionActive(subSection, pathname);
-
-                    return (
-                      <Link
-                        key={subSection.path}
-                        to={subSection.path}
-                        className={railSubSectionClasses(active)}
-                        aria-current={active ? 'page' : undefined}
-                        onClick={() => setFlyingOut(null)}
-                      >
-                        {subSection.label}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : null}
-          </div>
+            <section.icon className="size-4 shrink-0" aria-hidden="true" />
+          </Link>
         );
       })}
     </nav>
