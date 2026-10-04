@@ -206,11 +206,13 @@ export function PublishAddress({
         </span>
 
         {/* Brackets rather than a separator: the correction is a qualifier on the
-            address, the way "(locked)" qualifies a row. They are the colour of
-            the correction they wrap rather than the colour of the address — the
+            address, the way "(locked)" qualifies a row. They are the colour of the
+            correction they wrap rather than the colour of the address — the
             pair is one thing to read, and brackets in the address's colour made
-            the address look like it ended in three stray glyphs. */}
-        <span className="ml-1 text-primary">(</span>
+            the address look like it ended in three stray glyphs. The gap in front
+            of them is the same as the run's own gap above, so the address is set
+            off by one width whichever side of it the reader is looking. */}
+        <span className="ml-1.5 text-primary">(</span>
 
         <button
           type="button"

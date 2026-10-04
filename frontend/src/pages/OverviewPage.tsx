@@ -160,17 +160,17 @@ export function OverviewPage() {
             </span>
 
             {/* The address is a fact about the reader rather than about the server,
-                so it is set apart from the two counts by margin alone: it is not a
-                third number, and two figures followed by an address read as three of
-                a kind otherwise. The margin is the whole of the separation — the
-                rule that used to stand there was a thing to read before the address
-                even started, on a line whose own gaps already separate it. */}
-            <div className="ml-6">
-              <PublishAddress
-                address={data.publishedAddress?.address ?? null}
-                onPublished={reload}
-              />
-            </div>
+                so it keeps the colour that says so — but it takes the row's own gap
+                rather than a margin of its own. The margin that used to stand there
+                was 24 pixels on a line whose other items sit 8 apart, and once the
+                row wrapped on a narrow window it indented the address under the two
+                counts as though the address belonged to them. One gap for the whole
+                line is a separation the reader can see, whether it is written beside
+                the counts or under them. */}
+            <PublishAddress
+              address={data.publishedAddress?.address ?? null}
+              onPublished={reload}
+            />
           </div>
 
           {/* The latest item only, as a card rather than a list. The whole news page
