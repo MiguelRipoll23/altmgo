@@ -187,6 +187,13 @@ export function PublishAddress({
           a claim about the server. */}
       <Globe className="size-3.5 shrink-0 text-purple-400" aria-hidden="true" />
 
+      {/* The address is set in the page's own face, like the two counts beside it.
+          It was monospaced, which is the right face for a number being compared
+          with another number and the wrong one here: this line has three items on
+          it rather than a column of figures, so the address set in a second
+          typeface read as a different kind of thing from the two counts when it
+          is the same kind of thing. The globe, not the face, is what says which
+          of the three this is. */}
       {/* The address and its correction hang off one run: a space before the
           bracket so the correction does not run into the digits, and no space
           inside the brackets, so `172.226.116.12 (Update)` reads as the address
@@ -194,7 +201,7 @@ export function PublishAddress({
           outer span exists only to hold that margin, because a flex row cannot
           have a gap on one side of a word and not the other. */}
       <span className="inline-flex items-center">
-        <span className="font-mono text-purple-400">
+        <span className="text-purple-400">
           {address ?? 'No address published'}
         </span>
 
