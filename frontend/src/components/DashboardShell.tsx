@@ -14,6 +14,33 @@ function isWideWindow(): boolean {
   return window.matchMedia(WideWindow).matches;
 }
 
+/**
+ * The same question, kept as state so that a width change redraws the frame.
+ *
+ * It used to be read during render, which gives the right answer for the render
+ * that asked it and no answer at all for the ones that follow: nothing asks
+ * again unless some other state happens to change, so a tablet that came back
+ * from another tab — or was rotated — could keep drawing the narrow frame on a
+ * window that is not narrow, floating button and all, until something unrelated
+ * redrew it. A media query listener makes the width a real input: the frame
+ * redraws the moment it changes, so the column and the floating button can never
+ * be drawn from two different widths at once.
+ */
+function useWideWindow(): boolean {
+  const [wide, setWide] = useState(isWideWindow);
+
+  useEffect(() => {
+    const query = window.matchMedia(WideWindow);
+    const onChange = (event: MediaQueryListEvent) => setWide(event.matches);
+
+    query.addEventListener('change', onChange);
+
+    return () => query.removeEventListener('change', onChange);
+  }, []);
+
+  return wide;
+}
+
 /** How much of the navigation column is on screen. */
 type ColumnState = 'open' | 'reduced' | 'hidden';
 
@@ -37,13 +64,29 @@ type ColumnState = 'open' | 'reduced' | 'hidden';
  * because the same state has to mean the right thing on both kinds of window, but
  * it cannot put a desktop into the one state the desktop does not have.
  *
+ * The other direction is the same rule read the other way. A reduced column is a
+ * wide-window idea — icons with a page beside them — and on a narrow window it
+ * would be a rail of icons over the page with no way back to labels, so a stored
+ * `reduced` there draws as `hidden`: the drawer's away state, with the floating
+ * button as the way back in. Normalising both directions here means the frame is
+ * always drawn from one pair of facts — the stored state and the window's width —
+ * rather than from whichever of them happened to change last.
+ *
  * This is also what a reader means by "it collapsed when I came back". Whether
  * the column was put away while they were looking elsewhere or was already like
  * that, what they want to come back to is a slimmed column they can click, not a
  * button they have to click first.
  */
 function drawnColumn(stored: ColumnState, wide: boolean): ColumnState {
-  return wide && stored === 'hidden' ? 'reduced' : stored;
+  if (wide && stored === 'hidden') {
+    return 'reduced';
+  }
+
+  if (!wide && stored === 'reduced') {
+    return 'hidden';
+  }
+
+  return stored;
 }
 
 /**
@@ -99,12 +142,13 @@ export function DashboardShell({
   // no page beside them, which is not a layout. The initial read is made once,
   // before the first render, so a phone never flashes an open drawer.
   const [column, setColumn] = useState<ColumnState>(isWideWindow() ? 'open' : 'hidden');
+  const wide = useWideWindow();
   const location = useLocation();
   const arrived = useRef(false);
 
   // What is actually drawn, which is the stored state narrowed to what this kind
   // of window can be. See `drawnColumn`.
-  const drawn = drawnColumn(column, isWideWindow());
+  const drawn = drawnColumn(column, wide);
 
   /** Whether the column is on screen in any form. */
   const shown = drawn !== 'hidden';
@@ -117,12 +161,17 @@ export function DashboardShell({
    * and the icon rail.
    */
   function toggleColumn() {
-    if (!isWideWindow()) {
-      setColumn(column === 'hidden' ? 'open' : 'hidden');
+    // The decision is made against what is drawn rather than against what is
+    // stored, because the two can differ on this kind of window — a stored
+    // `reduced` beside the floating button's narrow window draws as `hidden` —
+    // and a toggle that read the stored state there would be a button that does
+    // nothing.
+    if (!wide) {
+      setColumn(drawn === 'hidden' ? 'open' : 'hidden');
       return;
     }
 
-    setColumn(column === 'open' ? 'reduced' : 'open');
+    setColumn(drawn === 'open' ? 'reduced' : 'open');
   }
 
   // Following a link on a phone has to put the column away again: the page it
@@ -143,10 +192,10 @@ export function DashboardShell({
       return;
     }
 
-    if (!isWideWindow()) {
+    if (!wide) {
       setColumn('hidden');
     }
-  }, [location.pathname, location.search]);
+  }, [location.pathname, location.search, wide]);
 
   // Escape closes the drawer, and only the drawer.
   //
@@ -168,7 +217,7 @@ export function DashboardShell({
   // mean whatever the thing that had focus meant by it.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !isWideWindow()) {
+      if (event.key === 'Escape' && !wide) {
         setColumn('hidden');
       }
     };
@@ -176,22 +225,19 @@ export function DashboardShell({
     window.addEventListener('keydown', onKey);
 
     return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  }, [wide]);
 
   // A window narrowed past the width the column is laid out for has to put it
-  // away, or a column that was beside the page is suddenly on top of it.
+  // away, or a column that was beside the page is suddenly on top of it. The
+  // stored state is normalised alongside the drawing — `drawnColumn` already
+  // draws a reduced column as hidden here — so that rotating back to a wide
+  // window does not bring the rail back, which is a state the reader did not ask
+  // for on the window they left.
   useEffect(() => {
-    const query = window.matchMedia(WideWindow);
-    const onChange = (event: MediaQueryListEvent) => {
-      if (!event.matches) {
-        setColumn('hidden');
-      }
-    };
-
-    query.addEventListener('change', onChange);
-
-    return () => query.removeEventListener('change', onChange);
-  }, []);
+    if (!wide) {
+      setColumn((state) => (state === 'reduced' ? 'hidden' : state));
+    }
+  }, [wide]);
 
   /**
    * Whether the page has been scrolled off its first screenful.
@@ -227,6 +273,13 @@ export function DashboardShell({
 
       <aside
         id="frame-navigation"
+        // A put-away column is still in the document, slid off the left edge. Its
+        // own control is therefore off-screen with it, and the floating button is
+        // the only way back — so the column is marked inert while it is away: a
+        // control nobody can see must not be tabbable behind the page either, and
+        // a screen reader gets the floating button rather than a second copy of
+        // the navigation that is not on screen.
+        inert={!shown}
         className={cn(
           'fixed inset-y-0 left-0 z-50 flex max-w-[85vw] flex-col gap-6 border-r border-border bg-card/60 pb-6 pt-5 transition-transform duration-200 ease-out',
           // The gutter and the width both move between the states, so the column is
