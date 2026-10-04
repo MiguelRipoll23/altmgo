@@ -262,10 +262,17 @@ function SidebarRail({ sections }: { sections: SidebarSection[] }) {
             ? isSectionSelected(section, pathname)
             : containsPage(section, pathname);
 
+        // A section with sub-options goes to the first of its pages rather than to
+        // the section's own path. That path is a redirect to the same first page,
+        // and depending on it would make the icon a link to a link — two hops for
+        // one tap, and one of the hops a route that exists only to bounce. Going
+        // straight there is the thing the reader asked for.
+        const destination = section.children?.[0]?.path ?? section.path;
+
         return (
           <Link
             key={section.path}
-            to={section.path}
+            to={destination}
             className={railSectionClasses(active)}
             title={section.label}
             aria-label={section.label}

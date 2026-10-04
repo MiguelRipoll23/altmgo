@@ -82,7 +82,7 @@ export function App() {
             path="news/:identifier"
             element={<NewsDetailPage listPath="/dashboard/news" />}
           />
-          <Route path="mail" element={<Navigate to="mail/inbox" replace />} />
+          <Route path="mail" element={<Navigate to="/dashboard/mail/inbox" replace />} />
           <Route path="mail/inbox" element={<MailInboxPage />} />
           <Route path="mail/outbox" element={<MailOutboxPage />} />
           <Route
@@ -96,7 +96,7 @@ export function App() {
           <Route path="clans" element={<ClansPage />} />
           <Route path="clans/:identifier" element={<ClanDetailPage />} />
           <Route path="games" element={<GamesPage />} />
-          <Route path="survival" element={<Navigate to="survival/events" replace />} />
+          <Route path="survival" element={<Navigate to="/dashboard/survival/events" replace />} />
           <Route path="survival/events" element={<SurvivalEventsPage />} />
           <Route path="survival/events/:identifier" element={<SurvivalEventPage />} />
           <Route path="survival/teams" element={<SurvivalTeamsPage />} />
@@ -113,7 +113,7 @@ export function App() {
             path="tournament/:identifier/fixtures"
             element={<TournamentEventPage area="fixtures" />}
           />
-          <Route path="rankings" element={<Navigate to="rankings/players" replace />} />
+          <Route path="rankings" element={<Navigate to="/dashboard/rankings/players" replace />} />
           <Route path="rankings/players" element={<RankingsPlayersPage />} />
           <Route path="rankings/clans" element={<RankingsClansPage />} />
         </Route>
