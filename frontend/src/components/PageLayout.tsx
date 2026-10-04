@@ -14,12 +14,13 @@ const widths: Record<PageLayoutWidth, string> = {
 };
 
 /**
- * The page itself: the dark background, the two soft glows, and the centred
- * column.
+ * The page itself: the background, the two soft glows, and the centred column.
  *
  * The background is carried by the body now that the stylesheet owns it, so the
  * glows are the only thing this has to draw: they are decoration that has no
  * token behind it, and a token would be a colour named after a decoration.
+ * `page-glow` draws them from the palette's own glow colours rather than from a
+ * gradient written into this class name, so they follow the system theme too.
  *
  * The column is centred in the window rather than hung from the top, which is the
  * whole of what a sign-in page is: a short form and nothing else to read, so it
@@ -36,7 +37,7 @@ export function PageLayout({
   width?: PageLayoutWidth;
 }) {
   return (
-    <div className="flex min-h-screen flex-col bg-[radial-gradient(ellipse_at_top,rgba(56,189,248,0.12),transparent_55%),radial-gradient(ellipse_at_bottom_right,rgba(30,64,175,0.18),transparent_60%)] text-foreground antialiased">
+    <div className="page-glow flex min-h-screen flex-col text-foreground antialiased">
       <main className="flex flex-1 items-center justify-center px-4 py-10 sm:px-6 sm:py-16">
         <div className={`w-full ${widths[width]}`}>{children}</div>
       </main>

@@ -22,8 +22,11 @@
  * component library is a change of how the colours are named and not of what
  * the site looks like.
  *
- * The dashboard is dark and has no light mode, so only the dark values are
- * declared. A light block would be a second set of numbers that nothing reads.
+ * Both palettes are declared: the dark one on `:root` and the light one under
+ * `prefers-color-scheme: light`, so the site follows the reader's system rather
+ * than asking them to pick. Dark stays on `:root` because it is the palette a
+ * browser that reports no preference at all should draw, and because it is the
+ * one every component was written against.
  */
 @theme inline {
   --color-background: var(--background);
@@ -51,7 +54,14 @@
   --radius-sm: calc(var(--radius) - 4px);
 }
 
+/*
+ * The page background the body carries, and the colour the browser draws its
+ * own chrome in — scrollbars, form controls, the area outside the document.
+ * Declaring it per palette is what makes a select or a scrollbar follow the
+ * theme instead of staying dark on a light page.
+ */
 :root {
+  color-scheme: dark;
   --background: oklch(0.13 0.02 260);
   --foreground: oklch(0.97 0.01 250);
   --card: oklch(0.17 0.02 260);
@@ -72,6 +82,63 @@
   --input: oklch(0.32 0.02 260);
   --ring: oklch(0.79 0.13 230);
   --radius: 0.75rem;
+
+  /* The two soft glows behind the pages that sit outside the dashboard frame.
+     They are decoration rather than content, so they have no token of their own
+     beyond these two: a colour named after a decoration is a colour nothing else
+     can use. They are declared per palette because the dark ones are nearly
+     invisible on white and would leave a light page looking flat. */
+  --glow-top: rgba(56, 189, 248, 0.12);
+  --glow-bottom: rgba(30, 64, 175, 0.18);
+}
+
+/*
+ * The light palette, which the site draws whenever the reader's system asks for
+ * light. It is the same hues as the dark one at the other end of the scale, so
+ * a page does not change its accent between themes — only how much light is
+ * behind it. The two exceptions are deliberate: the primary darkens so that both
+ * `text-primary` on the page background and the primary button's own foreground
+ * keep their contrast once the background behind them is white.
+ */
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
+    --background: oklch(0.98 0.004 250);
+    --foreground: oklch(0.22 0.02 260);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.22 0.02 260);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.22 0.02 260);
+    --primary: oklch(0.52 0.15 234);
+    --primary-foreground: oklch(0.99 0.005 250);
+    --secondary: oklch(0.94 0.012 250);
+    --secondary-foreground: oklch(0.28 0.02 260);
+    --muted: oklch(0.95 0.012 250);
+    --muted-foreground: oklch(0.46 0.02 255);
+    --accent: oklch(0.93 0.03 238);
+    --accent-foreground: oklch(0.28 0.02 260);
+    --destructive: oklch(0.55 0.2 25);
+    --destructive-foreground: oklch(0.99 0.005 250);
+    --border: oklch(0.9 0.012 250);
+    --input: oklch(0.88 0.012 250);
+    --ring: oklch(0.52 0.15 234);
+
+    --glow-top: rgba(14, 165, 233, 0.16);
+    --glow-bottom: rgba(37, 99, 235, 0.1);
+  }
+}
+
+/*
+ * The glows themselves, drawn as a background image rather than as two long
+ * `radial-gradient` utilities in a class name. They are the one piece of the
+ * page that has to change with the palette, and a gradient written into a class
+ * string is a gradient that cannot be: the classes would have to be duplicated
+ * per theme, and whichever came second would decide for both.
+ */
+.page-glow {
+  background-image:
+    radial-gradient(ellipse at top, var(--glow-top), transparent 55%),
+    radial-gradient(ellipse at bottom right, var(--glow-bottom), transparent 60%);
 }
 
 @layer base {

@@ -3,7 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#020617" />
+    <!-- The colour the browser paints its own chrome in. One per palette rather
+         than one for the site, so the toolbar around the page follows the same
+         system theme the page does. -->
+    <meta name="theme-color" content="#020617" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)" />
     <title>AltMGO</title>
   </head>
   <body>
