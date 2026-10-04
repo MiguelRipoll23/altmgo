@@ -25,7 +25,7 @@ import {
   SelectValue,
 } from '../components/ui/select';
 import { KnownRules, ruleName } from '../lib/gameModes';
-import { mapName } from '../lib/maps';
+import { KnownMaps, mapName } from '../lib/maps';
 import { cn } from '../lib/utils';
 
 /** The word a game with no lobby named is filed under. */
@@ -58,11 +58,24 @@ const LobbyOptions = [
   { value: 'locked', label: 'Password protected' },
 ];
 
-/** Every value the map filter offers, and what each of them means. */
+/**
+ * Every value the map filter offers, and what each of them means.
+ *
+ * `named` is the coarse answer — every game that is on some map — and the named
+ * maps below it are the precise ones. The two are the same kind of choice at two
+ * sizes, which is why they share one dropdown rather than sitting as a filter and
+ * a sub-filter: a reader either knows which map they want or they only know they
+ * want one that names itself.
+ *
+ * `None` comes from the map table rather than being written here as "No map
+ * named": it is the client's own name for map zero, and a reader filtering for it
+ * is asking for the rooms whose rotation names no map — the same rooms `named`
+ * excludes.
+ */
 const MapOptions = [
   { value: AnyValue, label: 'All maps' },
   { value: 'named', label: 'Named maps' },
-  { value: '0', label: 'No map named' },
+  ...KnownMaps.map(({ map, label }) => ({ value: String(map), label })),
 ];
 
 /** Every value the mode filter offers, and what each of them means. */
@@ -122,11 +135,14 @@ function matchesFilters(
     return false;
   }
 
-  if (map === 'named' && game.map === 0) {
-    return false;
-  }
-
-  if (map === '0' && game.map !== 0) {
+  if (map === 'named') {
+    if (game.map === 0) {
+      return false;
+    }
+  } else if (map !== AnyValue && game.map !== Number(map)) {
+    // Every other map value is a map number from the client's own table, and it
+    // matches the one map it names. `None` arrives here as the string `"0"` and
+    // matches map zero, which is the same set `named` excludes.
     return false;
   }
 

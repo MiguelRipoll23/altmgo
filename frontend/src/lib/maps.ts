@@ -111,3 +111,20 @@ export function mapImage(map: number): string | null {
 
   return slug === undefined ? null : `/maps/${slug}.webp`;
 }
+
+/**
+ * The maps in the client's own order, for a filter to list.
+ *
+ * Taken from the numbering rather than written out again, so a map added to the
+ * table above is a map the filter can name without a second edit. `None` is in
+ * the list because it is a real entry in the client's table — it is what a room
+ * reports when its rotation names no map — and a reader filtering for the rooms
+ * with no map named is asking the same question as one picking `None`.
+ *
+ * There is no entry for sixteen, because the client's table has none: a reader
+ * cannot filter for a map this build has never named, which is the honest
+ * consequence of not knowing it.
+ */
+export const KnownMaps: { map: number; label: string }[] = Object.entries(MapNames)
+  .map(([map, label]) => ({ map: Number(map), label }))
+  .sort((left, right) => left.map - right.map);
