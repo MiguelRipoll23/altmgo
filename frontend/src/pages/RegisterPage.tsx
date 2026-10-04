@@ -63,7 +63,7 @@ export function RegisterPage() {
             {status === null ? null : <StatusMessage kind={status.kind}>{status.message}</StatusMessage>}
 
             <div>
-              <Label htmlFor="username" className="mb-5 block">
+              <Label htmlFor="username" className="mb-3 block">
                 Username
               </Label>
               <Input
@@ -85,7 +85,7 @@ export function RegisterPage() {
             </div>
 
             <div>
-              <Label htmlFor="password" className="mb-5 block">
+              <Label htmlFor="password" className="mb-3 block">
                 Password
               </Label>
               <Input
