@@ -306,26 +306,27 @@ export function ClansPage({ basePath = '/dashboard' }: { basePath?: string }) {
  *
  * The whole card is the link, as on the characters page, because a clan is a page of
  * its own and a card whose link is a few characters of its name is a card that can
- * only be shared from that corner of itself.
+ * only be shared from that corner of itself. The arrow at the end says so in the
+ * width an arrow costs, and the words "See the clan" went with the height they were
+ * taking from every card.
  *
- * The band is square rather than the rooms' wide one, and that is the emblem's own
- * shape — see {@link ClanEmblem}, which is shared with the clan's own page.
+ * The emblem is a small square beside the words rather than the full-width banner
+ * above them it used to be. A square emblem as wide as the card makes the card as
+ * tall as that square, and it left the card mostly empty whenever the clan's own
+ * sentence was short — a directory of a dozen clans was a screen and a half of
+ * picture for about three lines of text each. The emblem is what a reader recognises
+ * a clan by, not what they read, so it is sized like an icon and the words are given
+ * the width a line of them needs.
  */
 function ClanCard({ clan, basePath }: { clan: Clan; basePath: string }) {
   return (
     <Link
       to={`${basePath}/clans/${clan.id}`}
-      className="group flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card/50 transition hover:border-primary/40 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="group flex h-full items-center gap-4 overflow-hidden rounded-xl border border-border bg-card/50 px-4 py-3.5 transition hover:border-primary/40 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
-      <ClanEmblem
-        clanId={clan.id}
-        name={clan.name}
-        hasEmblem={clan.hasEmblem}
-        size="aspect-square w-full"
-        className="rounded-none border-x-0 border-t-0"
-      />
+      <ClanEmblem clanId={clan.id} name={clan.name} hasEmblem={clan.hasEmblem} size="size-16" />
 
-      <div className="flex flex-1 flex-col gap-3 px-4 py-4">
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <div className="flex flex-wrap items-center gap-2">
           <h2 className="min-w-0 truncate text-base font-extrabold tracking-tight text-foreground">
             {clan.name}
@@ -333,45 +334,27 @@ function ClanCard({ clan, basePath }: { clan: Clan; basePath: string }) {
           {clan.open ? null : <Badge variant="secondary">closed</Badge>}
         </div>
 
-        <div className="flex items-baseline gap-2">
-          <p className="text-2xl font-extrabold tracking-tight text-foreground tabular-nums">
+        <p className="truncate text-base text-muted-foreground">
+          <span className="font-semibold tabular-nums text-foreground">
             {formatNumber(clan.memberCount)}
-          </p>
-          <p className="text-base text-muted-foreground tabular-nums">
-            {clan.memberCount === 1 ? 'member' : 'members'}
-          </p>
-        </div>
-
-        <dl className="space-y-1 text-base">
-          <div className="flex gap-2">
-            <dt className="w-20 shrink-0 text-muted-foreground">Leader</dt>
-            <dd className="min-w-0 flex-1 truncate text-foreground">
-              {clan.leaderName ?? 'unknown'}
-            </dd>
-          </div>
-
-          <div className="flex gap-2">
-            <dt className="w-20 shrink-0 text-muted-foreground">Waiting</dt>
-            <dd className="min-w-0 flex-1 truncate text-foreground tabular-nums">
-              {formatNumber(clan.applicationCount)}{' '}
-              {clan.applicationCount === 1 ? 'character' : 'characters'}
-            </dd>
-          </div>
-        </dl>
-
-        {/* The comment is the clan's own sentence about itself, and it is the part
-            a reader reads to choose between two otherwise identical cards, so it
-            is given the card's width and its remaining height rather than one
-            line in a column. */}
-        <p className="min-h-10 text-base text-muted-foreground">
-          {clan.comment === '' ? 'No comment' : clan.comment}
+          </span>{' '}
+          {clan.memberCount === 1 ? 'member' : 'members'} · Leader {clan.leaderName ?? 'unknown'}
         </p>
 
-        <span className="mt-auto inline-flex items-center gap-1.5 text-base font-medium text-primary">
-          See the clan
-          <ChevronRight className="size-4 transition group-hover:translate-x-0.5" />
-        </span>
+        <p className="truncate text-base text-muted-foreground">
+          Waiting on {formatNumber(clan.applicationCount)}{' '}
+          {clan.applicationCount === 1 ? 'character' : 'characters'}
+        </p>
+
+        <p className="truncate text-base text-muted-foreground">
+          {clan.comment === '' ? 'No comment' : clan.comment}
+        </p>
       </div>
+
+      <ChevronRight
+        className="size-4 shrink-0 text-muted-foreground transition group-hover:translate-x-0.5"
+        aria-hidden="true"
+      />
     </Link>
   );
 }
