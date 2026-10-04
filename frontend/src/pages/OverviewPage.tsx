@@ -160,16 +160,17 @@ export function OverviewPage() {
             </span>
 
             {/* The address is a fact about the reader rather than about the server,
-                so it is set apart from the two counts with the rule between them
-                rather than by another separator: it is not a third number, and two
-                figures followed by an IP would read as though it were. */}
-            <span aria-hidden="true" className="text-border">
-              |
-            </span>
-            <PublishAddress
-              address={data.publishedAddress?.address ?? null}
-              onPublished={reload}
-            />
+                so it is set apart from the two counts by margin alone: it is not a
+                third number, and two figures followed by an address read as three of
+                a kind otherwise. The margin is the whole of the separation — the
+                rule that used to stand there was a thing to read before the address
+                even started, on a line whose own gaps already separate it. */}
+            <div className="ml-6">
+              <PublishAddress
+                address={data.publishedAddress?.address ?? null}
+                onPublished={reload}
+              />
+            </div>
           </div>
 
           {/* The latest item only, as a card rather than a list. The whole news page

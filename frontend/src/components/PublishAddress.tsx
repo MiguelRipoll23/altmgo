@@ -63,9 +63,12 @@ const DiscoverableSeconds = 15;
  * The correction is bracketed against the address rather than standing beside it,
  * because it is a qualifier on the address rather than a thing in its own right —
  * the way "(locked)" qualifies a row. Brackets say that without spending a rule or
- * a middot on separating it from the two counts it is otherwise level with, and
- * there is no space inside them: `(Update)` reads as one thing hung off the
- * address, where `( Update )` reads as a fourth figure on a line of three.
+ * a middot on separating it from the two counts it is otherwise level with. There
+ * is a space in front of them and none inside them: `172.226.116.12 (Update)` reads
+ * as the address with something hung off it, where `172.226.116.12(Update)` runs
+ * the correction into the digits and `( Update )` reads as a fourth figure on a
+ * line of three. The brackets take the colour of the correction inside them, so
+ * the pair is one thing in one colour rather than a word in brackets.
  *
  * It is a link rather than a button, and its own text is the report. There is
  * nothing to navigate to — the thing it does is a write, not a journey — so a
@@ -184,19 +187,23 @@ export function PublishAddress({
           a claim about the server. */}
       <Globe className="size-3.5 shrink-0 text-purple-400" aria-hidden="true" />
 
-      {/* The address and its correction are one run with no gap in it. The outer
-          span exists only to switch the row's gap off between them, because a
-          flex row cannot have a gap on one side of a word and not the other, and
-          `172.226.116.12 (Update)` with the space inside the brackets reads as a
-          fourth figure on this line rather than as a qualifier on the third. */}
+      {/* The address and its correction hang off one run: a space before the
+          bracket so the correction does not run into the digits, and no space
+          inside the brackets, so `172.226.116.12 (Update)` reads as the address
+          with a qualifier on it rather than as a fourth figure on this line. The
+          outer span exists only to hold that margin, because a flex row cannot
+          have a gap on one side of a word and not the other. */}
       <span className="inline-flex items-center">
         <span className="font-mono text-purple-400">
           {address ?? 'No address published'}
         </span>
 
         {/* Brackets rather than a separator: the correction is a qualifier on the
-            address, the way "(locked)" qualifies a row. */}
-        <span className="text-purple-400">(</span>
+            address, the way "(locked)" qualifies a row. They are the colour of
+            the correction they wrap rather than the colour of the address — the
+            pair is one thing to read, and brackets in the address's colour made
+            the address look like it ended in three stray glyphs. */}
+        <span className="ml-1 text-primary">(</span>
 
         <button
           type="button"
@@ -212,7 +219,7 @@ export function PublishAddress({
           {publishing ? 'Publishing…' : discoverable ? 'Discoverable' : 'Update'}
         </button>
 
-        <span className="text-purple-400">)</span>
+        <span className="text-primary">)</span>
       </span>
 
       {/* The two things that need saying are said under the line rather than in
