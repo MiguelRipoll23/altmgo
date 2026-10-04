@@ -2,7 +2,7 @@ import { ArrowRight, Gamepad2, Newspaper, UserRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { LoadingBlock, SectionHeading, formatDay, formatNumber } from '../components/DataDisplay';
 import { GameCard, type Game } from '../components/GameCard';
-import { PublishAddress } from '../components/PublishAddress';
+import { PublishedAddress } from '../components/PublishedAddress';
 import { StatusMessage } from '../components/StatusMessage';
 import { useApiResource } from '../components/useApiResource';
 import { Badge } from '../components/ui/badge';
@@ -88,7 +88,7 @@ const UnnamedLobby = 'Unknown lobby';
  * page, which this dashboard does not have.
  */
 export function OverviewPage() {
-  const { data, error, reload } = useApiResource<Overview>('/api/overview');
+  const { data, error } = useApiResource<Overview>('/api/overview');
 
   const latest = data?.news[0] ?? null;
   const games = data?.games ?? [];
@@ -121,7 +121,7 @@ export function OverviewPage() {
         // One reading for the whole page, because there is one request and so one
         // moment of not knowing anything, and because every other page in the
         // dashboard says this once in the place its content will be.
-        <LoadingBlock />
+        <LoadingBlock centered />
       ) : (
         <>
           {/* The figures. They sit directly under the heading with the news and the
@@ -166,10 +166,7 @@ export function OverviewPage() {
                 so it takes the purple badge — the one colour on the page that is
                 not a claim about the server. It shares the row's gap with the two
                 counts, whether it is written beside them or wrapped under them. */}
-            <PublishAddress
-              address={data.publishedAddress?.address ?? null}
-              onPublished={reload}
-            />
+            <PublishedAddress address={data.publishedAddress?.address ?? null} />
           </div>
 
           {/* The latest item only, as a card rather than a list. The whole news page
