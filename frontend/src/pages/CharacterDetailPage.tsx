@@ -1,14 +1,9 @@
 import { ArrowLeft } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
-import { LoadingBlock, Panel, SectionHeading, formatDate, formatNumber } from '../components/DataDisplay';
+import { LoadingBlock, Panel, SectionHeading, formatNumber } from '../components/DataDisplay';
 import { StatusMessage } from '../components/StatusMessage';
 import { useApiResource } from '../components/useApiResource';
-import {
-  ClientTitleCount,
-  MaximumLevel,
-  characterLevelProgress,
-  isClientTitle,
-} from '../lib/game';
+import { MaximumLevel, characterLevelProgress } from '../lib/game';
 import { CharacterTitleCell } from './MyCharactersPage';
 
 /** One of the caller's own characters, as this page reads it. */
@@ -75,18 +70,13 @@ export function CharacterDetailPage() {
             <div className="flex flex-wrap items-center gap-3">
               <p className="text-base text-muted-foreground">Worn title</p>
               <CharacterTitleCell rank={character.rank} />
-              {character.rank > 0 && isClientTitle(character.rank) ? (
-                <p className="text-base text-muted-foreground">
-                  Title {character.rank} of the client&apos;s {ClientTitleCount}.
-                </p>
-              ) : null}
             </div>
           </div>
         )}
       </Panel>
 
       {character === null ? null : (
-        <Panel title="Record">
+        <Panel title="Details">
           <dl className="grid gap-4 sm:grid-cols-2">
             <Detail label="Total rewards" value={formatNumber(character.totalRewards)} />
             <Detail label="Clan" value={character.clan?.name ?? null} />
@@ -94,7 +84,6 @@ export function CharacterDetailPage() {
               label="Rank in clan"
               value={character.clan === null ? null : formatNumber(character.clan.rank)}
             />
-            <Detail label="Last seen" value={formatDate(character.lastSeenAt)} />
           </dl>
 
           {character.comment.trim().length === 0 ? null : (
