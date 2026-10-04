@@ -1,6 +1,6 @@
 import { ArrowRight, Newspaper } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { SectionHeading, formatDay } from '../components/DataDisplay';
+import { LoadingBlock, SectionHeading, formatDay } from '../components/DataDisplay';
 import { StatusMessage } from '../components/StatusMessage';
 import { useApiResource } from '../components/useApiResource';
 import { Badge } from '../components/ui/badge';
@@ -55,7 +55,7 @@ export function NewsPage({ basePath = '/dashboard' }: { basePath?: string }) {
       {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
 
       {loading ? (
-        <p className="text-base text-muted-foreground">Reading the news…</p>
+        <LoadingBlock />
       ) : (data?.news ?? []).length === 0 ? (
         <p className="text-base text-muted-foreground">No news has been published.</p>
       ) : (

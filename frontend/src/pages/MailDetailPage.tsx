@@ -81,24 +81,47 @@ export function MailDetailPage({ back, label }: {
           ) : null
         ) : (
           <>
-            <div className="mb-4 flex flex-wrap items-center gap-3">
-              <Mail className="size-4 shrink-0 text-muted-foreground" />
-              <p className="text-base uppercase tracking-widest text-muted-foreground">
-                {/*
-                  A letter in the game masters' mailbox carries the name of the
-                  character that wrote it as well as the signature the writer chose,
-                  and the character is the one a manager is answering: two players
-                  may have signed themselves the same name.
-                */}
-                From {message.senderCharacterName ?? message.senderName}
-                {message.recipientName === undefined ? null : ` · To ${message.recipientName}`} · Sent{' '}
-                {formatDate(message.sentAt)}
-              </p>
+            {/* Who it is from and who it is to are two answers to two questions, so
+                they are two lines rather than one sentence separated by middots. The
+                reader checking a letter is usually checking one of the two, and the
+                one they are looking for is at the head of its own line instead of
+                somewhere in the middle of a sentence. The body then reads as the
+                letter, with the date on its own at the foot: when it was sent is
+                true of the letter and not of the writer, and it belongs below the
+                words rather than in the header above them. */}
+            <div className="mb-4 flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <Mail className="size-4 shrink-0 text-muted-foreground" />
+                <p className="text-base uppercase tracking-widest text-muted-foreground">
+                  {/*
+                    A letter in the game masters' mailbox carries the name of the
+                    character that wrote it as well as the signature the writer chose,
+                    and the character is the one a manager is answering: two players
+                    may have signed themselves the same name.
+                  */}
+                  From {message.senderCharacterName ?? message.senderName}
+                </p>
+              </div>
+
+              {message.recipientName === undefined ? null : (
+                <p className="pl-6 text-base uppercase tracking-widest text-muted-foreground">
+                  To {message.recipientName}
+                </p>
+              )}
             </div>
 
             <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground/90">
               {message.body}
             </p>
+
+            {/* The bottom left, with the date and the time together. A letter is
+                stamped when it was written, and the hour is part of that: two
+                letters exchanged the same day are told apart by it. */}
+            <div className="mt-5">
+              <time dateTime={message.sentAt} className="text-base text-muted-foreground">
+                {formatDate(message.sentAt)}
+              </time>
+            </div>
           </>
         )}
       </Panel>
