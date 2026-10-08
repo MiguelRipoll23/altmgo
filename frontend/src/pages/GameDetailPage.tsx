@@ -3,7 +3,6 @@ import {
   Gamepad2,
   LockKeyhole,
   Map as MapIcon,
-  Server,
   UserRound,
   Users,
 } from 'lucide-react';
@@ -126,13 +125,6 @@ export function GameDetailPage() {
                   Hosted by
                 </p>
                 <div className="mt-1 flex items-center gap-2">
-                  {game.dedicated ? (
-                    <Server
-                      className="size-4 shrink-0 text-muted-foreground"
-                      role="img"
-                      aria-label="Dedicated server"
-                    />
-                  ) : null}
                   <PingIndicator ping={game.ping} />
                   {game.hostClan === null ? (
                     <span
@@ -191,13 +183,6 @@ export function GameDetailPage() {
                         key={player.characterId}
                         className="flex min-w-0 items-center gap-3 rounded-xl border border-border bg-background/50 p-3"
                       >
-                        {isHost && game.dedicated ? (
-                          <Server
-                            className="size-4 shrink-0 text-muted-foreground"
-                            role="img"
-                            aria-label="Dedicated server"
-                          />
-                        ) : null}
                         <PingIndicator ping={player.ping} />
                         {player.clan === null ? (
                           <span
