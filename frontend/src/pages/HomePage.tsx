@@ -108,9 +108,9 @@ export function HomePage() {
           </div>
 
           <div>
-            <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
               Live server activity
-            </p>
+            </h2>
             {pulse.data === null ? (
               <p
                 role={pulse.error ? 'alert' : 'status'}
@@ -119,7 +119,7 @@ export function HomePage() {
                 {pulse.error ?? 'Loading server activity…'}
               </p>
             ) : (
-              <div className="mx-auto grid max-w-sm grid-cols-2 gap-3 lg:mx-0">
+              <div className="mx-auto grid max-w-sm grid-cols-2 gap-5 lg:mx-0">
                 <PulseStat
                   icon={Users}
                   label="Players online"
@@ -202,17 +202,13 @@ function PulseStat({
   value: string;
 }) {
   return (
-    <Card className="bg-card/60 text-left">
-      <CardContent className="flex items-center gap-3 p-3 pt-3 sm:p-3 sm:pt-3">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-          <Icon className="size-4" aria-hidden="true" />
-        </span>
-        <span className="min-w-0">
-          <span className="block text-xl font-extrabold tabular-nums text-foreground">{value}</span>
-          <span className="block truncate text-xs text-muted-foreground">{label}</span>
-        </span>
-      </CardContent>
-    </Card>
+    <div className="flex min-w-0 items-center gap-3 text-left">
+      <Icon className="size-5 shrink-0 text-primary" aria-hidden="true" />
+      <span className="min-w-0">
+        <span className="block text-2xl font-extrabold tabular-nums text-foreground">{value}</span>
+        <span className="block truncate text-sm text-muted-foreground">{label}</span>
+      </span>
+    </div>
   );
 }
 
