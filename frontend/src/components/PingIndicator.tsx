@@ -24,7 +24,7 @@ export function PingIndicator({
         {Array.from({ length: 3 }, (_, index) => (
           <span
             key={index}
-            className={cn('h-3 w-1.5 rounded-sm', index < lit ? colour : 'bg-muted')}
+            className={cn('h-4 w-1.5 rounded-sm', index < lit ? colour : 'bg-muted')}
           />
         ))}
       </span>
