@@ -1,4 +1,5 @@
 import { LockKeyhole, Map as MapIcon } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { formatNumber } from './DataDisplay';
 import { ruleName } from '../lib/gameModes';
 import { mapImage, mapName } from '../lib/maps';
@@ -55,7 +56,11 @@ export function GameCard({ game }: { game: Game }) {
   const picture = mapImage(game.map);
 
   return (
-    <article className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card/50">
+    <Link
+      to={`/dashboard/games/${game.id}`}
+      className="group flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card/50 transition-colors hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      aria-label={`View details for ${game.name}`}
+    >
       <div className="relative flex aspect-video w-full items-center justify-center overflow-hidden border-b border-border bg-muted/20">
         {picture === null ? (
           <MapIcon className="size-8 text-muted-foreground/50" aria-hidden="true" />
@@ -152,7 +157,7 @@ export function GameCard({ game }: { game: Game }) {
           {game.comment === '' ? 'No comment' : game.comment}
         </p>
       </div>
-    </article>
+    </Link>
   );
 }
 

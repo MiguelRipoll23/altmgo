@@ -15,7 +15,7 @@ browser. There is deliberately no `vercel.json` here: this app is not deployed o
 | `/dashboard/mail` | redirects to the inbox; the other mailbox is `/dashboard/mail/outbox` |
 | `/dashboard/mail/inbox/:id`, `/dashboard/mail/outbox/:id` | one message, under the mailbox it was opened from |
 | `/dashboard/clans`, `/dashboard/clans/:id` | the clan directory as cards carrying each clan's own emblem, and one clan with its emblem and roster |
-| `/dashboard/games` | the game rooms that are up right now |
+| `/dashboard/games`, `/dashboard/games/:id` | the current games list and a game's settings, rotation and live roster |
 | `/dashboard/survival/events`, `/dashboard/survival/events/:id`, `/dashboard/survival/teams` | the Survival schedule, one event, and the ladder |
 | `/dashboard/tournament`, `/dashboard/tournament/:id{,/bracket,/fixtures}` | the tournament list, and one event's registrations, bracket and fixtures |
 | `/dashboard/rankings/players`, `/dashboard/rankings/clans` | the player and clan boards, as two pages |

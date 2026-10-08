@@ -3,6 +3,7 @@ import { DashboardRoute, OverviewSection } from './components/DashboardRoute';
 import { ClansPage } from './pages/ClansPage';
 import { ClanDetailPage } from './pages/ClanDetailPage';
 import { GamesPage } from './pages/GamesPage';
+import { GameDetailPage } from './pages/GameDetailPage';
 import { OverviewPage } from './pages/OverviewPage';
 import { HomePage } from './pages/HomePage';
 import { CharacterDetailPage } from './pages/CharacterDetailPage';
@@ -92,6 +93,7 @@ export function App() {
           <Route path="clans" element={<ClansPage />} />
           <Route path="clans/:identifier" element={<ClanDetailPage />} />
           <Route path="games" element={<GamesPage />} />
+          <Route path="games/:identifier" element={<GameDetailPage />} />
           <Route path="survival" element={<Navigate to="/dashboard/survival/events" replace />} />
           <Route path="survival/events" element={<SurvivalEventsPage />} />
           <Route path="survival/events/:identifier" element={<SurvivalEventPage />} />

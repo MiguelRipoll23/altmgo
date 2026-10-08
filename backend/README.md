@@ -24,8 +24,8 @@ itself.
 | `POST` | `/api/addresses` | publishes the caller's address for the account's characters that have a connection row |
 | `GET` | `/api/overview` | how many players are connected, and which lobby each is in |
 | `GET` | `/api/server/pulse` | players online and total games, for the public front door |
-| `GET` | `/api/server/pulse` | players online and total games, for the public front door |
 | `GET` | `/api/games` | the game rooms that are up right now |
+| `GET` | `/api/games/:id` | one current game, its stored settings and live roster |
 | `GET` | `/api/lobbies` | the gameplay lobbies the server is serving |
 | `GET` | `/api/clans` | the clan directory, filtered and ordered |
 | `GET` | `/api/clans/:id` | one clan: its notice, roster and waiting applications |

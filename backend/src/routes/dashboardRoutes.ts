@@ -9,8 +9,10 @@ import {
   listTournamentEntries,
   listTournamentFixtures,
   findTournamentBracket,
+  findGameDetails,
   isEventMode,
   SurvivalMode,
+  type GameDetails,
   type GameSummary,
 } from '../dashboardQueries.js';
 import { listNews, findNews, type NewsRow } from '../newsQueries.js';
@@ -163,11 +165,44 @@ function describeGame(game: GameSummary) {
   };
 }
 
+/** One game room as its detail page reads it. Password contents are never exposed. */
+function describeGameDetails(game: GameDetails) {
+  return {
+    ...describeGame(game),
+    hostIdentifier: game.hostIdentifier,
+    lobbyIdentifier: game.lobbyIdentifier,
+    currentGame: game.currentGame,
+    lobbySubtype: game.lobbySubtype,
+    stance: game.stance,
+    createdAt: game.createdAt,
+    rotation: game.rotation,
+    hostSettings: game.hostSettings,
+    roster: game.roster,
+  };
+}
+
 /** The game rooms that are up right now. */
 dashboardRoutes.get('/games', requireAccount, async (context) => {
   const games = await listGames();
 
   return context.json({ games: games.map(describeGame) });
+});
+
+/** One current game with its stored settings and live roster. */
+dashboardRoutes.get('/games/:identifier', requireAccount, async (context) => {
+  const identifier = Number(context.req.param('identifier'));
+
+  if (!Number.isSafeInteger(identifier) || identifier <= 0) {
+    return context.json({ error: 'That game identifier is invalid.' }, 400);
+  }
+
+  const game = await findGameDetails(identifier);
+
+  if (game === undefined) {
+    return context.json({ error: 'That game is no longer being hosted.' }, 404);
+  }
+
+  return context.json({ game: describeGameDetails(game) });
 });
 
 /**

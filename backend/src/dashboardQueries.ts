@@ -52,6 +52,8 @@ export function isEventMode(mode: number): mode is EventMode {
 /** One game room with what is known about it. */
 export type GameSummaryRow = {
   id: number;
+  host_id: number;
+  lobby_id: number;
   name: string;
   comment: string;
   host_name: string | null;
@@ -67,12 +69,15 @@ export type GameSummaryRow = {
    */
   dedicated: boolean;
   current_game: number;
+  lobby_subtype: number;
   /** The room's stored rotation, as the `[rule, map, flag]` JSON the host stored. */
   games: string;
+  stance: number;
   status: number;
   has_password: boolean;
   /** The ping the host's own client reported for itself. */
   ping: number;
+  created_at: Date | null;
   updated_at: Date;
 };
 
@@ -136,9 +141,232 @@ const HostSettingsSlot = 0;
 
 /** Lists the game rooms that are still current. */
 export async function listGames(): Promise<GameSummary[]> {
+  return readGames();
+}
+
+/** One current game with the full stored rotation and live roster. */
+export type GameDetails = GameSummary & {
+  hostIdentifier: number;
+  lobbyIdentifier: number;
+  currentGame: number;
+  lobbySubtype: number;
+  stance: number;
+  createdAt: Date | null;
+  rotation: { rule: number; map: number; flag: number }[];
+  hostSettings: GameHostSettings | null;
+  roster: {
+    characterId: number;
+    name: string;
+    experience: number;
+    team: number;
+    ping: number;
+    joinedAt: Date;
+  }[];
+};
+
+/** The host's named saved room settings; passwords and undocumented fields stay private. */
+export type GameHostSettings = {
+  stance: number;
+  maximumPlayers: number;
+  briefingTime: number;
+  dedicated: boolean;
+  nonStat: boolean;
+  friendlyFire: boolean;
+  autoAim: boolean;
+  uniquesEnabled: boolean;
+  enemyNametags: boolean;
+  silentMode: boolean;
+  autoAssign: boolean;
+  teamsSwitch: boolean;
+  ghosts: boolean;
+  voiceChat: boolean;
+  levelLimitEnabled: boolean;
+  levelLimitBase: number;
+  levelLimitTolerance: number;
+  teamKillKick: number;
+  idleKick: number;
+  settingsLobbySubtype: number;
+  rotationRules: number[] | null;
+  rotationMaps: number[] | null;
+  rotationFlags: number[] | null;
+  weaponRestrictions: string | null;
+  ruleTimers: number[] | null;
+  uniqueRed: number;
+  uniqueBlue: number;
+  commonA: number;
+  commonB: number;
+  captureExtraTime: boolean;
+  sneakingSnakeKills: number;
+};
+
+/** Reads one current game and the full roster stored by the game server. */
+export async function findGameDetails(identifier: number): Promise<GameDetails | undefined> {
+  const game = (await readGames(identifier))[0];
+
+  if (game === undefined) {
+    return undefined;
+  }
+
+  const [rows, settingsRows] = await Promise.all([
+    database()`
+      select
+        character.id as character_id,
+        character.name,
+        character.experience,
+        player.team,
+        player.ping,
+        player.joined_at
+      from game_players player
+      join characters character on character.id = player.character_id
+      where player.game_id = ${game.id}
+      order by
+        case when player.character_id = ${game.host_id} then 0 else 1 end,
+        player.joined_at,
+        character.id
+    `,
+    database()`
+      select
+        stance,
+        max_players as maximum_players,
+        briefing_time,
+        dedicated,
+        non_stat,
+        friendly_fire,
+        auto_aim,
+        uniques_enabled,
+        enemy_nametags,
+        silent_mode,
+        auto_assign,
+        teams_switch,
+        ghosts,
+        voice_chat,
+        level_limit_enabled,
+        level_limit_base,
+        level_limit_tolerance,
+        team_kill_kick,
+        idle_kick,
+        settings_lobby_subtype,
+        rotation_rules,
+        rotation_maps,
+        rotation_flags,
+        encode(weapon_restrictions, 'hex') as weapon_restrictions,
+        rule_timers,
+        unique_red,
+        unique_blue,
+        common_a,
+        common_b,
+        capture_extra_time,
+        sneaking_snake_kills
+      from characters_host_settings
+      where character_id = ${game.host_id}
+        and type = ${HostSettingsSlot}
+      limit 1
+    `,
+  ]);
+  const savedSettings = settingsRows[0] as {
+    stance: number;
+    maximum_players: number;
+    briefing_time: number;
+    dedicated: boolean;
+    non_stat: boolean;
+    friendly_fire: boolean;
+    auto_aim: boolean;
+    uniques_enabled: boolean;
+    enemy_nametags: boolean;
+    silent_mode: boolean;
+    auto_assign: boolean;
+    teams_switch: boolean;
+    ghosts: boolean;
+    voice_chat: boolean;
+    level_limit_enabled: boolean;
+    level_limit_base: number;
+    level_limit_tolerance: number;
+    team_kill_kick: number;
+    idle_kick: number;
+    settings_lobby_subtype: number;
+    rotation_rules: number[] | null;
+    rotation_maps: number[] | null;
+    rotation_flags: number[] | null;
+    weapon_restrictions: string | null;
+    rule_timers: number[] | null;
+    unique_red: number;
+    unique_blue: number;
+    common_a: number;
+    common_b: number;
+    capture_extra_time: boolean;
+    sneaking_snake_kills: number;
+  } | undefined;
+
+  return {
+    ...game,
+    hostIdentifier: game.host_id,
+    lobbyIdentifier: game.lobby_id,
+    currentGame: game.current_game,
+    lobbySubtype: game.lobby_subtype,
+    stance: game.stance,
+    createdAt: game.created_at,
+    rotation: parseRotation(game.games),
+    hostSettings:
+      savedSettings === undefined
+        ? null
+        : {
+            stance: savedSettings.stance,
+            maximumPlayers: savedSettings.maximum_players,
+            briefingTime: savedSettings.briefing_time,
+            dedicated: savedSettings.dedicated,
+            nonStat: savedSettings.non_stat,
+            friendlyFire: savedSettings.friendly_fire,
+            autoAim: savedSettings.auto_aim,
+            uniquesEnabled: savedSettings.uniques_enabled,
+            enemyNametags: savedSettings.enemy_nametags,
+            silentMode: savedSettings.silent_mode,
+            autoAssign: savedSettings.auto_assign,
+            teamsSwitch: savedSettings.teams_switch,
+            ghosts: savedSettings.ghosts,
+            voiceChat: savedSettings.voice_chat,
+            levelLimitEnabled: savedSettings.level_limit_enabled,
+            levelLimitBase: savedSettings.level_limit_base,
+            levelLimitTolerance: savedSettings.level_limit_tolerance,
+            teamKillKick: savedSettings.team_kill_kick,
+            idleKick: savedSettings.idle_kick,
+            settingsLobbySubtype: savedSettings.settings_lobby_subtype,
+            rotationRules: savedSettings.rotation_rules,
+            rotationMaps: savedSettings.rotation_maps,
+            rotationFlags: savedSettings.rotation_flags,
+            weaponRestrictions: savedSettings.weapon_restrictions,
+            ruleTimers: savedSettings.rule_timers,
+            uniqueRed: savedSettings.unique_red,
+            uniqueBlue: savedSettings.unique_blue,
+            commonA: savedSettings.common_a,
+            commonB: savedSettings.common_b,
+            captureExtraTime: savedSettings.capture_extra_time,
+            sneakingSnakeKills: savedSettings.sneaking_snake_kills,
+          },
+    roster: (rows as {
+      character_id: number;
+      name: string;
+      experience: number;
+      team: number;
+      ping: number;
+      joined_at: Date;
+    }[]).map((player) => ({
+      characterId: player.character_id,
+      name: player.name,
+      experience: player.experience,
+      team: player.team,
+      ping: player.ping,
+      joinedAt: player.joined_at,
+    })),
+  };
+}
+
+/** Reads current games, or one requested room, using the server's staleness window. */
+async function readGames(identifier?: number): Promise<GameSummary[]> {
   const rows = await database()`
     select
       game.id,
+      game.host_id,
+      game.lobby_id,
       game.name,
       game.comment,
       host.name as host_name,
@@ -165,15 +393,19 @@ export async function listGames(): Promise<GameSummary[]> {
         end
       ) as dedicated,
       game.current_game,
+      game.lobby_subtype,
       game.games,
+      game.stance,
       game.status,
       (game.password <> '') as has_password,
       game.ping,
+      game.created_at,
       game.updated_at
     from games game
     left join characters host on host.id = game.host_id
     left join lobbies lobby on lobby.id = game.lobby_id
     where game.updated_at >= now() - ${GameStaleSeconds} * interval '1 second'
+      and (${identifier === undefined} or game.id = ${identifier ?? 0})
     order by game.updated_at desc
   `;
 
@@ -187,6 +419,29 @@ export async function listGames(): Promise<GameSummary[]> {
 
 /** One room as the list reports it, which is the row plus what it is playing. */
 export type GameSummary = GameSummaryRow & { players: number; map: number; rule: number };
+
+/** Reads the room's whole `[rule, map, flag]` rotation without trusting stored JSON. */
+function parseRotation(games: string): { rule: number; map: number; flag: number }[] {
+  try {
+    const parsed: unknown = JSON.parse(games);
+
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed.map((value) => {
+      const round = Array.isArray(value) ? value : [];
+
+      return {
+        rule: roundEntry(round, 0),
+        map: roundEntry(round, 1),
+        flag: roundEntry(round, 2),
+      };
+    });
+  } catch {
+    return [];
+  }
+}
 
 /**
  * How many characters are playing in a room.
