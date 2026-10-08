@@ -84,13 +84,26 @@ export function GameCard({ game }: { game: Game }) {
               <span className="sr-only">Password protected</span>
             </span>
           ) : <span />}
-          <div>
-            <p className="truncate text-sm font-semibold uppercase tracking-wider text-white/80">
-              {mapName(game.map)}
-            </p>
-            <p className="mt-0.5 truncate text-lg font-extrabold leading-tight text-white">
-              {ruleName(game.rule)}
-            </p>
+          <div className="flex min-w-0 items-end justify-between gap-3">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold uppercase tracking-wider text-white/80">
+                {mapName(game.map)}
+              </p>
+              <p className="mt-0.5 truncate text-lg font-extrabold leading-tight text-white">
+                {ruleName(game.rule)}
+              </p>
+            </div>
+            <div className="shrink-0 text-right text-white drop-shadow-md">
+              <p className="text-lg font-extrabold tabular-nums leading-none">
+                {formatNumber(game.players)}
+                <span className="font-medium text-white/75">
+                  {' '}/ {formatNumber(game.maximumPlayers)}
+                </span>
+              </p>
+              <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-white/75">
+                Players
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -100,18 +113,6 @@ export function GameCard({ game }: { game: Game }) {
           <h3 className="min-w-0 truncate text-base font-extrabold tracking-tight text-foreground">
             {game.name}
           </h3>
-        </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-baseline gap-2">
-            <p className="text-2xl font-extrabold tracking-tight text-foreground tabular-nums">
-              {formatNumber(game.players)}
-            </p>
-            <p className="text-base text-muted-foreground tabular-nums">
-              of {formatNumber(game.maximumPlayers)} playing
-            </p>
-          </div>
-
         </div>
 
         <dl className="space-y-1 text-base">

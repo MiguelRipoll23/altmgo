@@ -80,7 +80,7 @@ export function GameDetailPage() {
                 />
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/10" />
-              <div className="absolute inset-x-0 bottom-0 p-5 pr-28 sm:p-7 sm:pr-36">
+              <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-5 sm:p-7">
                 <div className="min-w-0">
                   <p className="text-sm font-semibold uppercase tracking-widest text-white/75">
                     {mapName(currentRound?.map ?? game.map)}
@@ -88,6 +88,17 @@ export function GameDetailPage() {
                   <h2 className="mt-1 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
                     {ruleName(currentRound?.rule ?? game.rule)}
                   </h2>
+                </div>
+                <div className="shrink-0 text-right text-white drop-shadow-md">
+                  <p className="text-lg font-extrabold tabular-nums leading-none sm:text-xl">
+                    {formatNumber(game.players)}
+                    <span className="font-medium text-white/75">
+                      {' '}/ {formatNumber(game.maximumPlayers)}
+                    </span>
+                  </p>
+                  <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-white/75">
+                    Players
+                  </p>
                 </div>
               </div>
               <div className="absolute right-4 top-4">
@@ -101,17 +112,6 @@ export function GameDetailPage() {
                     Open to join
                   </Badge>
                 )}
-              </div>
-              <div className="absolute bottom-4 right-4 rounded-lg border border-white/20 bg-black/60 px-3 py-2 text-right text-white shadow-sm backdrop-blur-sm sm:bottom-6 sm:right-6">
-                <p className="text-lg font-extrabold tabular-nums leading-none">
-                  {formatNumber(game.players)}
-                  <span className="font-medium text-white/70">
-                    {' '}/ {formatNumber(game.maximumPlayers)}
-                  </span>
-                </p>
-                <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-white/75">
-                  Players
-                </p>
               </div>
             </div>
 
@@ -163,14 +163,9 @@ export function GameDetailPage() {
                         key={player.characterId}
                         className="flex min-w-0 items-center gap-3 rounded-xl border border-border bg-background/50 p-3"
                       >
-                        <span className="min-w-0 flex-1 truncate font-semibold text-foreground">
-                          {player.name}
-                        </span>
-                        <PingIndicator ping={player.ping} />
-                        {isHost ? <Badge variant="secondary">Host</Badge> : null}
                         {player.clan === null ? (
                           <span
-                            className="ml-auto flex size-10 shrink-0 items-center justify-center rounded-lg border border-border bg-muted/20 text-muted-foreground/50"
+                            className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-border bg-muted/20 text-muted-foreground/50"
                             aria-label="No clan emblem"
                             title="No clan"
                           >
@@ -182,9 +177,13 @@ export function GameDetailPage() {
                             name={player.clan.name}
                             hasEmblem={player.clan.hasEmblem}
                             size="size-10"
-                            className="ml-auto"
                           />
                         )}
+                        <span className="min-w-0 flex-1 truncate font-semibold text-foreground">
+                          {player.name}
+                        </span>
+                        <PingIndicator ping={player.ping} />
+                        {isHost ? <Badge variant="secondary">Host</Badge> : null}
                       </li>
                     );
                   })}
@@ -245,7 +244,6 @@ export function GameDetailPage() {
                             )}
                             <div className="absolute left-3 top-3 flex items-center gap-2">
                               <Badge variant="secondary">Round {index + 1}</Badge>
-                              {active ? <Badge variant="success">Now playing</Badge> : null}
                             </div>
                           </div>
                           <div className="p-4">
