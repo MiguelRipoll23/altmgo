@@ -7,7 +7,7 @@ import {
   Users,
 } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
-import { LoadingBlock, SectionHeading, formatNumber } from '../components/DataDisplay';
+import { LoadingBlock, formatNumber } from '../components/DataDisplay';
 import { ClanEmblem } from '../components/ClanEmblem';
 import { StatusMessage } from '../components/StatusMessage';
 import type { Game } from '../components/GameCard';
@@ -110,8 +110,6 @@ export function GameDetailPage() {
         All games
       </Link>
 
-      <SectionHeading title={game?.name ?? 'Game details'} />
-
       {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
       {loading && game === null ? <LoadingBlock centered /> : null}
       {!loading && error === null && game === null ? (
@@ -134,6 +132,43 @@ export function GameDetailPage() {
                 />
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/10" />
+              <div className="absolute inset-x-0 top-0 flex items-start justify-between gap-3 bg-gradient-to-b from-black/70 to-transparent p-4 sm:p-6">
+                <div className="flex min-w-0 items-center gap-2 text-white drop-shadow-md">
+                  <PingIndicator ping={game.ping} />
+                  {game.hasPassword ? (
+                    <LockKeyhole
+                      className="size-4 shrink-0"
+                      aria-label="Password protected"
+                      role="img"
+                    />
+                  ) : null}
+                  <h1 className="min-w-0 truncate text-lg font-extrabold tracking-tight sm:text-2xl">
+                    {game.name}
+                  </h1>
+                </div>
+                <div className="flex min-w-0 shrink-0 items-center gap-2 text-white drop-shadow-md">
+                  <span className="max-w-32 truncate text-right text-sm font-semibold sm:max-w-48 sm:text-base">
+                    {game.hostName ?? 'Unknown host'}
+                  </span>
+                  {game.hostClan === null ? (
+                    <span
+                      className="flex size-8 shrink-0 items-center justify-center rounded border border-white/30 bg-black/30 text-white/70"
+                      aria-label="No clan emblem"
+                      title="No clan"
+                    >
+                      <UserRound className="size-4" aria-hidden="true" />
+                    </span>
+                  ) : (
+                    <ClanEmblem
+                      clanId={game.hostClan.id}
+                      name={game.hostClan.name}
+                      hasEmblem={game.hostClan.hasEmblem}
+                      size="size-8"
+                      className="border-white/30 bg-black/30"
+                    />
+                  )}
+                </div>
+              </div>
               <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-5 sm:p-7">
                 <div className="min-w-0">
                   <p className="text-sm font-semibold uppercase tracking-widest text-white/75">
@@ -155,50 +190,15 @@ export function GameDetailPage() {
                   </p>
                 </div>
               </div>
-              <div className="absolute right-4 top-4">
-                {game.hasPassword ? (
-                  <Badge variant="warning" className="bg-black/60">
-                    <LockKeyhole className="size-4" aria-hidden="true" />
-                    Password protected
-                  </Badge>
-                ) : null}
-              </div>
             </div>
 
-            <CardContent className="pt-5 sm:pt-6">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
-                  Hosted by
+            {game.comment.trim() === '' ? null : (
+              <CardContent className="pt-5 sm:pt-6">
+                <p className="whitespace-pre-wrap text-base text-muted-foreground">
+                  {game.comment}
                 </p>
-                <div className="mt-1 flex items-center gap-2">
-                  <PingIndicator ping={game.ping} />
-                  {game.hostClan === null ? (
-                    <span
-                      className="flex size-8 shrink-0 items-center justify-center rounded border border-border bg-muted/20 text-muted-foreground/50"
-                      aria-label="No clan emblem"
-                      title="No clan"
-                    >
-                      <UserRound className="size-4" aria-hidden="true" />
-                    </span>
-                  ) : (
-                    <ClanEmblem
-                      clanId={game.hostClan.id}
-                      name={game.hostClan.name}
-                      hasEmblem={game.hostClan.hasEmblem}
-                      size="size-8"
-                    />
-                  )}
-                  <p className="text-lg font-bold text-foreground">
-                    {game.hostName ?? 'Unknown host'}
-                  </p>
-                </div>
-                {game.comment.trim() === '' ? null : (
-                  <p className="mt-2 whitespace-pre-wrap text-base text-muted-foreground">
-                    {game.comment}
-                  </p>
-                )}
-              </div>
-            </CardContent>
+              </CardContent>
+            )}
           </Card>
 
           <Tabs defaultValue="players">

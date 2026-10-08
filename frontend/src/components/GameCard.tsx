@@ -80,12 +80,25 @@ export function GameCard({ game }: { game: Game }) {
         )}
 
         <div className="pointer-events-none absolute inset-0 flex flex-col justify-between bg-gradient-to-t from-black/85 via-black/15 to-black/30 p-3">
-          {game.hasPassword ? (
-            <span className="ml-auto rounded-full bg-black/50 p-2 text-white" title="Password protected">
-              <LockKeyhole className="size-4" aria-hidden="true" />
-              <span className="sr-only">Password protected</span>
-            </span>
-          ) : <span />}
+          <div className="flex min-w-0 items-start justify-between gap-3 text-white drop-shadow-md">
+            <div className="flex min-w-0 items-center gap-2">
+              <PingIndicator ping={game.ping} />
+              <h3 className="min-w-0 truncate text-base font-extrabold tracking-tight">
+                {game.name}
+              </h3>
+            </div>
+            <div className="flex min-w-0 shrink-0 items-center gap-2">
+              <span className="max-w-28 truncate text-right text-sm font-semibold sm:max-w-36">
+                {game.hostName ?? 'unknown'}
+              </span>
+              {game.hasPassword ? (
+                <span title="Password protected">
+                  <LockKeyhole className="size-4" aria-hidden="true" />
+                  <span className="sr-only">Password protected</span>
+                </span>
+              ) : null}
+            </div>
+          </div>
           <div className="flex min-w-0 items-end justify-between gap-3">
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold uppercase tracking-wider text-white/80">
@@ -111,20 +124,6 @@ export function GameCard({ game }: { game: Game }) {
       </div>
 
       <div className="flex flex-1 flex-col gap-3 px-4 py-4">
-        <h3 className="min-w-0 truncate text-base font-extrabold tracking-tight text-foreground">
-          {game.name}
-        </h3>
-
-        <dl className="space-y-1 text-base">
-          <div className="flex gap-2">
-            <dt className="w-16 shrink-0 text-muted-foreground">Host</dt>
-            <dd className="flex min-w-0 flex-1 items-center gap-2 text-foreground">
-              <PingIndicator ping={game.ping} />
-              <span className="min-w-0 flex-1 truncate">{game.hostName ?? 'unknown'}</span>
-            </dd>
-          </div>
-        </dl>
-
         {/* The comment is the host's own sentence about the room, so it is given
             the room's width and the room's remaining height rather than one line
             in a column: it is the part a reader reads to choose between two
