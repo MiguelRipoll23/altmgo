@@ -57,6 +57,9 @@ export type GameSummaryRow = {
   name: string;
   comment: string;
   host_name: string | null;
+  host_clan_id: number | null;
+  host_clan_name: string | null;
+  host_clan_has_emblem: boolean | null;
   lobby_name: string | null;
   /** The room's roster as it stands, which counts a dedicated host as a member. */
   members: number;
@@ -387,6 +390,9 @@ async function readGames(identifier?: number): Promise<GameSummary[]> {
       game.name,
       game.comment,
       host.name as host_name,
+      host_clan.id as host_clan_id,
+      host_clan.name as host_clan_name,
+      (host_clan.emblem is not null) as host_clan_has_emblem,
       lobby.name as lobby_name,
       (
         select count(*)::int
@@ -420,6 +426,8 @@ async function readGames(identifier?: number): Promise<GameSummary[]> {
       game.updated_at
     from games game
     left join characters host on host.id = game.host_id
+    left join clans_members host_membership on host_membership.character_id = host.id
+    left join clans host_clan on host_clan.id = host_membership.clan_id
     left join lobbies lobby on lobby.id = game.lobby_id
     where game.updated_at >= now() - ${GameStaleSeconds} * interval '1 second'
       and (${identifier === undefined} or game.id = ${identifier ?? 0})

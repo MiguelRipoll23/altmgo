@@ -1,5 +1,6 @@
-import { LockKeyhole, Map as MapIcon } from 'lucide-react';
+import { LockKeyhole, Map as MapIcon, Server, UserRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { ClanEmblem } from './ClanEmblem';
 import { formatNumber } from './DataDisplay';
 import { PingIndicator } from './PingIndicator';
 import { ruleName } from '../lib/gameModes';
@@ -11,6 +12,8 @@ export type Game = {
   name: string;
   comment: string;
   hostName: string | null;
+  dedicated: boolean;
+  hostClan: { id: number; name: string; hasEmblem: boolean } | null;
   lobbyName: string | null;
   players: number;
   maximumPlayers: number;
@@ -117,7 +120,30 @@ export function GameCard({ game }: { game: Game }) {
           <div className="flex gap-2">
             <dt className="w-16 shrink-0 text-muted-foreground">Host</dt>
             <dd className="flex min-w-0 flex-1 items-center gap-2 text-foreground">
+              {game.dedicated ? (
+                <Server
+                  className="size-4 shrink-0 text-muted-foreground"
+                  role="img"
+                  aria-label="Dedicated server"
+                />
+              ) : null}
               <PingIndicator ping={game.ping} />
+              {game.hostClan === null ? (
+                <span
+                  className="flex size-7 shrink-0 items-center justify-center rounded border border-border bg-muted/20 text-muted-foreground/50"
+                  aria-label="No clan emblem"
+                  title="No clan"
+                >
+                  <UserRound className="size-4" aria-hidden="true" />
+                </span>
+              ) : (
+                <ClanEmblem
+                  clanId={game.hostClan.id}
+                  name={game.hostClan.name}
+                  hasEmblem={game.hostClan.hasEmblem}
+                  size="size-7"
+                />
+              )}
               <span className="min-w-0 flex-1 truncate">{game.hostName ?? 'unknown'}</span>
             </dd>
           </div>

@@ -153,6 +153,15 @@ function describeGame(game: GameSummary) {
     name: game.name,
     comment: game.comment,
     hostName: game.host_name,
+    dedicated: game.dedicated,
+    hostClan:
+      game.host_clan_id === null || game.host_clan_name === null
+        ? null
+        : {
+            id: game.host_clan_id,
+            name: game.host_clan_name,
+            hasEmblem: game.host_clan_has_emblem ?? false,
+          },
     lobbyName: game.lobby_name,
     players: game.players,
     maximumPlayers: game.maximum_players,

@@ -1,4 +1,12 @@
-import { ArrowLeft, Gamepad2, LockKeyhole, Map as MapIcon, UserRound, Users } from 'lucide-react';
+import {
+  ArrowLeft,
+  Gamepad2,
+  LockKeyhole,
+  Map as MapIcon,
+  Server,
+  UserRound,
+  Users,
+} from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { LoadingBlock, SectionHeading, formatNumber } from '../components/DataDisplay';
 import { ClanEmblem } from '../components/ClanEmblem';
@@ -32,6 +40,7 @@ type GamePlayer = {
 
 type GameDetails = Game & {
   hostIdentifier: number;
+  hostClan: Game['hostClan'];
   currentGame: number;
   rotation: GameRound[];
   roster: GamePlayer[];
@@ -117,7 +126,30 @@ export function GameDetailPage() {
                   Hosted by
                 </p>
                 <div className="mt-1 flex items-center gap-2">
+                  {game.dedicated ? (
+                    <Server
+                      className="size-4 shrink-0 text-muted-foreground"
+                      role="img"
+                      aria-label="Dedicated server"
+                    />
+                  ) : null}
                   <PingIndicator ping={game.ping} />
+                  {game.hostClan === null ? (
+                    <span
+                      className="flex size-8 shrink-0 items-center justify-center rounded border border-border bg-muted/20 text-muted-foreground/50"
+                      aria-label="No clan emblem"
+                      title="No clan"
+                    >
+                      <UserRound className="size-4" aria-hidden="true" />
+                    </span>
+                  ) : (
+                    <ClanEmblem
+                      clanId={game.hostClan.id}
+                      name={game.hostClan.name}
+                      hasEmblem={game.hostClan.hasEmblem}
+                      size="size-8"
+                    />
+                  )}
                   <p className="text-lg font-bold text-foreground">
                     {game.hostName ?? 'Unknown host'}
                   </p>
@@ -159,6 +191,14 @@ export function GameDetailPage() {
                         key={player.characterId}
                         className="flex min-w-0 items-center gap-3 rounded-xl border border-border bg-background/50 p-3"
                       >
+                        {isHost && game.dedicated ? (
+                          <Server
+                            className="size-4 shrink-0 text-muted-foreground"
+                            role="img"
+                            aria-label="Dedicated server"
+                          />
+                        ) : null}
+                        <PingIndicator ping={player.ping} />
                         {player.clan === null ? (
                           <span
                             className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-border bg-muted/20 text-muted-foreground/50"
@@ -175,7 +215,6 @@ export function GameDetailPage() {
                             size="size-10"
                           />
                         )}
-                        <PingIndicator ping={player.ping} />
                         <span className="min-w-0 flex-1 truncate font-semibold text-foreground">
                           {player.name}
                         </span>
