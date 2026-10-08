@@ -15,8 +15,6 @@ import { NewsPage } from './pages/NewsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { RankingsClansPage } from './pages/RankingsClansPage';
 import { RankingsPlayersPage } from './pages/RankingsPlayersPage';
-import { RegisterPage } from './pages/RegisterPage';
-import { SignInPage } from './pages/SignInPage';
 import { SurvivalEventsPage } from './pages/SurvivalEventsPage';
 import { SurvivalEventPage } from './pages/SurvivalEventPage';
 import { SurvivalTeamsPage } from './pages/SurvivalTeamsPage';
@@ -70,8 +68,6 @@ export function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/signin" element={<SignInPage />} />
 
         <Route path="/dashboard" element={<DashboardRoute />}>
           <Route index element={<OverviewSection />} />

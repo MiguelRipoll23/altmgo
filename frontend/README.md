@@ -8,9 +8,7 @@ browser. There is deliberately no `vercel.json` here: this app is not deployed o
 
 | path | what it is |
 | --- | --- |
-| `/` | the front door: sign in or register |
-| `/register` | creates the account the game logs in with |
-| `/signin` | signs in and keeps the bearer token |
+| `/` | the front door / — welcome, sign in, and register on one page |
 | `/dashboard` | the server's figures and the caller's published address, whose tile carries the update button |
 | `/dashboard/characters`, `/dashboard/characters/:id` | the caller's own characters, and one of them in full |
 | `/dashboard/news`, `/dashboard/news/:id` | the published news, and one item on a page of its own so it can be linked to |

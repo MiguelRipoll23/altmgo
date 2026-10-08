@@ -7,6 +7,7 @@ import { characterRoutes } from './routes/characterRoutes.js';
 import { addressRoutes } from './routes/addressRoutes.js';
 import { clanRoutes } from './routes/clanRoutes.js';
 import { dashboardRoutes } from './routes/dashboardRoutes.js';
+import { serverPulseRoutes } from './routes/serverPulse.js';
 
 /**
  * Vercel finds the backend by this default export — from `app`, `index` or
@@ -17,6 +18,12 @@ import { dashboardRoutes } from './routes/dashboardRoutes.js';
  * reaches this one across origins — the prefix is what makes that addressable,
  * and what keeps the bare root free to answer something useful to a visitor who
  * opened the API by hand.
+ *
+ * Public routes live in the root route table (the same table that owns `/` and
+ * the authentication routes), and dashboard routes live in dashboardRoutes,
+ * because the root table is the one thing any visitor touches before they are
+ * signed in and dashboardRoutes is the one thing only a signed-in account touches
+ * after.
  */
 const app = new Hono<AppBindings>();
 
@@ -44,6 +51,7 @@ app.route('/api', characterRoutes);
 app.route('/api', addressRoutes);
 app.route('/api', clanRoutes);
 app.route('/api', dashboardRoutes);
+app.route('/api/server', serverPulseRoutes);
 
 app.notFound((context) => context.json({ error: 'Not found.' }, 404));
 
