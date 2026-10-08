@@ -108,6 +108,28 @@ function subListId(section: SidebarSection): string {
   return `sub-${section.path.replace(/[^a-z]+/gi, '-')}`;
 }
 
+const OpenSectionsStorageKey = 'altmgo.navigation-open-sections';
+
+function readStoredOpenSections(
+  sections: SidebarSection[],
+  pathname: string,
+): Record<string, boolean> {
+  return Object.fromEntries(
+    sections
+      .filter((section) => section.children !== undefined)
+      .map((section) => {
+        const stored = window.localStorage.getItem(
+          `${OpenSectionsStorageKey}:${section.path}`,
+        );
+
+        return [
+          section.path,
+          stored === 'open' ? true : stored === 'closed' ? false : containsPage(section, pathname),
+        ];
+      }),
+  );
+}
+
 /**
  * The column of sections down the side of a frame.
  *
@@ -143,7 +165,9 @@ export function SidebarNav({
   reduced?: boolean;
 }) {
   const { pathname } = useLocation();
-  const [opened, setOpened] = useState<Record<string, boolean>>({});
+  const [opened, setOpened] = useState<Record<string, boolean>>(() =>
+    readStoredOpenSections(sections, pathname),
+  );
 
   if (reduced) {
     return <SidebarRail sections={sections} />;
@@ -170,12 +194,20 @@ export function SidebarNav({
         }
 
         const open = opened[section.path] ?? containsPage(section, pathname);
+        function toggleSection() {
+          const next = !open;
+          window.localStorage.setItem(
+            `${OpenSectionsStorageKey}:${section.path}`,
+            next ? 'open' : 'closed',
+          );
+          setOpened((state) => ({ ...state, [section.path]: next }));
+        }
 
         return (
           <div key={section.path} className="flex flex-col gap-1">
             <button
               type="button"
-              onClick={() => setOpened((state) => ({ ...state, [section.path]: !open }))}
+              onClick={toggleSection}
               className={sectionClasses(isSectionSelected(section, pathname))}
               aria-expanded={open}
               aria-controls={subListId(section)}

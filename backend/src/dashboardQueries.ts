@@ -161,6 +161,7 @@ export type GameDetails = GameSummary & {
     team: number;
     ping: number;
     joinedAt: Date;
+    clan: { id: number; name: string; hasEmblem: boolean } | null;
   }[];
 };
 
@@ -215,9 +216,14 @@ export async function findGameDetails(identifier: number): Promise<GameDetails |
         character.experience,
         player.team,
         player.ping,
-        player.joined_at
+        player.joined_at,
+        clan.id as clan_id,
+        clan.name as clan_name,
+        (clan.emblem is not null) as clan_has_emblem
       from game_players player
       join characters character on character.id = player.character_id
+      left join clans_members membership on membership.character_id = character.id
+      left join clans clan on clan.id = membership.clan_id
       where player.game_id = ${game.id}
       order by
         case when player.character_id = ${game.host_id} then 0 else 1 end,
@@ -349,6 +355,9 @@ export async function findGameDetails(identifier: number): Promise<GameDetails |
       team: number;
       ping: number;
       joined_at: Date;
+      clan_id: number | null;
+      clan_name: string | null;
+      clan_has_emblem: boolean | null;
     }[]).map((player) => ({
       characterId: player.character_id,
       name: player.name,
@@ -356,6 +365,14 @@ export async function findGameDetails(identifier: number): Promise<GameDetails |
       team: player.team,
       ping: player.ping,
       joinedAt: player.joined_at,
+      clan:
+        player.clan_id === null || player.clan_name === null
+          ? null
+          : {
+              id: player.clan_id,
+              name: player.clan_name,
+              hasEmblem: player.clan_has_emblem ?? false,
+            },
     })),
   };
 }

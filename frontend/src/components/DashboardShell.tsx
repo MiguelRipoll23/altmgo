@@ -93,16 +93,16 @@ function drawnColumn(stored: ColumnState, wide: boolean): ColumnState {
  * Where the column's state is written down between visits to the document.
  *
  * The frame remembers what the reader left it as, so a document that is reloaded,
- * restored from the browser's cache or reopened in the same tab comes back to the
- * column they were using rather than folding it away by itself. The session store
- * rather than the local one: this is a fact about the reader's place in one tab's
- * history, not a preference that should follow them into every later one.
+ * restored from the browser's cache or reopened after focus returns comes back to
+ * the column they were using rather than folding it away by itself.
  */
 const ColumnStorageKey = 'altmgo.navigation-column';
 
 /** The stored state, or nothing when there is none or it is not one of the three. */
 function readStoredColumn(): ColumnState | null {
-  const stored = window.sessionStorage.getItem(ColumnStorageKey);
+  const stored =
+    window.localStorage.getItem(ColumnStorageKey) ??
+    window.sessionStorage.getItem(ColumnStorageKey);
 
   return stored === 'open' || stored === 'reduced' || stored === 'hidden' ? stored : null;
 }
@@ -272,8 +272,20 @@ export function DashboardShell({
 
   // The state is written down as it changes, so the next document opens on it.
   useEffect(() => {
-    window.sessionStorage.setItem(ColumnStorageKey, column);
+    window.localStorage.setItem(ColumnStorageKey, column);
   }, [column]);
+
+  useEffect(() => {
+    const restoreColumn = () => {
+      const stored = readStoredColumn();
+      if (stored !== null) {
+        setColumn(stored);
+      }
+    };
+
+    window.addEventListener('focus', restoreColumn);
+    return () => window.removeEventListener('focus', restoreColumn);
+  }, []);
 
   // The room the page keeps for the floating button is a padding on the content
   // itself, in CSS, and it is not taken back on scroll.

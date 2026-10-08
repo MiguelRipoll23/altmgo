@@ -1,6 +1,7 @@
 import { ArrowLeft, Gamepad2, LockKeyhole, Map as MapIcon, UserRound, Users } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { LoadingBlock, SectionHeading, formatNumber } from '../components/DataDisplay';
+import { ClanEmblem } from '../components/ClanEmblem';
 import { StatusMessage } from '../components/StatusMessage';
 import type { Game } from '../components/GameCard';
 import { PingIndicator } from '../components/PingIndicator';
@@ -26,6 +27,7 @@ type GamePlayer = {
   characterId: number;
   name: string;
   ping: number;
+  clan: { id: number; name: string; hasEmblem: boolean } | null;
 };
 
 type GameDetails = Game & {
@@ -78,7 +80,7 @@ export function GameDetailPage() {
                 />
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/10" />
-              <div className="absolute inset-x-0 bottom-0 flex flex-wrap items-end justify-between gap-4 p-5 sm:p-7">
+              <div className="absolute inset-x-0 bottom-0 p-5 pr-28 sm:p-7 sm:pr-36">
                 <div className="min-w-0">
                   <p className="text-sm font-semibold uppercase tracking-widest text-white/75">
                     {mapName(currentRound?.map ?? game.map)}
@@ -87,20 +89,33 @@ export function GameDetailPage() {
                     {ruleName(currentRound?.rule ?? game.rule)}
                   </h2>
                 </div>
+              </div>
+              <div className="absolute right-4 top-4">
                 {game.hasPassword ? (
-                  <Badge variant="warning" className="bg-black/40">
+                  <Badge variant="warning" className="bg-black/60">
                     <LockKeyhole className="size-4" aria-hidden="true" />
                     Password protected
                   </Badge>
                 ) : (
-                  <Badge variant="success" className="bg-black/40">
+                  <Badge variant="success" className="bg-black/60">
                     Open to join
                   </Badge>
                 )}
               </div>
+              <div className="absolute bottom-4 right-4 rounded-lg border border-white/20 bg-black/60 px-3 py-2 text-right text-white shadow-sm backdrop-blur-sm sm:bottom-6 sm:right-6">
+                <p className="text-lg font-extrabold tabular-nums leading-none">
+                  {formatNumber(game.players)}
+                  <span className="font-medium text-white/70">
+                    {' '}/ {formatNumber(game.maximumPlayers)}
+                  </span>
+                </p>
+                <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-white/75">
+                  Players
+                </p>
+              </div>
             </div>
 
-            <CardContent className="grid gap-5 pt-5 sm:grid-cols-[minmax(0,1fr)_minmax(15rem,1fr)] sm:items-center sm:pt-6">
+            <CardContent className="pt-5 sm:pt-6">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
                   Hosted by
@@ -117,45 +132,65 @@ export function GameDetailPage() {
                   </p>
                 )}
               </div>
-
-              <div className="rounded-xl border border-border bg-background/50 p-4">
-                <div className="mb-2 flex items-center justify-between gap-3">
-                  <span className="flex items-center gap-2 font-semibold text-foreground">
-                    <Users className="size-4 text-primary" aria-hidden="true" />
-                    Players
-                  </span>
-                  <span className="font-bold tabular-nums text-foreground">
-                    {formatNumber(game.players)}{' '}
-                    <span className="font-medium text-muted-foreground">
-                      / {formatNumber(game.maximumPlayers)}
-                    </span>
-                  </span>
-                </div>
-                <div
-                  role="meter"
-                  aria-label="Players in game"
-                  aria-valuemin={0}
-                  aria-valuemax={game.maximumPlayers}
-                  aria-valuenow={Math.min(game.players, game.maximumPlayers)}
-                  aria-valuetext={`${game.players} of ${game.maximumPlayers} players`}
-                  className="h-2.5 overflow-hidden rounded-full bg-muted"
-                >
-                  <div
-                    className="h-full rounded-full bg-primary transition-[width]"
-                    style={{
-                      width: `${game.maximumPlayers > 0
-                        ? (Math.min(game.players, game.maximumPlayers) / game.maximumPlayers) * 100
-                        : 0}%`,
-                    }}
-                  />
-                </div>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {game.maximumPlayers - game.players > 0
-                    ? `${formatNumber(game.maximumPlayers - game.players)} spots open`
-                    : 'Game is full'}
-                </p>
-              </div>
             </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="size-4 text-primary" aria-hidden="true" />
+                Players in this game
+              </CardTitle>
+              <CardDescription>
+                {game.roster.length === 0
+                  ? 'Nobody is listed in the room yet.'
+                  : `${formatNumber(game.roster.length)} ${game.roster.length === 1 ? 'player' : 'players'} in the room`}
+              </CardDescription>
+            </CardHeader>
+            {game.roster.length === 0 ? (
+              <CardContent>
+                <p className="text-base text-muted-foreground">
+                  Nobody is listed in the room yet.
+                </p>
+              </CardContent>
+            ) : (
+              <CardContent>
+                <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {game.roster.map((player) => {
+                    const isHost = player.characterId === game.hostIdentifier;
+                    return (
+                      <li
+                        key={player.characterId}
+                        className="flex min-w-0 items-center gap-3 rounded-xl border border-border bg-background/50 p-3"
+                      >
+                        <span className="min-w-0 flex-1 truncate font-semibold text-foreground">
+                          {player.name}
+                        </span>
+                        <PingIndicator ping={player.ping} />
+                        {isHost ? <Badge variant="secondary">Host</Badge> : null}
+                        {player.clan === null ? (
+                          <span
+                            className="ml-auto flex size-10 shrink-0 items-center justify-center rounded-lg border border-border bg-muted/20 text-muted-foreground/50"
+                            aria-label="No clan emblem"
+                            title="No clan"
+                          >
+                            <UserRound className="size-5" aria-hidden="true" />
+                          </span>
+                        ) : (
+                          <ClanEmblem
+                            clanId={player.clan.id}
+                            name={player.clan.name}
+                            hasEmblem={player.clan.hasEmblem}
+                            size="size-10"
+                            className="ml-auto"
+                          />
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </CardContent>
+            )}
           </Card>
 
           <Card>
@@ -224,45 +259,6 @@ export function GameDetailPage() {
                     );
                   })}
                 </ol>
-              </CardContent>
-            )}
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="size-4 text-primary" aria-hidden="true" />
-                Players in this game
-              </CardTitle>
-              <CardDescription>
-                {game.roster.length === 0
-                  ? 'Nobody is listed in the room yet.'
-                  : `${formatNumber(game.roster.length)} ${game.roster.length === 1 ? 'player' : 'players'} in the room`}
-              </CardDescription>
-            </CardHeader>
-            {game.roster.length === 0 ? null : (
-              <CardContent>
-                <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {game.roster.map((player) => {
-                    const isHost = player.characterId === game.hostIdentifier;
-
-                    return (
-                      <li
-                        key={player.characterId}
-                        className="flex min-w-0 items-center gap-3 rounded-xl border border-border bg-background/50 p-3"
-                      >
-                        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                          <UserRound className="size-5" aria-hidden="true" />
-                        </span>
-                        <span className="min-w-0 flex-1 truncate font-semibold text-foreground">
-                          {player.name}
-                        </span>
-                        <PingIndicator ping={player.ping} />
-                        {isHost ? <Badge variant="secondary">Host</Badge> : null}
-                      </li>
-                    );
-                  })}
-                </ul>
               </CardContent>
             )}
           </Card>
