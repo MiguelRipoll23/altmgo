@@ -83,7 +83,7 @@
   --card-foreground: oklch(0.97 0.01 250);
   --popover: oklch(0.17 0.02 260);
   --popover-foreground: oklch(0.97 0.01 250);
-  --primary: #00c0e8;
+  --primary: #0096b5;
   --primary-foreground: #ffffff;
   --secondary: oklch(0.25 0.02 260);
   --secondary-foreground: oklch(0.95 0.01 250);
@@ -95,7 +95,7 @@
   --destructive-foreground: oklch(0.98 0.01 250);
   --border: oklch(0.3 0.02 260);
   --input: oklch(0.32 0.02 260);
-  --ring: #00c0e8;
+  --ring: #0096b5;
   --radius: 0.75rem;
 
   /* The pale ends of the three status hues, which are the ends that read against
