@@ -107,11 +107,7 @@ export function GameDetailPage() {
                     <LockKeyhole className="size-4" aria-hidden="true" />
                     Password protected
                   </Badge>
-                ) : (
-                  <Badge variant="success" className="bg-black/60">
-                    Open to join
-                  </Badge>
-                )}
+                ) : null}
               </div>
             </div>
 
