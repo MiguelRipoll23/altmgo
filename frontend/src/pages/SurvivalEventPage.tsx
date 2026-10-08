@@ -1,5 +1,5 @@
-import { ArrowLeft, CalendarClock, Users } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
+import { CalendarClock, Users } from 'lucide-react';
+import { useParams } from 'react-router-dom';
 import { LoadingBlock, Panel, SectionHeading } from '../components/DataDisplay';
 import { StatusMessage } from '../components/StatusMessage';
 import { TeamCard, type Team } from '../components/TeamCard';
@@ -46,14 +46,6 @@ export function SurvivalEventPage() {
 
   return (
     <div className="space-y-6">
-      <Link
-        to="/dashboard/survival/events"
-        className="inline-flex items-center gap-2 text-base font-medium text-primary hover:underline"
-      >
-        <ArrowLeft className="size-4" />
-        All Survival events
-      </Link>
-
       <SectionHeading title={schedule?.name ?? 'Survival event'} />
 
       {schedules.error === null ? null : <StatusMessage kind="error">{schedules.error}</StatusMessage>}

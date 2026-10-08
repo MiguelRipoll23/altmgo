@@ -1,5 +1,4 @@
-import { ArrowLeft } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { LoadingBlock, Panel, SectionHeading, formatDay } from '../components/DataDisplay';
 import { StatusMessage } from '../components/StatusMessage';
 import { useApiResource } from '../components/useApiResource';
@@ -27,18 +26,11 @@ type NewsItem = {
  * one read and one page: a second read of the same rows for staff would be a
  * second implementation of the same question.
  *
- * The back link is the first thing on the page rather than something below the
- * heading. A page reached from a list is read in that order — where am I, what is
- * this — and a link under a title is a link the eye has already passed.
- *
  * The item is drawn in its card whether or not it has arrived, so the page is the
  * same page while it is being read rather than a heading followed by a sentence in
  * the place the card will be.
  */
-export function NewsDetailPage({ listPath }: {
-  /** Where the back link returns to: the news list this page was opened from. */
-  listPath: string;
-}) {
+export function NewsDetailPage() {
   const { identifier } = useParams();
   const { data, error, loading } = useApiResource<{ news: NewsItem }>(`/api/news/${identifier}`);
 
@@ -46,14 +38,6 @@ export function NewsDetailPage({ listPath }: {
 
   return (
     <div className="space-y-6">
-      <Link
-        to={listPath}
-        className="inline-flex items-center gap-2 text-base font-medium text-primary hover:underline"
-      >
-        <ArrowLeft className="size-4" />
-        All news
-      </Link>
-
       <SectionHeading title={item?.title ?? 'News'} />
 
       {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}

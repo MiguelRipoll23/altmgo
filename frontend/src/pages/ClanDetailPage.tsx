@@ -1,5 +1,4 @@
-import { ArrowLeft } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { ClanEmblem } from '../components/ClanEmblem';
 import {
   DataTable,
@@ -51,14 +50,6 @@ export function ClanDetailPage() {
 
   return (
     <div className="space-y-6">
-      <Link
-        to="/dashboard/clans"
-        className="inline-flex items-center gap-2 text-base font-medium text-primary hover:underline"
-      >
-        <ArrowLeft className="size-4" />
-        All clans
-      </Link>
-
       <SectionHeading title={clan?.name ?? 'Clan'} />
 
       {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}

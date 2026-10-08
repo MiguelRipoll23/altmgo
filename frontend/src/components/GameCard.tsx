@@ -83,20 +83,15 @@ export function GameCard({ game }: { game: Game }) {
           <div className="flex min-w-0 items-start justify-between gap-3 text-white drop-shadow-md">
             <div className="flex min-w-0 items-center gap-2">
               <PingIndicator ping={game.ping} />
-              <h3 className="min-w-0 truncate text-base font-extrabold tracking-tight">
-                {game.name}
-              </h3>
-            </div>
-            <div className="flex min-w-0 shrink-0 items-center gap-2">
-              <span className="max-w-28 truncate text-right text-sm font-semibold sm:max-w-36">
-                {game.hostName ?? 'unknown'}
-              </span>
               {game.hasPassword ? (
                 <span title="Password protected">
-                  <LockKeyhole className="size-4" aria-hidden="true" />
+                  <LockKeyhole className="size-4 shrink-0" aria-hidden="true" />
                   <span className="sr-only">Password protected</span>
                 </span>
               ) : null}
+              <h3 className="min-w-0 truncate text-base font-extrabold tracking-tight">
+                {game.name}
+              </h3>
             </div>
           </div>
           <div className="flex min-w-0 items-end justify-between gap-3">
@@ -134,6 +129,9 @@ export function GameCard({ game }: { game: Game }) {
             picked the room. The card is about what the room is, not about when it
             last blinked. */}
         <p className="mt-auto min-h-10 text-base text-muted-foreground">
+          <span className="mb-1 block text-xs font-semibold uppercase tracking-widest text-muted-foreground/75">
+            Comment
+          </span>
           {game.comment === '' ? 'No comment' : game.comment}
         </p>
       </div>

@@ -1,5 +1,4 @@
-import { ArrowLeft } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { LoadingBlock, Panel, SectionHeading, formatNumber } from '../components/DataDisplay';
 import { StatusMessage } from '../components/StatusMessage';
 import { useApiResource } from '../components/useApiResource';
@@ -44,14 +43,6 @@ export function CharacterDetailPage() {
 
   return (
     <div className="space-y-6">
-      <Link
-        to="/dashboard/characters"
-        className="inline-flex items-center gap-2 text-base font-medium text-primary hover:underline"
-      >
-        <ArrowLeft className="size-4" />
-        All characters
-      </Link>
-
       <SectionHeading title={character?.name ?? 'Character'} />
 
       {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}

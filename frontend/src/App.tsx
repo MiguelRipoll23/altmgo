@@ -77,18 +77,18 @@ export function App() {
           <Route path="news" element={<NewsPage />} />
           <Route
             path="news/:identifier"
-            element={<NewsDetailPage listPath="/dashboard/news" />}
+            element={<NewsDetailPage />}
           />
           <Route path="mail" element={<Navigate to="/dashboard/mail/inbox" replace />} />
           <Route path="mail/inbox" element={<MailInboxPage />} />
           <Route path="mail/outbox" element={<MailOutboxPage />} />
           <Route
             path="mail/inbox/:identifier"
-            element={<MailDetailPage back="/dashboard/mail/inbox" label="Inbox" />}
+            element={<MailDetailPage />}
           />
           <Route
             path="mail/outbox/:identifier"
-            element={<MailDetailPage back="/dashboard/mail/outbox" label="Outbox" />}
+            element={<MailDetailPage />}
           />
           <Route path="clans" element={<ClansPage />} />
           <Route path="clans/:identifier" element={<ClanDetailPage />} />

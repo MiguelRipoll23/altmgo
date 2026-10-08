@@ -1,5 +1,5 @@
-import { ArrowLeft, Crown, Swords, Trophy } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
+import { Crown, Swords, Trophy } from 'lucide-react';
+import { useParams } from 'react-router-dom';
 import {
   LoadingBlock,
   Panel,
@@ -88,14 +88,6 @@ export function TournamentEventPage({ area = 'registrations' }: { area?: Tournam
 
   return (
     <div className="space-y-6">
-      <Link
-        to="/dashboard/tournament"
-        className="inline-flex items-center gap-2 text-base font-medium text-primary hover:underline"
-      >
-        <ArrowLeft className="size-4" />
-        All Tournament events
-      </Link>
-
       <SectionHeading title={`Tournament event ${identifier}`} />
 
       {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}

@@ -1,5 +1,4 @@
-import { ArrowLeft } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { LoadingBlock, Panel, SectionHeading, formatDate } from '../components/DataDisplay';
 import { StatusMessage } from '../components/StatusMessage';
 import { useApiResource } from '../components/useApiResource';
@@ -24,31 +23,16 @@ type MailMessage = {
  * One message, on its own page.
  *
  * The inbox and the outbox are two lists of the same messages, so this is one
- * page reached from either. The only thing that differs between them is where the
- * back link goes, and that is the reader's choice rather than the page's, so it
- * travels in the address.
+ * page reached from either.
  *
  * It is a page rather than an expansion under the list for the reason the news
  * detail page is: a link to a letter is a thing people paste to each other, and a
  * pasted link has to open the letter and not a list it once sat in.
  *
- * The mailbox a message was opened from is part of the address rather than a
- * piece of state, so the back link returns to the list the reader was actually
- * reading — a letter found in the outbox goes back to the outbox rather than to
- * whichever mailbox happens to be first — and so a shared link names the list the
- * sender was reading rather than leaving the reader to guess.
- *
  * The letter is drawn in its card whether or not it has arrived, so the page is the
- * same page while it is being read, and the back link sits above the heading for the
- * same reason the news detail page puts it there: a page reached from a list is read
- * in that order.
+ * same page while it is being read.
  */
-export function MailDetailPage({ back, label }: {
-  /** Where the back link returns to: the list this message was opened from. */
-  back: string;
-  /** The words on the back link, which differ between a mailbox and a sent list. */
-  label: string;
-}) {
+export function MailDetailPage() {
   const { identifier } = useParams();
   const { data, error, loading } = useApiResource<{ mail: MailMessage }>(`/api/mail/${identifier}`);
 
@@ -56,14 +40,6 @@ export function MailDetailPage({ back, label }: {
 
   return (
     <div className="space-y-6">
-      <Link
-        to={back}
-        className="inline-flex items-center gap-2 text-base font-medium text-primary hover:underline"
-      >
-        <ArrowLeft className="size-4" />
-        {label}
-      </Link>
-
       <SectionHeading title={message?.subject ?? 'Mail'} />
 
       {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}

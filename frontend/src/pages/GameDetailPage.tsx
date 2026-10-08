@@ -1,12 +1,11 @@
 import {
-  ArrowLeft,
   Gamepad2,
   LockKeyhole,
   Map as MapIcon,
   UserRound,
   Users,
 } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { LoadingBlock, formatNumber } from '../components/DataDisplay';
 import { ClanEmblem } from '../components/ClanEmblem';
 import { StatusMessage } from '../components/StatusMessage';
@@ -102,14 +101,6 @@ export function GameDetailPage() {
 
   return (
     <div className="space-y-6">
-      <Link
-        to="/dashboard/games"
-        className="inline-flex items-center gap-2 text-base font-medium text-primary hover:underline"
-      >
-        <ArrowLeft className="size-4" />
-        All games
-      </Link>
-
       {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
       {loading && game === null ? <LoadingBlock centered /> : null}
       {!loading && error === null && game === null ? (
@@ -146,28 +137,6 @@ export function GameDetailPage() {
                     {game.name}
                   </h1>
                 </div>
-                <div className="flex min-w-0 shrink-0 items-center gap-2 text-white drop-shadow-md">
-                  <span className="max-w-32 truncate text-right text-sm font-semibold sm:max-w-48 sm:text-base">
-                    {game.hostName ?? 'Unknown host'}
-                  </span>
-                  {game.hostClan === null ? (
-                    <span
-                      className="flex size-8 shrink-0 items-center justify-center rounded border border-white/30 bg-black/30 text-white/70"
-                      aria-label="No clan emblem"
-                      title="No clan"
-                    >
-                      <UserRound className="size-4" aria-hidden="true" />
-                    </span>
-                  ) : (
-                    <ClanEmblem
-                      clanId={game.hostClan.id}
-                      name={game.hostClan.name}
-                      hasEmblem={game.hostClan.hasEmblem}
-                      size="size-8"
-                      className="border-white/30 bg-black/30"
-                    />
-                  )}
-                </div>
               </div>
               <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-5 sm:p-7">
                 <div className="min-w-0">
@@ -194,6 +163,9 @@ export function GameDetailPage() {
 
             {game.comment.trim() === '' ? null : (
               <CardContent className="pt-5 sm:pt-6">
+                <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground/75">
+                  Comment
+                </p>
                 <p className="whitespace-pre-wrap text-base text-muted-foreground">
                   {game.comment}
                 </p>
@@ -349,10 +321,7 @@ export function GameDetailPage() {
             <TabsContent value="settings">
               <Card>
                 <CardHeader>
-                  <CardTitle>Game settings</CardTitle>
-                  <CardDescription>
-                    The host’s saved settings, which may differ from the live room configuration.
-                  </CardDescription>
+                  <CardTitle>Host settings</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <dl className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
