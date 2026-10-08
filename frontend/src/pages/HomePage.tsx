@@ -147,7 +147,7 @@ export function HomePage() {
         </section>
 
         <Card className="w-full">
-          <CardHeader className="pb-4">
+          <CardHeader className="pb-2">
             <CardTitle className="text-lg font-bold normal-case tracking-normal text-foreground">
               {registering ? 'Create your account' : 'Welcome back'}
             </CardTitle>
@@ -158,7 +158,7 @@ export function HomePage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs value={mode} onValueChange={selectMode} className="gap-3">
+            <Tabs value={mode} onValueChange={selectMode}>
               <TabsList aria-label="Account access">
                 <TabsTrigger
                   value="signin"
