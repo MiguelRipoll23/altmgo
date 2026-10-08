@@ -65,7 +65,7 @@ export function GameDetailPage() {
         All games
       </Link>
 
-      <SectionHeading title={game?.name ?? 'Game details'} className="mb-0" />
+      <SectionHeading title={game?.name ?? 'Game details'} />
 
       {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
       {loading && game === null ? <LoadingBlock centered /> : null}
