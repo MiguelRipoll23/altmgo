@@ -5,12 +5,13 @@ import type { ReactNode } from 'react';
  * whose whole content is a pair of stacked buttons is narrower still — a card
  * that wide for two buttons reads as a page that lost its content.
  */
-export type PageLayoutWidth = 'narrow' | 'form' | 'wide';
+export type PageLayoutWidth = 'narrow' | 'form' | 'wide' | 'landing';
 
 const widths: Record<PageLayoutWidth, string> = {
   narrow: 'max-w-sm',
   form: 'max-w-md',
   wide: 'max-w-3xl',
+  landing: 'max-w-5xl',
 };
 
 /**
