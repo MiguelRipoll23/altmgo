@@ -38,7 +38,7 @@ export function PublishedAddress({ address }: { address: string | null }) {
           reader who does not already know that this is where their game is reachable
           has nothing to attach them to. */}
       <Globe className="size-3.5 shrink-0" aria-hidden="true" />
-      <span className="truncate">{address ?? 'No address published'}</span>
+      <span className="truncate text-foreground">{address ?? 'No address published'}</span>
     </span>
   );
 }

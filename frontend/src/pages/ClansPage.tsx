@@ -1,4 +1,4 @@
-import { ArrowUpDown, ChevronRight, RefreshCw, Search, SlidersHorizontal } from 'lucide-react';
+import { ArrowUpDown, ChevronRight, Funnel, RefreshCw, Search } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ClanEmblem } from '../components/ClanEmblem';
@@ -155,7 +155,7 @@ export function ClansPage({ basePath = '/dashboard' }: { basePath?: string }) {
           <Dialog open={filtersOpen} onOpenChange={setFiltersOpen}>
             <DialogTrigger asChild>
               <Button variant="outline">
-                <SlidersHorizontal aria-hidden="true" />
+                <Funnel aria-hidden="true" />
                 Filters
                 {activeFilters === 0 ? null : (
                   <Badge variant="secondary" className="ml-1">
@@ -237,13 +237,10 @@ export function ClansPage({ basePath = '/dashboard' }: { basePath?: string }) {
             </DialogContent>
           </Dialog>
 
-          {/* The order the list is read in. It carries the icon rather than a
-              written label, like the games page: the trigger says which order is
-              chosen, and a second word would be the longest thing on a line that is
-              otherwise controls. */}
           <Select value={sort} onValueChange={setSort}>
             <SelectTrigger aria-label="Order by" className="w-auto justify-start">
               <ArrowUpDown className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+              <span>Order by</span>
               <SelectValue className="flex-1 text-left" />
             </SelectTrigger>
             <SelectContent>
@@ -260,12 +257,11 @@ export function ClansPage({ basePath = '/dashboard' }: { basePath?: string }) {
               start a second read of the same list. */}
           <Button
             variant="outline"
-            size="icon"
             onClick={list.reload}
             disabled={list.loading}
-            aria-label="Read the clans again"
           >
             <RefreshCw className={cn(list.loading && 'animate-spin')} aria-hidden="true" />
+            Refresh
           </Button>
 
           {/* How many clans answered, beside the controls that asked. The list is

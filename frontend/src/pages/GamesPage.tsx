@@ -1,4 +1,4 @@
-import { ArrowUpDown, RefreshCw, Search, SlidersHorizontal } from 'lucide-react';
+import { ArrowUpDown, Funnel, RefreshCw, Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { LoadingBlock, SectionHeading, formatNumber } from '../components/DataDisplay';
 import { GameCard, type Game } from '../components/GameCard';
@@ -454,7 +454,7 @@ export function GamesPage() {
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="outline">
-                <SlidersHorizontal aria-hidden="true" />
+                <Funnel aria-hidden="true" />
                 Filters
                 {activeFilters === 0 ? null : (
                   <Badge variant="secondary" className="ml-1">
@@ -509,14 +509,10 @@ export function GamesPage() {
             </DialogContent>
           </Dialog>
 
-          {/* The order the list is read in. It carries the icon rather than a
-              written label: it sits beside a button whose whole word is "Filters"
-              and a count that says what it counts, so a second word here would be
-              the longest thing on a line that is otherwise controls. The icon says
-              it is a sort and the trigger says which one is chosen. */}
           <Select value={order} onValueChange={setOrder}>
             <SelectTrigger aria-label="Order by" className="w-auto justify-start">
               <ArrowUpDown className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+              <span>Order by</span>
               <SelectValue className="flex-1 text-left" />
             </SelectTrigger>
             <SelectContent>
@@ -533,12 +529,11 @@ export function GamesPage() {
               start a second read of the same list. */}
           <Button
             variant="outline"
-            size="icon"
             onClick={reload}
             disabled={loading}
-            aria-label="Read the games again"
           >
             <RefreshCw className={cn(loading && 'animate-spin')} aria-hidden="true" />
+            Refresh
           </Button>
 
           {/* The count sits beside the last button rather than pushed to the far
