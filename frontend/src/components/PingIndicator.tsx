@@ -1,16 +1,14 @@
-import { formatNumber } from './DataDisplay';
 import { cn } from '../lib/utils';
 
 /** A host- or player-reported ping, shown as a quick quality gauge. */
 export function PingIndicator({
   ping,
-  showValue = false,
   className,
 }: {
   ping: number;
-  showValue?: boolean;
   className?: string;
 }) {
+  const quality = ping <= 50 ? 'Excellent' : ping <= 100 ? 'Good' : ping <= 200 ? 'Fair' : 'Poor';
   const colour =
     ping <= 50 ? 'bg-emerald-500' : ping <= 100 ? 'bg-amber-500' : 'bg-red-500';
   const lit = ping <= 50 ? 1 : ping <= 100 ? 2 : ping <= 200 ? 3 : 4;
@@ -19,8 +17,8 @@ export function PingIndicator({
     <span className={cn('inline-flex items-center gap-2', className)}>
       <span
         role="img"
-        aria-label={`${formatNumber(ping)} milliseconds ping`}
-        title={`${formatNumber(ping)} ms ping`}
+        aria-label={`${quality} ping`}
+        title={`${quality} ping`}
         className="flex shrink-0 items-end gap-0.5"
       >
         {BarHeights.map((height, index) => (
@@ -30,11 +28,6 @@ export function PingIndicator({
           />
         ))}
       </span>
-      {showValue ? (
-        <span className="text-sm tabular-nums text-muted-foreground">
-          {formatNumber(ping)} ms
-        </span>
-      ) : null}
     </span>
   );
 }
