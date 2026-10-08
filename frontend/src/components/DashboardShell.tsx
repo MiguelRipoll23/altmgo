@@ -58,11 +58,8 @@ type ColumnState = 'open' | 'reduced' | 'hidden';
  *
  * So `hidden` is honoured only where it means something: a narrow window, where
  * the column is a drawer over the page and the page genuinely needs the width
- * back. A stored `hidden` on a wide window — however it got there, whether the
- * reader was last on a phone, whether a window was resized, whether something
- * asked for it and was refused — draws as reduced. The state can still be stored,
- * because the same state has to mean the right thing on both kinds of window, but
- * it cannot put a desktop into the one state the desktop does not have.
+ * back. A stored `hidden` on a wide window — usually left from using a phone —
+ * draws open so the desktop starts with its navigation visible.
  *
  * The other direction is the same rule read the other way. A reduced column is a
  * wide-window idea — icons with a page beside them — and on a narrow window it
@@ -79,7 +76,7 @@ type ColumnState = 'open' | 'reduced' | 'hidden';
  */
 function drawnColumn(stored: ColumnState, wide: boolean): ColumnState {
   if (wide && stored === 'hidden') {
-    return 'reduced';
+    return 'open';
   }
 
   if (!wide && stored === 'reduced') {
