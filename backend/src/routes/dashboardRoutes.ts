@@ -5,6 +5,7 @@ import {
   listEventSchedules,
   listEventTeams,
   listGames,
+  listLobbies,
   listTournamentEntries,
   listTournamentFixtures,
   findTournamentBracket,
@@ -167,6 +168,23 @@ dashboardRoutes.get('/games', requireAccount, async (context) => {
   const games = await listGames();
 
   return context.json({ games: games.map(describeGame) });
+});
+
+/**
+ * Every gameplay lobby the server is serving right now.
+ *
+ * The list the games page builds its lobby filter from, read from the game
+ * server's own `lobbies` table rather than from the games on the page: the
+ * question the filter answers is which lobbies the server has, and a lobby with
+ * nothing hosted in it at this moment is still a lobby a reader may be looking
+ * for. It is its own route rather than a field of `/games` because the two
+ * answer different questions — which rooms are up is a moment, which lobbies
+ * exist is the shape of the server — and a field of `/games` could only ever
+ * offer the lobbies that happen to have a game in them, so a reader after a
+ * quiet lobby would be told it was never there.
+ */
+dashboardRoutes.get('/lobbies', requireAccount, async (context) => {
+  return context.json({ lobbies: await listLobbies() });
 });
 
 /** The Survival teams and the events they are played in. */

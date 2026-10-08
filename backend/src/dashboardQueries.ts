@@ -9,6 +9,35 @@ export const TournamentMode = 3;
 /** Lobby selector of the Tournament registration screen. */
 export const TournamentRegistrationMode = 10;
 
+/**
+ * Kind of service a lobby row describes, as the game server's own `LobbyType`
+ * numbers it: the gate is 0, the account server 1 and a gameplay lobby 2.
+ *
+ * Only the third is a place a game can be hosted in — the other two are
+ * permanent endpoints the client dials before it has a character — so the lobby
+ * list is the third alone.
+ */
+const GameplayLobbyType = 2;
+
+/**
+ * How long a gameplay lobby's row stays on the list after its last heartbeat,
+ * as the game server counts it: two heartbeats at the sixty-minute default of
+ * its `LobbiesRefreshIntervalMinutes`. A deployment that beats more often (the
+ * live one beats every five minutes) only makes the server's own window narrower
+ * than this.
+ *
+ * Deliberately wider than the games window below. A game row goes stale in a
+ * minute because it is what somebody joins from, and the failure there is a
+ * room left on the page that nobody can join. The lobby row is read by a filter,
+ * where the failure is the other way round: a window narrower than the server's
+ * own would drop a lobby that is still running in the gap between two of its
+ * heartbeats, and a reader could then no longer filter for a room that is right
+ * there on the page. The cost of the wider window is a lobby whose server
+ * stopped staying on the filter as an option matching nothing, for at most this
+ * long — and the game server deletes the row itself in its daily cleanup anyway.
+ */
+const LobbyStaleSeconds = 2 * 60 * 60;
+
 /** The three lobby modes an event can be played in. */
 export const EventModes = [SurvivalMode, TournamentMode, TournamentRegistrationMode] as const;
 
@@ -242,6 +271,37 @@ function roomMap(game: GameSummaryRow): number {
  */
 function roomRule(game: GameSummaryRow): number {
   return roundEntry(currentRound(game), 0);
+}
+
+/**
+ * Every gameplay lobby the server is serving, in the order the client is sent them.
+ *
+ * The order is the row's own id, which is the order the gate hands the list to a
+ * client in — so the filter reads the way the game's own lobby-select screen
+ * does, rather than alphabetically, which would scatter the lobbies a player
+ * moves between (Free Battle, then the training lobbies) into an order they have
+ * never seen.
+ *
+ * Names rather than ids, because a name is what the reader recognises and what
+ * the games page groups by; the id is a row number from another table that a
+ * reader has never seen. A name shared by two rows is one option, since two
+ * rows of the same name are one kind of place to the reader.
+ *
+ * A lobby with no game in it is still listed. That is the point of reading the
+ * table rather than the games: the question is which lobbies the server has,
+ * not which have something running in them right now, and an empty result for a
+ * quiet lobby is the truth rather than the filter being broken.
+ */
+export async function listLobbies(): Promise<string[]> {
+  const rows = await database()`
+    select name
+    from lobbies
+    where type_id = ${GameplayLobbyType}
+      and updated_at >= now() - ${LobbyStaleSeconds} * interval '1 second'
+    order by id
+  `;
+
+  return (rows as { name: string }[]).map((lobby) => lobby.name);
 }
 
 /** One event team with the roster it holds. */

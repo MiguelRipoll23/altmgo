@@ -24,6 +24,7 @@ itself.
 | `POST` | `/api/addresses` | publishes the caller's address for the account's characters that have a connection row |
 | `GET` | `/api/overview` | how many players are connected, and which lobby each is in |
 | `GET` | `/api/games` | the game rooms that are up right now |
+| `GET` | `/api/lobbies` | the gameplay lobbies the server is serving |
 | `GET` | `/api/clans` | the clan directory, filtered and ordered |
 | `GET` | `/api/clans/:id` | one clan: its notice, roster and waiting applications |
 | `GET` | `/api/clans/:id/emblem` | one clan's emblem, decoded to a 32×32 PNG; 404 when it has drawn none |
@@ -54,7 +55,7 @@ routes.
 | `src/clientAddress.ts` | the address a request arrived from, IPv4 only |
 | `src/publicAddresses.ts` | an account's connected characters, and the public address write |
 | `src/presence.ts` | the connected-player counts, the server totals and the lobby breakdown |
-| `src/dashboardQueries.ts` | the game, survival and tournament reads |
+| `src/dashboardQueries.ts` | the game, lobby, survival and tournament reads |
 | `src/newsQueries.ts` | the news list, and one news item by id |
 | `src/mailQueries.ts` | a player's own mail, from either side of the delivery |
 | `src/rankingsQueries.ts` | the five player boards and the three clan boards |

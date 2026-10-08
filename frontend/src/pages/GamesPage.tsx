@@ -51,9 +51,30 @@ const RefreshSeconds = 60;
 /** The value a filter takes when nothing is being filtered. */
 const AnyValue = 'any';
 
-/** Every value the lobby filter offers, and what each of them means. */
-const LobbyOptions = [
-  { value: AnyValue, label: 'All lobbies' },
+/**
+ * The prefix a lobby filter value carries.
+ *
+ * A lobby's value is its own name, and the name is the game server's to choose
+ * (`LOBBY_NAME` of the lobby's own service) rather than something written here,
+ * so nothing here can promise a lobby is not called `any` — the one word the
+ * dropdown reads as "no filter". The prefix keeps the two apart without
+ * pretending to know what the server will be called. The label stays the bare
+ * name, so it costs the reader nothing.
+ */
+const LobbyPrefix = 'lobby:';
+
+/**
+ * Every value the access filter offers, and what each of them means.
+ *
+ * These three are what the lobby filter used to carry, under a label that said
+ * Lobby: two answers about passwords sitting in a filter about places, which
+ * meant a reader after "the lobbies this server has" was handed a question about
+ * padlocks and a reader after open games had to hope the label was lying
+ * politely. They are their own filter now, so the lobby one can mean lobbies and
+ * this one keeps asking what it always asked.
+ */
+const AccessOptions = [
+  { value: AnyValue, label: 'Any access' },
   { value: 'open', label: 'Open to everyone' },
   { value: 'locked', label: 'Password protected' },
 ];
@@ -108,11 +129,17 @@ const OrderOptions = [
  * looking for a particular game types the game, and somebody looking for who is
  * hosting types the host. A name that matches one of them is enough; searching
  * for both at once is a query a reader would have to know to write.
+ *
+ * The lobby is matched by name against the name the room was filed under, which
+ * is the same key the page groups by below — so picking a lobby shows exactly
+ * the games that would sit under that heading, and never a game from a group
+ * the filter's own list does not offer.
  */
 function matchesFilters(
   game: Game,
   query: string,
   lobby: string,
+  access: string,
   map: string,
   rule: string,
 ): boolean {
@@ -127,11 +154,15 @@ function matchesFilters(
     }
   }
 
-  if (lobby === 'open' && game.hasPassword) {
+  if (lobby !== AnyValue && (game.lobbyName ?? UnnamedLobby) !== lobby.slice(LobbyPrefix.length)) {
     return false;
   }
 
-  if (lobby === 'locked' && !game.hasPassword) {
+  if (access === 'open' && game.hasPassword) {
+    return false;
+  }
+
+  if (access === 'locked' && !game.hasPassword) {
     return false;
   }
 
@@ -237,10 +268,33 @@ export function GamesPage() {
   const { data, error, loading, reload } = useApiResource<{ games: Game[] }>('/api/games');
   const games = data?.games ?? [];
 
+  // The lobbies the server is serving, which is where the lobby filter's options
+  // come from. It is its own read rather than a field of the games because the
+  // two answer different questions: a lobby is a place the server runs whether
+  // or not anything is hosted in it, so a lobby with no game in it right now is
+  // still a lobby a reader may be looking for — while the games are a moment and
+  // are re-read every minute.
+  //
+  // A read that fails is reported only when the games came back, because a page
+  // that already has its own error message for the list would be drawing a second
+  // one beside the first; and the filter keeps working either way, from the
+  // lobbies the games themselves name, which is what the options below fall back
+  // to.
+  const {
+    data: lobbyList,
+    error: lobbyError,
+    reload: reloadLobbies,
+  } = useApiResource<{ lobbies: string[] }>('/api/lobbies');
+
   // The list reads itself again while the page is open. The interval is armed once
   // and never re-armed: `reload` changes an identity inside the hook rather than
   // being a new function, so depending on it would restart the timer after every
   // tick and the list would never refresh at all.
+  //
+  // The lobby list is read on the same tick. It is the same size of a query and
+  // it is what the filter's options are built from, so a lobby started or stopped
+  // while the page sat open would otherwise be missing from — or stuck in — the
+  // dropdown, offering a reader a choice the server no longer makes.
   //
   // Nothing is drawn from this — it is not a "last updated" line, because a reader
   // who did not ask does not need to be told when the page last spoke to the
@@ -255,21 +309,68 @@ export function GamesPage() {
     const timer = window.setInterval(() => {
       if (!document.hidden) {
         reload();
+        reloadLobbies();
       }
     }, RefreshSeconds * 1000);
 
     return () => window.clearInterval(timer);
-  }, [reload]);
+  }, [reload, reloadLobbies]);
 
   const [query, setQuery] = useState('');
   const [lobby, setLobby] = useState(AnyValue);
+  const [access, setAccess] = useState(AnyValue);
   const [map, setMap] = useState(AnyValue);
   const [rule, setRule] = useState(AnyValue);
   const [order, setOrder] = useState('players');
 
+  /**
+   * Every value the lobby filter offers: the server's own lobbies, then any
+   * lobby a listed game is in that the first list did not name.
+   *
+   * The server's list comes first and keeps its order, because that is the order
+   * the client is sent the lobby list in and the order a player who switches
+   * between lobbies does it in. Alphabetising would scatter the lobbies a player
+   * moves between into an order they have never seen.
+   *
+   * The games then add their own names, for the two ways a room can be in a
+   * lobby the server's list did not hand us: the lobby row the room points at
+   * was not readable (a room with no lobby still sits on the page under a word
+   * saying so), or the lobbies read has just failed and these names are all there
+   * is. Without them a reader could be shown a game no option in the dropdown
+   * reaches — which is a filter that hides rather than narrows.
+   *
+   * A lobby with nothing hosted in it stays on the list. That is the point of
+   * reading the table: the question is which lobbies the server has, not which
+   * are busy, and a quiet lobby picked from the list answers with "no game
+   * matches" rather than being an option the page never offered.
+   */
+  const lobbyOptions = useMemo(() => {
+    const seen = new Set<string>();
+    const options = [{ value: AnyValue, label: 'All lobbies' }];
+
+    function offer(name: string) {
+      if (seen.has(name)) {
+        return;
+      }
+
+      seen.add(name);
+      options.push({ value: LobbyPrefix + name, label: name });
+    }
+
+    for (const name of lobbyList?.lobbies ?? []) {
+      offer(name);
+    }
+
+    for (const game of games) {
+      offer(game.lobbyName ?? UnnamedLobby);
+    }
+
+    return options;
+  }, [lobbyList, games]);
+
   const filtered = useMemo(
-    () => games.filter((game) => matchesFilters(game, query, lobby, map, rule)),
-    [games, query, lobby, map, rule],
+    () => games.filter((game) => matchesFilters(game, query, lobby, access, map, rule)),
+    [games, query, lobby, access, map, rule],
   );
 
   // The groups are built once per filter change rather than per render, because
@@ -317,6 +418,7 @@ export function GamesPage() {
   const activeFilters =
     (query.trim() === '' ? 0 : 1) +
     (lobby === AnyValue ? 0 : 1) +
+    (access === AnyValue ? 0 : 1) +
     (map === AnyValue ? 0 : 1) +
     (rule === AnyValue ? 0 : 1);
 
@@ -325,6 +427,7 @@ export function GamesPage() {
   function clearFilters() {
     setQuery('');
     setLobby(AnyValue);
+    setAccess(AnyValue);
     setMap(AnyValue);
     setRule(AnyValue);
   }
@@ -334,6 +437,14 @@ export function GamesPage() {
       <SectionHeading title="Games" />
 
       {error === null ? null : <StatusMessage kind="error">{error}</StatusMessage>}
+
+      {/* The lobby list failing on its own is reported only while the games came
+          back, so a page that is already saying the read failed does not draw the
+          same sentence twice — and a page whose games did fail has that message
+          to show instead. */}
+      {error !== null || lobbyError === null ? null : (
+        <StatusMessage kind="error">{lobbyError}</StatusMessage>
+      )}
 
       {/* The controls, in one line, once there is a list to control. While the
           first read is in flight there is nothing to filter, sort or count, so
@@ -357,7 +468,7 @@ export function GamesPage() {
               <DialogHeader>
                 <DialogTitle>Filters</DialogTitle>
                 <DialogDescription>
-                  Narrow the games by name, lobby, map or mode.
+                  Narrow the games by name, lobby, access, map or mode.
                 </DialogDescription>
               </DialogHeader>
 
@@ -381,7 +492,8 @@ export function GamesPage() {
               </label>
 
               <div className="flex flex-col gap-3">
-                <FilterSelect label="Lobby" value={lobby} options={LobbyOptions} onChange={setLobby} />
+                <FilterSelect label="Lobby" value={lobby} options={lobbyOptions} onChange={setLobby} />
+                <FilterSelect label="Access" value={access} options={AccessOptions} onChange={setAccess} />
                 <FilterSelect label="Map" value={map} options={MapOptions} onChange={setMap} />
                 <FilterSelect label="Mode" value={rule} options={RuleOptions} onChange={setRule} />
               </div>
