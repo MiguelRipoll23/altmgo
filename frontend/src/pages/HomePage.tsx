@@ -158,7 +158,7 @@ export function HomePage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs value={mode} onValueChange={selectMode}>
+            <Tabs value={mode} onValueChange={selectMode} className="gap-3">
               <TabsList aria-label="Account access">
                 <TabsTrigger
                   value="signin"
