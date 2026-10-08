@@ -6,9 +6,9 @@
  * Tailwind's own slate and sky, which that page uses directly.
  */
 @theme {
-  --color-mgo-400: #7dd3fc;
-  --color-mgo-500: #38bdf8;
-  --color-mgo-600: #0ea5e9;
+  --color-mgo-400: #67e8f9;
+  --color-mgo-500: #22d3ee;
+  --color-mgo-600: #06b6d4;
 }
 
 /*
@@ -83,7 +83,7 @@
   --card-foreground: oklch(0.97 0.01 250);
   --popover: oklch(0.17 0.02 260);
   --popover-foreground: oklch(0.97 0.01 250);
-  --primary: oklch(0.79 0.13 230);
+  --primary: oklch(0.84 0.14 205);
   --primary-foreground: oklch(0.15 0.03 250);
   --secondary: oklch(0.25 0.02 260);
   --secondary-foreground: oklch(0.95 0.01 250);
@@ -95,7 +95,7 @@
   --destructive-foreground: oklch(0.98 0.01 250);
   --border: oklch(0.3 0.02 260);
   --input: oklch(0.32 0.02 260);
-  --ring: oklch(0.79 0.13 230);
+  --ring: oklch(0.84 0.14 205);
   --radius: 0.75rem;
 
   /* The pale ends of the three status hues, which are the ends that read against
@@ -132,7 +132,7 @@
     --card-foreground: oklch(0.22 0.02 260);
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.22 0.02 260);
-    --primary: oklch(0.52 0.15 234);
+    --primary: oklch(0.55 0.13 215);
     --primary-foreground: oklch(0.99 0.005 250);
     --secondary: oklch(0.94 0.012 250);
     --secondary-foreground: oklch(0.28 0.02 260);
@@ -144,7 +144,7 @@
     --destructive-foreground: oklch(0.99 0.005 250);
     --border: oklch(0.9 0.012 250);
     --input: oklch(0.88 0.012 250);
-    --ring: oklch(0.52 0.15 234);
+    --ring: oklch(0.55 0.13 215);
 
     /* The same three hues at the other end of the scale, where a badge's text has
        to clear a white card rather than a black one — hence seven hundred rather
