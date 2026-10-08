@@ -61,7 +61,7 @@ type GameDetails = Game & {
 };
 
 function settingState(value: boolean | undefined): string {
-  return value === undefined ? 'Unavailable' : value ? 'On' : 'Off';
+  return value === undefined ? 'Unavailable' : value ? 'Yes' : 'No';
 }
 
 /** A player-friendly view of the map, playlist, and people in a live game. */
