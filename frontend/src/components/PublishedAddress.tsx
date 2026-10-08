@@ -1,5 +1,4 @@
 import { Globe } from 'lucide-react';
-import { Badge } from './ui/badge';
 
 /**
  * The address the reader's account publishes, as a badge on the overview.
@@ -29,16 +28,17 @@ import { Badge } from './ui/badge';
  */
 export function PublishedAddress({ address }: { address: string | null }) {
   return (
-    <Badge
-      verbatim
-      className="gap-1.5 border-info/30 bg-info/10 tracking-normal text-info"
+    <span
+      className="inline-flex min-w-0 items-center gap-2 text-muted-foreground"
+      aria-label={`Published address: ${address ?? 'No address published'}`}
+      title="Published address"
     >
       {/* The globe says what the digits beside it are before they are read: four
           groups of digits in a row look like any other four groups of digits, and a
           reader who does not already know that this is where their game is reachable
           has nothing to attach them to. */}
       <Globe className="size-3.5 shrink-0" aria-hidden="true" />
-      <span>{address ?? 'No address published'}</span>
-    </Badge>
+      <span className="truncate text-foreground">{address ?? 'No address published'}</span>
+    </span>
   );
 }

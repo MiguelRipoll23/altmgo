@@ -1,5 +1,5 @@
 import { Gamepad2, LogIn, Users, UserPlus } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { apiRequest, describeError } from '../api';
@@ -41,6 +41,29 @@ export function HomePage() {
   const [status, setStatus] = useState<{ kind: StatusKind; message: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const pulse = useApiResource<ServerPulse>('/api/server/pulse');
+  const [displayedPlayers, setDisplayedPlayers] = useState(0);
+  const [displayedGames, setDisplayedGames] = useState(0);
+
+  useEffect(() => {
+    const targetPlayers = pulse.data?.playersOnline ?? 0;
+    const targetGames = pulse.data?.totalGames ?? 0;
+    const duration = 700;
+    const startedAt = performance.now();
+    let frame = 0;
+
+    const animate = (now: number) => {
+      const progress = Math.min((now - startedAt) / duration, 1);
+      setDisplayedPlayers(Math.round(targetPlayers * progress));
+      setDisplayedGames(Math.round(targetGames * progress));
+
+      if (progress < 1) {
+        frame = window.requestAnimationFrame(animate);
+      }
+    };
+
+    frame = window.requestAnimationFrame(animate);
+    return () => window.cancelAnimationFrame(frame);
+  }, [pulse.data?.playersOnline, pulse.data?.totalGames]);
 
   function selectMode(value: string) {
     if (value !== 'signin' && value !== 'register') {
@@ -108,27 +131,18 @@ export function HomePage() {
           </div>
 
           <div>
-            {pulse.data === null ? (
-              <p
-                role={pulse.error ? 'alert' : 'status'}
-                className="text-sm text-muted-foreground"
-              >
-                {pulse.error ?? 'Loading server activity…'}
-              </p>
-            ) : (
-              <div className="mx-auto grid max-w-sm grid-cols-2 gap-5 lg:mx-0">
+            <div className="mx-auto grid max-w-sm grid-cols-2 gap-5 lg:mx-0">
                 <PulseStat
                   icon={Users}
                   label="Players online"
-                  value={formatNumber(pulse.data.playersOnline)}
+                  value={formatNumber(displayedPlayers)}
                 />
                 <PulseStat
                   icon={Gamepad2}
                   label="Games hosted"
-                  value={formatNumber(pulse.data.totalGames)}
+                  value={formatNumber(displayedGames)}
                 />
-              </div>
-            )}
+            </div>
           </div>
         </section>
 

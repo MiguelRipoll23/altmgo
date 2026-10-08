@@ -135,7 +135,7 @@ export function OverviewPage() {
             >
               <UserRound className="size-4 shrink-0 text-success" aria-hidden="true" />
               <span className="tabular-nums text-foreground">
-                {formatNumber(data.connectedPlayers)}
+                {formatNumber(data.connectedPlayers)} online
               </span>
             </span>
 
@@ -146,7 +146,7 @@ export function OverviewPage() {
             >
               <Gamepad2 className="size-4 shrink-0 text-primary" aria-hidden="true" />
               <span className="tabular-nums text-foreground">
-                {formatNumber(data.totalGames)}
+                {formatNumber(data.totalGames)} games
               </span>
             </span>
 
