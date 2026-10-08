@@ -163,7 +163,7 @@ export function HomePage() {
                 <TabsTrigger
                   value="signin"
                   disabled={submitting}
-                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                  className="data-[state=active]:bg-[#007a96] data-[state=active]:text-white"
                 >
                   <LogIn />
                   Sign in
@@ -171,7 +171,7 @@ export function HomePage() {
                 <TabsTrigger
                   value="register"
                   disabled={submitting}
-                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                  className="data-[state=active]:bg-[#007a96] data-[state=active]:text-white"
                 >
                   <UserPlus />
                   Register
