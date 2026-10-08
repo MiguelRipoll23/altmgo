@@ -63,7 +63,7 @@ export function GameCard({ game }: { game: Game }) {
       className="group flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card/50 transition-colors hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       aria-label={`View details for ${game.name}`}
     >
-      <div className="relative flex aspect-video w-full items-center justify-center overflow-hidden border-b border-border bg-muted/20">
+      <div className="relative flex aspect-[2/1] w-full items-center justify-center overflow-hidden border-b border-border bg-muted/20">
         {picture === null ? (
           <MapIcon className="size-8 text-muted-foreground/50" aria-hidden="true" />
         ) : (
@@ -79,7 +79,7 @@ export function GameCard({ game }: { game: Game }) {
           />
         )}
 
-        <div className="pointer-events-none absolute inset-0 flex flex-col justify-between bg-gradient-to-t from-black/85 via-black/15 to-black/30 p-3">
+        <div className="pointer-events-none absolute inset-0 flex flex-col justify-between bg-gradient-to-t from-black/85 via-black/15 to-black/30 p-2.5">
           <div className="flex min-w-0 items-start justify-between gap-3 text-white drop-shadow-md">
             <h3 className="min-w-0 truncate text-base font-extrabold tracking-tight">
               {game.name}
@@ -118,7 +118,7 @@ export function GameCard({ game }: { game: Game }) {
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col gap-3 px-4 py-4">
+      <div className="flex flex-1 flex-col gap-2 px-3 py-3">
         {/* The comment is the host's own sentence about the room, so it is given
             the room's width and the room's remaining height rather than one line
             in a column: it is the part a reader reads to choose between two
@@ -128,8 +128,8 @@ export function GameCard({ game }: { game: Game }) {
             card that was never the same twice and was never the reason anybody
             picked the room. The card is about what the room is, not about when it
             last blinked. */}
-        <p className="mt-auto min-h-10 text-base text-muted-foreground">
-          <span className="mb-1 block text-xs font-semibold uppercase tracking-widest text-muted-foreground/75">
+        <p className="mt-auto line-clamp-2 text-sm text-muted-foreground">
+          <span className="mb-1 block text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/75">
             Comment
           </span>
           {game.comment === '' ? 'No comment' : game.comment}
