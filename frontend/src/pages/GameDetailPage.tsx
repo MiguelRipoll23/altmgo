@@ -20,6 +20,7 @@ import {
   CardHeader,
   CardTitle,
 } from '../components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { useApiResource } from '../components/useApiResource';
 import { ruleName } from '../lib/gameModes';
 import { mapImage, mapName } from '../lib/maps';
@@ -43,7 +44,26 @@ type GameDetails = Game & {
   currentGame: number;
   rotation: GameRound[];
   roster: GamePlayer[];
+  hostSettings: {
+    nonStat: boolean;
+    friendlyFire: boolean;
+    autoAim: boolean;
+    uniquesEnabled: boolean;
+    enemyNametags: boolean;
+    silentMode: boolean;
+    autoAssign: boolean;
+    teamsSwitch: boolean;
+    ghosts: boolean;
+    voiceChat: boolean;
+    levelLimitEnabled: boolean;
+    levelLimitBase: number;
+    levelLimitTolerance: number;
+  } | null;
 };
+
+function settingState(value: boolean | undefined): string {
+  return value === undefined ? 'Unavailable' : value ? 'On' : 'Off';
+}
 
 /** A player-friendly view of the map, playlist, and people in a live game. */
 export function GameDetailPage() {
@@ -53,6 +73,32 @@ export function GameDetailPage() {
   );
   const game = data?.game ?? null;
   const currentRound = game?.rotation[game.currentGame];
+  const hostSettings = game?.hostSettings;
+  const levelLimit =
+    hostSettings === null || hostSettings === undefined
+      ? 'Unavailable'
+      : !hostSettings.levelLimitEnabled
+        ? 'None'
+        : `Base ${formatNumber(hostSettings.levelLimitBase)} (±${formatNumber(hostSettings.levelLimitTolerance)})`;
+  const settings = [
+    ['Level limit', levelLimit],
+    [
+      'Stats recorded',
+      settingState(
+        hostSettings === null || hostSettings === undefined ? undefined : !hostSettings.nonStat,
+      ),
+    ],
+    ['Dedicated host', settingState(game?.dedicated)],
+    ['Friendly fire', settingState(hostSettings?.friendlyFire)],
+    ['Auto aim', settingState(hostSettings?.autoAim)],
+    ['Enemy name tags', settingState(hostSettings?.enemyNametags)],
+    ['Silent mode', settingState(hostSettings?.silentMode)],
+    ['Auto-assign teams', settingState(hostSettings?.autoAssign)],
+    ['Team switching', settingState(hostSettings?.teamsSwitch)],
+    ['Ghosts', settingState(hostSettings?.ghosts)],
+    ['Voice chat', settingState(hostSettings?.voiceChat)],
+    ['Unique characters', settingState(hostSettings?.uniquesEnabled)],
+  ];
 
   return (
     <div className="space-y-6">
@@ -155,131 +201,177 @@ export function GameDetailPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="size-4 text-primary" aria-hidden="true" />
-                Players in this game
-              </CardTitle>
-              <CardDescription>
-                {game.roster.length === 0
-                  ? 'Nobody is listed in the room yet.'
-                  : `${formatNumber(game.roster.length)} ${game.roster.length === 1 ? 'player' : 'players'} in the room`}
-              </CardDescription>
-            </CardHeader>
-            {game.roster.length === 0 ? (
-              <CardContent>
-                <p className="text-base text-muted-foreground">
-                  Nobody is listed in the room yet.
-                </p>
-              </CardContent>
-            ) : (
-              <CardContent>
-                <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {game.roster.map((player) => {
-                    const isHost = player.characterId === game.hostIdentifier;
-                    return (
-                      <li
-                        key={player.characterId}
-                        className="flex min-w-0 items-center gap-3 rounded-xl border border-border bg-background/50 p-3"
-                      >
-                        <PingIndicator ping={player.ping} />
-                        {player.clan === null ? (
-                          <span
-                            className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-border bg-muted/20 text-muted-foreground/50"
-                            aria-label="No clan emblem"
-                            title="No clan"
+          <Tabs defaultValue="players">
+            <TabsList>
+              <TabsTrigger value="players">
+                <Users className="size-4" aria-hidden="true" />
+                Players
+              </TabsTrigger>
+              <TabsTrigger value="playlist">
+                <Gamepad2 className="size-4" aria-hidden="true" />
+                Map &amp; rules
+              </TabsTrigger>
+              <TabsTrigger value="settings">Settings</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="players">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="size-4 text-primary" aria-hidden="true" />
+                    Players in this game
+                  </CardTitle>
+                  <CardDescription>
+                    {game.roster.length === 0
+                      ? 'Nobody is listed in the room yet.'
+                      : `${formatNumber(game.roster.length)} ${game.roster.length === 1 ? 'player' : 'players'} in the room`}
+                  </CardDescription>
+                </CardHeader>
+                {game.roster.length === 0 ? (
+                  <CardContent>
+                    <p className="text-base text-muted-foreground">
+                      Nobody is listed in the room yet.
+                    </p>
+                  </CardContent>
+                ) : (
+                  <CardContent>
+                    <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      {game.roster.map((player) => {
+                        const isHost = player.characterId === game.hostIdentifier;
+                        return (
+                          <li
+                            key={player.characterId}
+                            className="flex min-w-0 items-center gap-3 rounded-xl border border-border bg-background/50 p-3"
                           >
-                            <UserRound className="size-5" aria-hidden="true" />
-                          </span>
-                        ) : (
-                          <ClanEmblem
-                            clanId={player.clan.id}
-                            name={player.clan.name}
-                            hasEmblem={player.clan.hasEmblem}
-                            size="size-10"
-                          />
-                        )}
-                        <span className="min-w-0 flex-1 truncate font-semibold text-foreground">
-                          {player.name}
-                        </span>
-                        {isHost ? <Badge variant="secondary">Host</Badge> : null}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </CardContent>
-            )}
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Gamepad2 className="size-4 text-primary" aria-hidden="true" />
-                Playlist
-              </CardTitle>
-              <CardDescription>
-                {game.rotation.length === 0
-                  ? 'The round list is not available.'
-                  : `${formatNumber(game.rotation.length)} ${game.rotation.length === 1 ? 'round' : 'rounds'} in rotation`}
-              </CardDescription>
-            </CardHeader>
-            {game.rotation.length === 0 ? (
-              <CardContent>
-                <p className="text-base text-muted-foreground">
-                  No playlist information is available for this game.
-                </p>
-              </CardContent>
-            ) : (
-              <CardContent>
-                <ol className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                  {game.rotation.map((round, index) => {
-                    const active = index === game.currentGame;
-                    const image = mapImage(round.map);
-
-                    return (
-                      <li key={`${index}-${round.rule}-${round.map}`}>
-                        <div
-                          className={`overflow-hidden rounded-xl border ${
-                            active
-                              ? 'border-primary ring-1 ring-primary'
-                              : 'border-border'
-                          }`}
-                        >
-                          <div className="relative aspect-video overflow-hidden bg-muted/30">
-                            {image === null ? (
-                              <div className="flex size-full items-center justify-center">
-                                <MapIcon
-                                  className="size-8 text-muted-foreground/50"
-                                  aria-hidden="true"
-                                />
-                              </div>
+                            <PingIndicator ping={player.ping} />
+                            {player.clan === null ? (
+                              <span
+                                className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-border bg-muted/20 text-muted-foreground/50"
+                                aria-label="No clan emblem"
+                                title="No clan"
+                              >
+                                <UserRound className="size-5" aria-hidden="true" />
+                              </span>
                             ) : (
-                              <img
-                                src={image}
-                                alt={mapName(round.map)}
-                                loading="lazy"
-                                className="size-full object-cover"
+                              <ClanEmblem
+                                clanId={player.clan.id}
+                                name={player.clan.name}
+                                hasEmblem={player.clan.hasEmblem}
+                                size="size-10"
                               />
                             )}
-                            <div className="absolute left-3 top-3 flex items-center gap-2">
-                              <Badge variant="secondary">Round {index + 1}</Badge>
+                            <span className="min-w-0 flex-1 truncate font-semibold text-foreground">
+                              {player.name}
+                            </span>
+                            {isHost ? <Badge variant="secondary">Host</Badge> : null}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </CardContent>
+                )}
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="playlist">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Gamepad2 className="size-4 text-primary" aria-hidden="true" />
+                    Map &amp; rules
+                  </CardTitle>
+                  <CardDescription>
+                    {game.rotation.length === 0
+                      ? 'The round list is not available.'
+                      : `${formatNumber(game.rotation.length)} ${game.rotation.length === 1 ? 'round' : 'rounds'} in rotation`}
+                  </CardDescription>
+                </CardHeader>
+                {game.rotation.length === 0 ? (
+                  <CardContent>
+                    <p className="text-base text-muted-foreground">
+                      No playlist information is available for this game.
+                    </p>
+                  </CardContent>
+                ) : (
+                  <CardContent>
+                    <ol className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                      {game.rotation.map((round, index) => {
+                        const active = index === game.currentGame;
+                        const image = mapImage(round.map);
+
+                        return (
+                          <li key={`${index}-${round.rule}-${round.map}`}>
+                            <div
+                              className={`overflow-hidden rounded-xl border ${
+                                active
+                                  ? 'border-primary ring-1 ring-primary'
+                                  : 'border-border'
+                              }`}
+                            >
+                              <div className="relative aspect-video overflow-hidden bg-muted/30">
+                                {image === null ? (
+                                  <div className="flex size-full items-center justify-center">
+                                    <MapIcon
+                                      className="size-8 text-muted-foreground/50"
+                                      aria-hidden="true"
+                                    />
+                                  </div>
+                                ) : (
+                                  <img
+                                    src={image}
+                                    alt={mapName(round.map)}
+                                    loading="lazy"
+                                    className="size-full object-cover"
+                                  />
+                                )}
+                                <div className="absolute left-3 top-3 flex items-center gap-2">
+                                  <Badge variant="secondary">Round {index + 1}</Badge>
+                                </div>
+                              </div>
+                              <div className="p-4">
+                                <p className="font-bold text-foreground">
+                                  {mapName(round.map)}
+                                </p>
+                                <p className="mt-1 text-base text-muted-foreground">
+                                  {ruleName(round.rule)}
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                          <div className="p-4">
-                            <p className="font-bold text-foreground">{mapName(round.map)}</p>
-                            <p className="mt-1 text-base text-muted-foreground">
-                              {ruleName(round.rule)}
-                            </p>
-                          </div>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ol>
-              </CardContent>
-            )}
-          </Card>
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  </CardContent>
+                )}
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="settings">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Game settings</CardTitle>
+                  <CardDescription>
+                    The host’s saved settings, which may differ from the live room configuration.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <dl className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
+                    {settings.map(([label, value]) => (
+                      <div
+                        key={label}
+                        className="flex items-center justify-between gap-4 border-b border-border pb-3"
+                      >
+                        <dt className="text-base font-medium text-muted-foreground">{label}</dt>
+                        <dd className="text-right text-base font-semibold text-foreground">
+                          {value}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       )}
     </div>

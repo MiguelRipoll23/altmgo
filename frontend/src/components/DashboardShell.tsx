@@ -190,11 +190,15 @@ export function DashboardShell({
     // and a toggle that read the stored state there would be a button that does
     // nothing.
     if (!wide) {
-      setColumn(drawn === 'hidden' ? 'open' : 'hidden');
+      const next = drawn === 'hidden' ? 'open' : 'hidden';
+      window.localStorage.setItem(ColumnStorageKey, next);
+      setColumn(next);
       return;
     }
 
-    setColumn(drawn === 'open' ? 'reduced' : 'open');
+    const next = drawn === 'open' ? 'reduced' : 'open';
+    window.localStorage.setItem(ColumnStorageKey, next);
+    setColumn(next);
   }
 
   // Following a link on a phone has to put the column away again: the page it
@@ -274,18 +278,6 @@ export function DashboardShell({
   useEffect(() => {
     window.localStorage.setItem(ColumnStorageKey, column);
   }, [column]);
-
-  useEffect(() => {
-    const restoreColumn = () => {
-      const stored = readStoredColumn();
-      if (stored !== null) {
-        setColumn(stored);
-      }
-    };
-
-    window.addEventListener('focus', restoreColumn);
-    return () => window.removeEventListener('focus', restoreColumn);
-  }, []);
 
   // The room the page keeps for the floating button is a padding on the content
   // itself, in CSS, and it is not taken back on scroll.
