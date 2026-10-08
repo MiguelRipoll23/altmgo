@@ -1,9 +1,9 @@
 import { LockKeyhole, Map as MapIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatNumber } from './DataDisplay';
+import { PingIndicator } from './PingIndicator';
 import { ruleName } from '../lib/gameModes';
 import { mapImage, mapName } from '../lib/maps';
-import { cn } from '../lib/utils';
 
 /** One hosted room, as the API reports it. */
 export type Game = {
@@ -77,23 +77,21 @@ export function GameCard({ game }: { game: Game }) {
           />
         )}
 
-        {/* The map's name, over the foot of the picture rather than under it. The
-            picture is how a map is recognised by somebody who knows it, and the
-            name is how it is recognised by everybody else, so the name belongs on
-            the thing it names rather than on a line below the card's frame — where
-            it was an extra band of height for every card and read as a caption to
-            the room's name rather than to the picture.
-
-            Text on a photograph is unreadable wherever the photograph is bright,
-            so it is given the treatment a video player gives its controls: a scrim
-            that darkens towards the foot of the frame, so the words keep their
-            contrast over a pale map as well as a dark one. The scrim is the
-            gradient rather than a solid bar because a bar would cut the picture
-            in two, and the map is the part of the card that is looked at. */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end bg-gradient-to-t from-black/80 via-black/40 to-transparent px-3 pb-2.5 pt-12">
-          <p className="truncate text-base font-semibold text-white">
-            {mapName(game.map)}
-          </p>
+        <div className="pointer-events-none absolute inset-0 flex flex-col justify-between bg-gradient-to-t from-black/85 via-black/15 to-black/30 p-3">
+          {game.hasPassword ? (
+            <span className="ml-auto rounded-full bg-black/50 p-2 text-white" title="Password protected">
+              <LockKeyhole className="size-4" aria-hidden="true" />
+              <span className="sr-only">Password protected</span>
+            </span>
+          ) : <span />}
+          <div>
+            <p className="truncate text-sm font-semibold uppercase tracking-wider text-white/80">
+              {mapName(game.map)}
+            </p>
+            <p className="mt-0.5 truncate text-lg font-extrabold leading-tight text-white">
+              {ruleName(game.rule)}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -102,17 +100,6 @@ export function GameCard({ game }: { game: Game }) {
           <h3 className="min-w-0 truncate text-base font-extrabold tracking-tight text-foreground">
             {game.name}
           </h3>
-          {/* The lock rather than a written badge. The fact being reported is a
-              yes-or-no one and the icon says it in the width an icon costs,
-              which leaves the room's name the longest thing on the card — and
-              the name is what a reader picks a room by. The word is still there
-              for a reader who cannot see the icon. */}
-          {game.hasPassword ? (
-            <span title="Password protected">
-              <LockKeyhole className="size-4 shrink-0 text-warning" aria-hidden="true" />
-              <span className="sr-only">Password protected</span>
-            </span>
-          ) : null}
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -125,17 +112,10 @@ export function GameCard({ game }: { game: Game }) {
             </p>
           </div>
 
-          <PingGauge ping={game.ping} />
+          <PingIndicator ping={game.ping} />
         </div>
 
         <dl className="space-y-1 text-base">
-          <div className="flex gap-2">
-            <dt className="w-16 shrink-0 text-muted-foreground">Mode</dt>
-            <dd className="min-w-0 flex-1 truncate text-foreground">
-              {ruleName(game.rule)}
-            </dd>
-          </div>
-
           <div className="flex gap-2">
             <dt className="w-16 shrink-0 text-muted-foreground">Host</dt>
             <dd className="min-w-0 flex-1 truncate text-foreground">
@@ -160,60 +140,3 @@ export function GameCard({ game }: { game: Game }) {
     </Link>
   );
 }
-
-/**
- * How far the host is away, as a row of bars going green to red.
- *
- * The bars rather than the number, because a millisecond figure is a number
- * nobody reading a list of rooms can rank at a glance: twenty-five is good to
- * somebody in one country and unusable to somebody in another, and the reader
- * comparing ten rooms has ten different baselines. What they share is the
- * question — "which of these can I actually play in" — and the bars answer it by
- * sorting themselves by colour across the cards, which a column of numbers does
- * not.
- *
- * The scale is fixed rather than scaled to the best room on the page. A gauge
- * that stretches to fit whatever is currently listed means the same bar is green
- * on a quiet evening and amber on a busy one, so a card cannot be compared with
- * one remembered from earlier, which is the only comparison a gauge is any use
- * for.
- */
-function PingGauge({ ping }: { ping: number }) {
-  // The step at which each colour takes over, low to high. The steps are the ones
-  // a player actually distinguishes: under fifty is indistinguishable from the
-  // local network, past a hundred and round trips stop being felt, and past two
-  // hundred is where rooms stop being playable rather than merely being worse.
-  const steps = [50, 100, 200];
-  const [local, felt, unplayable] = steps as [number, number, number];
-
-  const colour =
-    ping <= local ? 'bg-emerald-500' : ping <= felt ? 'bg-amber-500' : 'bg-red-500';
-
-  // One lit bar per step passed, so the gauge grows with the ping as well as
-  // changing colour: a number that trips two steps reads differently from one
-  // that only just trips the first, which a colour alone cannot show. The fastest
-  // ping lights one bar of the four and the slowest lights all four, so the whole
-  // range is used rather than leaving a bar nothing ever reaches.
-  const lit = ping <= local ? 1 : ping <= felt ? 2 : ping <= unplayable ? 3 : 4;
-
-  return (
-    <div
-      className="flex shrink-0 items-end gap-0.5"
-      role="img"
-      aria-label={`${formatNumber(ping)} milliseconds ping`}
-      title={`${formatNumber(ping)} ms ping`}
-    >
-      {BarHeights.map((height, index) => (
-        // Every bar is always drawn, lit or not, so the gauge is the same width
-        // for every room and the cards in a row stay aligned.
-        <span
-          key={index}
-          className={cn('w-1 rounded-sm', height, index < lit ? colour : 'bg-muted')}
-        />
-      ))}
-    </div>
-  );
-}
-
-/** The heights of the four bars, shortest first, so the gauge reads as a fill. */
-const BarHeights = ['h-2', 'h-3', 'h-4', 'h-5'];

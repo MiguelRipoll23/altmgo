@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { LoadingBlock, SectionHeading, formatNumber } from '../components/DataDisplay';
 import { StatusMessage } from '../components/StatusMessage';
 import type { Game } from '../components/GameCard';
+import { PingIndicator } from '../components/PingIndicator';
 import { Badge } from '../components/ui/badge';
 import {
   Card,
@@ -24,6 +25,7 @@ type GameRound = {
 type GamePlayer = {
   characterId: number;
   name: string;
+  ping: number;
 };
 
 type GameDetails = Game & {
@@ -106,6 +108,10 @@ export function GameDetailPage() {
                 <p className="mt-1 text-lg font-bold text-foreground">
                   {game.hostName ?? 'Unknown host'}
                 </p>
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Host ping</span>
+                  <PingIndicator ping={game.ping} showValue />
+                </div>
                 {game.comment.trim() === '' ? null : (
                   <p className="mt-2 whitespace-pre-wrap text-base text-muted-foreground">
                     {game.comment}
@@ -252,6 +258,7 @@ export function GameDetailPage() {
                         <span className="min-w-0 flex-1 truncate font-semibold text-foreground">
                           {player.name}
                         </span>
+                        <PingIndicator ping={player.ping} showValue />
                         {isHost ? <Badge variant="secondary">Host</Badge> : null}
                       </li>
                     );
