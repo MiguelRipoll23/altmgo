@@ -151,7 +151,7 @@ export function HomePage() {
             <CardTitle className="text-lg font-bold normal-case tracking-normal text-foreground">
               {registering ? 'Create your account' : 'Welcome back'}
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="min-h-10">
               {registering
                 ? 'Use the same ID and password you will play with.'
                 : 'Sign in with the account you use in game.'}
@@ -160,11 +160,19 @@ export function HomePage() {
           <CardContent>
             <Tabs value={mode} onValueChange={selectMode}>
               <TabsList aria-label="Account access">
-                <TabsTrigger value="signin" disabled={submitting}>
+                <TabsTrigger
+                  value="signin"
+                  disabled={submitting}
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                >
                   <LogIn />
                   Sign in
                 </TabsTrigger>
-                <TabsTrigger value="register" disabled={submitting}>
+                <TabsTrigger
+                  value="register"
+                  disabled={submitting}
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                >
                   <UserPlus />
                   Register
                 </TabsTrigger>
@@ -269,11 +277,11 @@ function AuthForm({
           value={username}
           onChange={(event) => onUsernameChange(event.target.value)}
         />
-        {registering ? (
-          <p className="mt-1.5 text-sm text-muted-foreground">
-            3–32 characters: letters, numbers, _ or -.
-          </p>
-        ) : null}
+        <p
+          className={`mt-1.5 min-h-10 text-sm text-muted-foreground ${registering ? '' : 'invisible'}`}
+        >
+          3–32 characters: letters, numbers, _ or -.
+        </p>
       </div>
 
       <div>
@@ -291,9 +299,11 @@ function AuthForm({
           value={password}
           onChange={(event) => onPasswordChange(event.target.value)}
         />
-        {registering ? (
-          <p className="mt-1.5 text-sm text-muted-foreground">At least 6 characters.</p>
-        ) : null}
+        <p
+          className={`mt-1.5 min-h-5 text-sm text-muted-foreground ${registering ? '' : 'invisible'}`}
+        >
+          At least 6 characters.
+        </p>
       </div>
 
       <Button type="submit" disabled={submitting} className="w-full" size="lg">
