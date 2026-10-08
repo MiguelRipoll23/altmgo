@@ -12,9 +12,9 @@ import { OverviewPage } from '../pages/OverviewPage';
  * does not: the account name is read once here and handed down through the
  * layout rather than re-read by every page.
  *
- * A browser with no token is sent to sign in and remembers where it was going, so
- * signing in returns it to the section it asked for rather than to the overview it
- * did not.
+ * A browser with no token is sent to the public front door and remembers where it
+ * was going, so signing in returns it to the section it asked for rather than to
+ * the overview it did not.
  *
  * There is no role gate here, and none anywhere in the frame: everything it
  * draws is a read any signed-in account may make, so the only question this
@@ -25,7 +25,7 @@ export function DashboardRoute() {
   const token = readSessionToken();
 
   if (!token) {
-    return <Navigate to="/signin" replace state={{ from: location.pathname }} />;
+    return <Navigate to="/" replace state={{ from: location.pathname }} />;
   }
 
   const account = useSessionAccount();
