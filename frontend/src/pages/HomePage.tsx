@@ -151,7 +151,7 @@ export function HomePage() {
             <CardTitle className="text-lg font-bold normal-case tracking-normal text-foreground">
               {registering ? 'Create your account' : 'Welcome back'}
             </CardTitle>
-            <CardDescription className="min-h-10">
+            <CardDescription>
               {registering
                 ? 'Use the same ID and password you will play with.'
                 : 'Sign in with the account you use in game.'}
