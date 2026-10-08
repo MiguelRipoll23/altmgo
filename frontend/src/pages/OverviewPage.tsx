@@ -127,40 +127,28 @@ export function OverviewPage() {
           {/* The figures. They sit directly under the heading with the news and the
               games below them, so the page is one thing arriving rather than three
               arriving at once. */}
-          <div className="mb-4 flex flex-wrap items-center gap-2 text-base">
-            {/* The figures are badges: a shape with a border and a fill. The page
-                drew them as plain coloured text, on the reasoning that a badge says
-                "this is a state of some thing" and a count that only goes up is not
-                a state. What a badge actually says is "this is a figure the page is
-                reporting", which is what both of these are — and where a line of
-                coloured words runs together into a sentence, a badge keeps its edge,
-                so the row reads as the facts it holds rather than as prose with
-                numbers in it.
+          <div className="mb-4 flex flex-wrap items-center gap-5 text-base">
+            <span
+              className="inline-flex items-center gap-2 text-muted-foreground"
+              aria-label={`${formatNumber(data.connectedPlayers)} players online`}
+              title="Players online"
+            >
+              <UserRound className="size-4 shrink-0 text-success" aria-hidden="true" />
+              <span className="tabular-nums text-foreground">
+                {formatNumber(data.connectedPlayers)}
+              </span>
+            </span>
 
-                They are green and blue because the two are not the same kind of
-                thing: green is how busy the server is right now and moves while the
-                page is open, blue is how much it has done and only ever goes up.
-
-                They are `verbatim`, so they read as written rather than as labels:
-                a count the page is stating is not a word the dashboard chose, and
-                "0 online" is a sentence about the server where "0 ONLINE" is a
-                chip somebody has to decode.
-
-                Neither says "hosted", and the second is always plural. A game is a
-                game whether or not it is up, so the count is of every one the
-                server has run; and a figure that reads "1 game" beside a "0 online"
-                that is genuinely zero is a page switching between two words to say
-                whether a count happens to be one, which is arithmetic the reader
-                can do and a flicker they should not have to watch. */}
-            <Badge verbatim variant="success" className="gap-1.5">
-              <UserRound className="size-3.5 shrink-0" aria-hidden="true" />
-              <span className="tabular-nums">{formatNumber(data.connectedPlayers)} online</span>
-            </Badge>
-
-            <Badge verbatim variant="default" className="gap-1.5">
-              <Gamepad2 className="size-3.5 shrink-0" aria-hidden="true" />
-              <span className="tabular-nums">{formatNumber(data.totalGames)} games</span>
-            </Badge>
+            <span
+              className="inline-flex items-center gap-2 text-muted-foreground"
+              aria-label={`${formatNumber(data.totalGames)} games`}
+              title="Games"
+            >
+              <Gamepad2 className="size-4 shrink-0 text-primary" aria-hidden="true" />
+              <span className="tabular-nums text-foreground">
+                {formatNumber(data.totalGames)}
+              </span>
+            </span>
 
             {/* The address is a fact about the reader rather than about the server,
                 so it takes the purple badge — the one colour on the page that is

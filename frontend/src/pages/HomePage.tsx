@@ -108,9 +108,6 @@ export function HomePage() {
           </div>
 
           <div>
-            <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
-              Live server activity
-            </h2>
             {pulse.data === null ? (
               <p
                 role={pulse.error ? 'alert' : 'status'}
