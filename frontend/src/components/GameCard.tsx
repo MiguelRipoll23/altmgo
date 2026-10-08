@@ -81,7 +81,10 @@ export function GameCard({ game }: { game: Game }) {
 
         <div className="pointer-events-none absolute inset-0 flex flex-col justify-between bg-gradient-to-t from-black/85 via-black/15 to-black/30 p-3">
           <div className="flex min-w-0 items-start justify-between gap-3 text-white drop-shadow-md">
-            <div className="flex min-w-0 items-center gap-2">
+            <h3 className="min-w-0 truncate text-base font-extrabold tracking-tight">
+              {game.name}
+            </h3>
+            <div className="flex shrink-0 items-center gap-2">
               <PingIndicator ping={game.ping} />
               {game.hasPassword ? (
                 <span title="Password protected">
@@ -89,9 +92,6 @@ export function GameCard({ game }: { game: Game }) {
                   <span className="sr-only">Password protected</span>
                 </span>
               ) : null}
-              <h3 className="min-w-0 truncate text-base font-extrabold tracking-tight">
-                {game.name}
-              </h3>
             </div>
           </div>
           <div className="flex min-w-0 items-end justify-between gap-3">

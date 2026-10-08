@@ -124,7 +124,10 @@ export function GameDetailPage() {
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/10" />
               <div className="absolute inset-x-0 top-0 flex items-start justify-between gap-3 bg-gradient-to-b from-black/70 to-transparent p-4 sm:p-6">
-                <div className="flex min-w-0 items-center gap-2 text-white drop-shadow-md">
+                <h1 className="min-w-0 truncate text-lg font-extrabold tracking-tight text-white drop-shadow-md sm:text-2xl">
+                  {game.name}
+                </h1>
+                <div className="flex shrink-0 items-center gap-2 text-white drop-shadow-md">
                   <PingIndicator ping={game.ping} />
                   {game.hasPassword ? (
                     <LockKeyhole
@@ -133,9 +136,6 @@ export function GameDetailPage() {
                       role="img"
                     />
                   ) : null}
-                  <h1 className="min-w-0 truncate text-lg font-extrabold tracking-tight sm:text-2xl">
-                    {game.name}
-                  </h1>
                 </div>
               </div>
               <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-5 sm:p-7">
