@@ -277,11 +277,6 @@ function AuthForm({
           value={username}
           onChange={(event) => onUsernameChange(event.target.value)}
         />
-        <p
-          className={`mt-1.5 min-h-10 text-sm text-muted-foreground ${registering ? '' : 'invisible'}`}
-        >
-          3–32 characters: letters, numbers, _ or -.
-        </p>
       </div>
 
       <div>
@@ -299,11 +294,6 @@ function AuthForm({
           value={password}
           onChange={(event) => onPasswordChange(event.target.value)}
         />
-        <p
-          className={`mt-1.5 min-h-5 text-sm text-muted-foreground ${registering ? '' : 'invisible'}`}
-        >
-          At least 6 characters.
-        </p>
       </div>
 
       <Button type="submit" disabled={submitting} className="w-full" size="lg">
