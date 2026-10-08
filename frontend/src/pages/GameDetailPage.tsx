@@ -117,10 +117,10 @@ export function GameDetailPage() {
                   Hosted by
                 </p>
                 <div className="mt-1 flex items-center gap-2">
+                  <PingIndicator ping={game.ping} />
                   <p className="text-lg font-bold text-foreground">
                     {game.hostName ?? 'Unknown host'}
                   </p>
-                  <PingIndicator ping={game.ping} />
                 </div>
                 {game.comment.trim() === '' ? null : (
                   <p className="mt-2 whitespace-pre-wrap text-base text-muted-foreground">
@@ -175,10 +175,10 @@ export function GameDetailPage() {
                             size="size-10"
                           />
                         )}
+                        <PingIndicator ping={player.ping} />
                         <span className="min-w-0 flex-1 truncate font-semibold text-foreground">
                           {player.name}
                         </span>
-                        <PingIndicator ping={player.ping} />
                         {isHost ? <Badge variant="secondary">Host</Badge> : null}
                       </li>
                     );

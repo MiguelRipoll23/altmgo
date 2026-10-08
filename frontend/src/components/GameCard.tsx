@@ -109,17 +109,15 @@ export function GameCard({ game }: { game: Game }) {
       </div>
 
       <div className="flex flex-1 flex-col gap-3 px-4 py-4">
-        <div className="flex min-w-0 items-center gap-2">
-          <PingIndicator ping={game.ping} />
-          <h3 className="min-w-0 truncate text-base font-extrabold tracking-tight text-foreground">
-            {game.name}
-          </h3>
-        </div>
+        <h3 className="min-w-0 truncate text-base font-extrabold tracking-tight text-foreground">
+          {game.name}
+        </h3>
 
         <dl className="space-y-1 text-base">
           <div className="flex gap-2">
             <dt className="w-16 shrink-0 text-muted-foreground">Host</dt>
             <dd className="flex min-w-0 flex-1 items-center gap-2 text-foreground">
+              <PingIndicator ping={game.ping} />
               <span className="min-w-0 flex-1 truncate">{game.hostName ?? 'unknown'}</span>
             </dd>
           </div>
