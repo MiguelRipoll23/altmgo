@@ -1,4 +1,5 @@
 import { ArrowRight, Gamepad2, Newspaper, UserRound } from 'lucide-react';
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { LoadingBlock, SectionHeading, formatDay, formatNumber } from '../components/DataDisplay';
 import { GameCard, type Game } from '../components/GameCard';
@@ -91,6 +92,16 @@ const UnnamedLobby = 'Unknown lobby';
  */
 export function OverviewPage() {
   const { data, error } = useApiResource<Overview>('/api/overview');
+
+  // Arriving here is the end of signing in, and the sign-in page is taller than a
+  // phone's window, so the reader can be scrolled down it when the form is
+  // submitted. A single-page navigation keeps the window where it was, so without
+  // this the overview opens at the foot of the page before it rather than at its
+  // own top. It scrolls itself on arrival rather than every route doing so, because
+  // it is the one page the browser lands on after signing in.
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0 });
+  }, []);
 
   const latest = data?.news[0] ?? null;
   const games = data?.games ?? [];
