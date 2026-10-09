@@ -23,7 +23,7 @@ type Overview = {
   games: Game[];
   /** Characters connected to the server right now. */
   connectedPlayers: number;
-  /** Every game the server has hosted, live or closed. */
+  /** Games being hosted right now, the rooms still beating. */
   totalGames: number;
   /** The address the account's most recently active character publishes. */
   publishedAddress: { characterId: number; characterName: string; address: string } | null;
@@ -51,17 +51,19 @@ const UnnamedLobby = 'Unknown lobby';
  * page that shows them "Games".
  *
  * The figures sit in one line under the title rather than on tiles. How many
- * players are on the server, how many games it has hosted and what address the
- * reader publishes are the size of the thing and the reader's own place in it —
- * context to be read or skipped in one glance, not the weight a row of bordered
- * cards under a heading gives to what a reader looks at first. The two counts are
- * coloured text rather than badges — they are counts that only go up, not states
- * of a thing, and a badge says the latter — and neither says "hosted": a game is a
- * game whether or not it is up, and the count is of every one the server has run.
- * The second is always plural, because a count that changes its noun as it crosses
- * one is arithmetic the reader can do and a flicker they should not watch.
- * `total players` did not come back at all: it is the one figure that only ever
- * goes up and says nothing about whether the server is being used.
+ * players are on the server, how many games are up and what address the reader
+ * publishes are the size of the thing and the reader's own place in it — context
+ * to be read or skipped in one glance, not the weight a row of bordered cards
+ * under a heading gives to what a reader looks at first. The two counts are
+ * coloured text rather than badges, because they are numbers to read rather than
+ * labels on a thing, and the games count is read over the same window as the list
+ * below it: a room whose host stopped answering is gone from the list and gone
+ * from the count, so the number above the cards is the number of cards. Neither
+ * says "hosted", because a game is a game while it is up and the page is about
+ * what is up. The second is always plural, because a count that changes its noun
+ * as it crosses one is arithmetic the reader can do and a flicker they should not
+ * watch. `total players` did not come back at all: it is the one figure that only
+ * ever goes up and says nothing about whether the server is being used.
  *
  * The page says it is reading once, in one place. It was saying it three times —
  * where the figures are, for the news, and for the games — which is a page that

@@ -127,12 +127,18 @@ export type GameSummaryRow = {
  * as. The game server freezes a copy onto the room at creation
  * (`games.common`, read by its own `EventHostEligibilityUtils.IsDedicated`)
  * precisely because the saved row is the host's to change while the room is
- * open. So a dedicated host who unticks the box mid-session is counted as a
- * player here until they tick it again, and a player who ticks it is not counted
- * until they open the room. Both are the host's live intent, which is the thing
- * the question is about.
+ * open. So the dedicated flag the detail page shows follows the live row: a host
+ * who unticks the box mid-session reads as one that is playing again without
+ * reopening the room, and one who ticks it reads as dedicated without doing so
+ * either. Both are the host's live intent, which is the thing the question is
+ * about.
+ *
+ * Exported because the overview's game count reads the same window rather than a
+ * second copy of it: the number above the list is the list's own length, and two
+ * windows that can drift apart are a count that disagrees with the page showing
+ * it.
  */
-const GameStaleSeconds = 60;
+export const GameStaleSeconds = 60;
 
 /**
  * The stored host-settings slot the client reads and writes, as the game server's
@@ -469,28 +475,23 @@ function parseRotation(games: string): { rule: number; map: number; flag: number
 }
 
 /**
- * How many characters are playing in a room.
+ * How many characters are in a room, which is never fewer than the host.
  *
- * The roster counts the host, because the host is a member of the room: the game
- * puts them there when the room is created, and the room list shows them. A
- * dedicated host is the exception — it hosts a game it never joins, so it holds a
- * connection without holding a playing slot. The client's own Create Game screen
- * draws it the same way, drawing the maximum one lower while the flag is set
- * (`subf r0,r0,r5` at `0x8A51A8`, documented on `0x4313`'s `dedicated` field),
- * because the host's own slot is the one the flag takes away. Counting it as a
- * player is a room that reads "1 of 8 playing" when nobody is playing.
+ * The roster is the count. The game puts the host in the room when it is created
+ * and everybody who joins is added to the same list, so `members` already holds
+ * every person the room has, host included. A dedicated host is in the count as
+ * well: it takes no playing slot, but it is still in the room as a spectator, and
+ * the game fills one of the room's own places with it — a spectator counts toward
+ * the total and the limit the same as anyone standing in the room. So a room with
+ * a host and nobody else is one of its places used, not none, and counting it any
+ * other way is a list that shows a room somebody is sitting in as empty.
  *
- * Whether the host is one is asked in SQL rather than here, because answering it
- * needs the host's saved settings — a second table, reached by the host — and
- * that belongs in the same read as the roster it adjusts rather than in a second
- * query per room. The two branches it asks are written out on `listGames`.
- *
- * A host the roster does not hold subtracts nothing: there is no member to take
- * out, and a count below zero would say less than the roster the game itself
- * reports.
+ * The floor of one covers the same fact at the edge: a room the game has opened
+ * but not yet seated the host in is still somebody's room, and "0 of 8" would say
+ * less than the host the room belongs to.
  */
 function playingCount(game: GameSummaryRow): number {
-  return game.dedicated ? Math.max(0, game.members - 1) : game.members;
+  return Math.max(1, game.members);
 }
 
 /**
