@@ -1,0 +1,127 @@
+# mgo2-web: the AltMGO companion site and its API in one container.
+#
+# The image is built from the repository root (`docker build -t mgo2-web:local .`)
+# and loaded into k3s's containerd, so it is referenced by a local tag and never
+# pulled. The site and the API share the container's port 8443, served over TLS
+# with the cluster's mgo2-tls certificate, which is the same origin arrangement
+# `vercel.json` makes at the edge.
+#
+# The Deployment reads a secret named mgo2-web-secrets with two keys:
+#   DATABASE_URL  a standard postgresql:// URL (the game's Postgres)
+#   JWT_SECRET    a value of this site's own, e.g. `openssl rand -hex 32`
+# Create it before applying, for example:
+#   kubectl -n mgo2 create secret generic mgo2-web-secrets \
+#     --from-literal=DATABASE_URL='postgresql://user:password@mgo2-postgres:5432/mgo2' \
+#     --from-literal=JWT_SECRET="$(openssl rand -hex 32)"
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mgo2-web
+  namespace: mgo2
+  labels:
+    app: mgo2-web
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: mgo2-web
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: mgo2-web
+    spec:
+      containers:
+        - name: mgo2-web
+          image: mgo2-web:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: https
+              containerPort: 8443
+              protocol: TCP
+          env:
+            - name: PORT
+              value: "8443"
+            - name: TLS_CERTIFICATE_PATH
+              value: /app/certs/tls.crt
+            - name: TLS_CERTIFICATE_KEY_PATH
+              value: /app/certs/tls.key
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: mgo2-web-secrets
+                  key: DATABASE_URL
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: mgo2-web-secrets
+                  key: JWT_SECRET
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: https
+              scheme: HTTPS
+            initialDelaySeconds: 3
+            periodSeconds: 10
+            timeoutSeconds: 3
+          startupProbe:
+            httpGet:
+              path: /health
+              port: https
+              scheme: HTTPS
+            failureThreshold: 30
+            periodSeconds: 2
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: https
+              scheme: HTTPS
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 3
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            runAsNonRoot: true
+            runAsUser: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: tls
+              mountPath: /app/certs
+              readOnly: true
+      volumes:
+        - name: tls
+          secret:
+            secretName: mgo2-tls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mgo2-web
+  namespace: mgo2
+spec:
+  type: LoadBalancer
+  # Preserve the caller's address: the API publishes it for the player's game,
+  # so a service that SNATs the connection would publish the node's address.
+  externalTrafficPolicy: Local
+  selector:
+    app: mgo2-web
+  ports:
+    - name: https
+      port: 8443
+      targetPort: https
+      protocol: TCP

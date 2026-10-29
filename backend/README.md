@@ -50,7 +50,7 @@ routes.
 | --- | --- |
 | `src/index.ts` | the app itself: middleware, route mounting, the JSON error front, and the default export Vercel takes |
 | `src/environment.ts` | the settings, each refused when absent |
-| `src/database.ts` | the Neon client, the unique-violation test and the raw-SQL escape hatch |
+| `src/database.ts` | the database client — Neon's HTTP driver for a Neon URL, node-postgres for any other Postgres — the unique-violation test and the raw-SQL escape hatch |
 | `src/authentication.ts` | password hashing, session tokens, and the one middleware |
 | `src/accounts.ts` | the `accounts` queries |
 | `src/characters.ts` | the character list for the account's own dashboard |
@@ -67,6 +67,10 @@ routes.
 
 ## Notes worth keeping
 
+- **The driver follows the URL.** A `*.neon.tech` URL uses Neon's HTTP driver, which is what a
+  serverless function wants; any other Postgres URL uses node-postgres, which is what the container
+  deployment needs to read the game's own database in the cluster. Both are adapted to the same
+  tagged-template surface, so no query knows which one answered it.
 - **The password digest is the game's.** Accounts hold `md5(password)` in lowercase hex, because
   that is what the client sends and what the server stores. The site hashes the same way so the two
   share credentials. That is a deliberate property of the game, not a choice made here.
