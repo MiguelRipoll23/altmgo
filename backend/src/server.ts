@@ -5,6 +5,7 @@ import { cors } from 'hono/cors';
 import type { Context } from 'hono';
 import { createServer as createHttpServer } from 'node:http';
 import { allowedOrigins } from './allowedOrigins.js';
+import { isProxyHop } from './clientAddress.js';
 import app from './index.js';
 
 /**
@@ -12,10 +13,10 @@ import app from './index.js';
  * Hono app.
  *
  * The site is its own deployment on Vercel and calls this container at
- * http://raspberrypi.tailbb45e2.ts.net:8443, so the request is cross-origin. The app's
- * CORS middleware answers the preflight, and the caller's address is read from
- * the socket the request arrived on — the Service keeps it with
- * `externalTrafficPolicy: Local` — rather than from a proxy hop.
+ * https://raspberrypi.tailbb45e2.ts.net:9090, so the request is cross-origin. The
+ * app's CORS middleware answers the preflight, and the caller's address is read
+ * from the socket when the client reached this container itself, or from the
+ * `x-forwarded-for` the Tailscale Funnel writes when it proxied the request.
  */
 const port = Number(process.env.PORT ?? 9090);
 
@@ -43,10 +44,15 @@ server.get('/health', (context) =>
  * browser cannot name somebody else's address.
  */
 function handleApi(context: Context) {
-  const address = getConnInfo(context).remote.address;
+  const peer = getConnInfo(context).remote.address;
 
-  if (address) {
-    context.req.raw.headers.set('x-forwarded-for', address);
+  // A proxy hop reports the visitor in `x-forwarded-for`, and the Funnel even
+  // replaces a header the client sent with the address it observed. A client
+  // that reached this container itself is the socket, and writing the socket
+  // over the header is what keeps a browser from naming somebody else's
+  // address - which is why the condition is not simply "prefer the header".
+  if (peer && !(isProxyHop(peer) && context.req.header('x-forwarded-for'))) {
+    context.req.raw.headers.set('x-forwarded-for', peer);
   }
 
   return app.fetch(context.req.raw);

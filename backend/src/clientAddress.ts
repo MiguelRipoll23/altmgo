@@ -36,3 +36,33 @@ export function parseForwardedIpv4(address: string | undefined): string | undefi
 
   return isIPv4(candidate) ? candidate : undefined;
 }
+
+/**
+ * Whether the socket peer is a hop on this machine rather than the visitor.
+ *
+ * The Funnel terminates TLS and proxies to 127.0.0.1, and the cluster's port
+ * mapping rewrites a loopback connection before it reaches the container, so a
+ * request that came through the Funnel arrives from a private address. Such a
+ * hop reports the visitor in `x-forwarded-for` - the Funnel even replaces a
+ * header the client sent - so that header is the only record of the visitor
+ * left, and the socket names the proxy instead.
+ */
+export function isProxyHop(address: string | undefined): boolean {
+  if (!address) {
+    return false;
+  }
+
+  const candidate = address.startsWith('::ffff:') ? address.slice('::ffff:'.length) : address;
+  if (candidate === '::1' || candidate === '127.0.0.1') {
+    return true;
+  }
+
+  const [first, second] = candidate.split('.').map(Number);
+
+  return (
+    first === 10 ||
+    (first === 172 && second >= 16 && second <= 31) ||
+    (first === 192 && second === 168) ||
+    (first === 100 && second >= 64 && second <= 127)
+  );
+}
