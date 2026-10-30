@@ -57,7 +57,7 @@ export function isProxyHop(address: string | undefined): boolean {
     return true;
   }
 
-  const [first, second] = candidate.split('.').map(Number);
+  const [first = -1, second = -1] = candidate.split('.').map(Number);
 
   return (
     first === 10 ||
