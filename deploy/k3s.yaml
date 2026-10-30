@@ -5,7 +5,7 @@
 # `/api` prefix the app routes.
 #
 # The image is built from the repository root
-# (`docker build -t altmgo-backend:local .`) and loaded into k3s's containerd,
+# (`docker build -t altmgo-backend:latest .`) and loaded into k3s's containerd,
 # so it is referenced by a local tag and never pulled. The API listens on the
 # container's port 8443 over plain HTTP.
 #
@@ -41,7 +41,7 @@ spec:
     spec:
       containers:
         - name: altmgo-backend
-          image: altmgo-backend:local
+          image: ghcr.io/miguelripoll23/altmgo-backend:latest
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

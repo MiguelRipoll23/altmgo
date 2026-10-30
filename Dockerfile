@@ -2,15 +2,15 @@
 # over plain HTTP on 8443. The site itself is deployed separately on Vercel and reaches
 # this container at http://raspberrypi.tailbb45e2.ts.net:8443.
 #
-# The image is built from the repository root
-# (`docker build -t mgo2-web-backend:local .`) and loaded into k3s's containerd,
+# The image is built from this repository
+# (`docker build -t altmgo-backend:latest .`) and loaded into k3s's containerd,
 # so it is referenced by a local tag and never pulled.
 #
 # The Deployment reads a secret named mgo2-web-secrets with two keys:
 #   DATABASE_URL  a standard postgresql:// URL (the game's Postgres)
 #   JWT_SECRET    a value of this site's own, e.g. `openssl rand -hex 32`
 # Create it before applying, for example:
-#   kubectl -n mgo2 create secret generic mgo2-web-secrets \
+#   kubectl -n altmgo create secret generic altmgo-secrets \
 #     --from-literal=DATABASE_URL='postgresql://user:password@mgo2-postgres:5432/mgo2' \
 #     --from-literal=JWT_SECRET="$(openssl rand -hex 32)"
 FROM node:24-alpine AS build
