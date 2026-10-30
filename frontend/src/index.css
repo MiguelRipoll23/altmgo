@@ -83,8 +83,8 @@
   --card-foreground: oklch(0.97 0.01 250);
   --popover: oklch(0.17 0.02 260);
   --popover-foreground: oklch(0.97 0.01 250);
-  --primary: #00c0e8;
-  --primary-foreground: #ffffff;
+  --primary: #FE8E00;
+  --primary-foreground: #1a1a1a;
   --secondary: oklch(0.25 0.02 260);
   --secondary-foreground: oklch(0.95 0.01 250);
   --muted: oklch(0.25 0.02 260);
@@ -95,7 +95,7 @@
   --destructive-foreground: oklch(0.98 0.01 250);
   --border: oklch(0.3 0.02 260);
   --input: oklch(0.32 0.02 260);
-  --ring: #00c0e8;
+  --ring: #FE8E00;
   --radius: 0.75rem;
 
   /* The pale ends of the three status hues, which are the ends that read against
@@ -132,19 +132,19 @@
     --card-foreground: oklch(0.22 0.02 260);
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.22 0.02 260);
-    --primary: #0096b5;
-    --primary-foreground: #ffffff;
+    --primary: #C26A00;
+    --primary-foreground: #1a1a1a;
     --secondary: oklch(0.94 0.012 250);
     --secondary-foreground: oklch(0.28 0.02 260);
     --muted: oklch(0.95 0.012 250);
     --muted-foreground: oklch(0.46 0.02 255);
-    --accent: #B96A00;
+    --accent: #FE8E00;
     --accent-foreground: #ffffff;
     --destructive: oklch(0.5 0.2 25);
     --destructive-foreground: oklch(0.99 0.005 250);
     --border: oklch(0.9 0.012 250);
     --input: oklch(0.88 0.012 250);
-    --ring: #0096b5;
+    --ring: #C26A00;
 
     /* The same three hues at the other end of the scale, where a badge's text has
        to clear a white card rather than a black one — hence seven hundred rather
