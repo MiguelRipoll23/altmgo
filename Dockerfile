@@ -1,11 +1,10 @@
 # The backend container only: the Hono app is compiled to JavaScript and served
-# over TLS on 8443. The site itself is deployed separately on Vercel and reaches
-# this container at https://altmgo.duckdns.org:8443.
+# over plain HTTP on 8443. The site itself is deployed separately on Vercel and reaches
+# this container at http://raspberrypi.tailbb45e2.ts.net:8443.
 #
 # The image is built from the repository root
 # (`docker build -t mgo2-web-backend:local .`) and loaded into k3s's containerd,
-# so it is referenced by a local tag and never pulled. TLS comes from the
-# cluster's mgo2-tls certificate for altmgo.duckdns.org.
+# so it is referenced by a local tag and never pulled.
 #
 # The Deployment reads a secret named mgo2-web-secrets with two keys:
 #   DATABASE_URL  a standard postgresql:// URL (the game's Postgres)

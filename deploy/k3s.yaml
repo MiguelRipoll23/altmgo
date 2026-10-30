@@ -1,14 +1,13 @@
 # mgo2-web-backend: the AltMGO API, in its own container.
 #
 # The site is deployed separately on Vercel and reaches this container at
-# https://altmgo.duckdns.org:8443, so every call is cross-origin and carries the
+# http://raspberrypi.tailbb45e2.ts.net:8443, so every call is cross-origin and carries the
 # `/api` prefix the app routes.
 #
 # The image is built from the repository root
 # (`docker build -t mgo2-web-backend:local .`) and loaded into k3s's containerd,
 # so it is referenced by a local tag and never pulled. The API listens on the
-# container's port 8443, served over TLS with the cluster's mgo2-tls
-# certificate for altmgo.duckdns.org.
+# container's port 8443 over plain HTTP.
 #
 # The Deployment reads a secret named mgo2-web-secrets with two keys:
 #   DATABASE_URL  a standard postgresql:// URL (the game's Postgres)
@@ -45,16 +44,12 @@ spec:
           image: mgo2-web-backend:local
           imagePullPolicy: IfNotPresent
           ports:
-            - name: https
+            - name: http
               containerPort: 8443
               protocol: TCP
           env:
             - name: PORT
               value: "8443"
-            - name: TLS_CERTIFICATE_PATH
-              value: /app/certs/tls.crt
-            - name: TLS_CERTIFICATE_KEY_PATH
-              value: /app/certs/tls.key
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
@@ -68,24 +63,21 @@ spec:
           readinessProbe:
             httpGet:
               path: /health
-              port: https
-              scheme: HTTPS
+              port: http
             initialDelaySeconds: 3
             periodSeconds: 10
             timeoutSeconds: 3
           startupProbe:
             httpGet:
               path: /health
-              port: https
-              scheme: HTTPS
+              port: http
             failureThreshold: 30
             periodSeconds: 2
             timeoutSeconds: 3
           livenessProbe:
             httpGet:
               path: /health
-              port: https
-              scheme: HTTPS
+              port: http
             initialDelaySeconds: 15
             periodSeconds: 20
             timeoutSeconds: 3
@@ -103,14 +95,6 @@ spec:
             runAsUser: 1000
             seccompProfile:
               type: RuntimeDefault
-          volumeMounts:
-            - name: tls
-              mountPath: /app/certs
-              readOnly: true
-      volumes:
-        - name: tls
-          secret:
-            secretName: mgo2-tls
 ---
 apiVersion: v1
 kind: Service
@@ -125,7 +109,7 @@ spec:
   selector:
     app: mgo2-web-backend
   ports:
-    - name: https
+    - name: http
       port: 8443
-      targetPort: https
+      targetPort: http
       protocol: TCP

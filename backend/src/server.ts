@@ -3,33 +3,21 @@ import { getConnInfo } from '@hono/node-server/conninfo';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import type { Context } from 'hono';
-import { readFileSync } from 'node:fs';
 import { createServer as createHttpServer } from 'node:http';
-import { createServer as createHttpsServer } from 'node:https';
 import { allowedOrigins } from './allowedOrigins.js';
 import app from './index.js';
 
 /**
- * The backend's front door: one TLS port handing everything under `/api` to the
+ * The backend's front door: one plain HTTP port handing everything under `/api` to the
  * Hono app.
  *
  * The site is its own deployment on Vercel and calls this container at
- * https://altmgo.duckdns.org:8443, so the request is cross-origin. The app's
+ * http://raspberrypi.tailbb45e2.ts.net:8443, so the request is cross-origin. The app's
  * CORS middleware answers the preflight, and the caller's address is read from
  * the socket the request arrived on — the Service keeps it with
  * `externalTrafficPolicy: Local` — rather than from a proxy hop.
  */
 const port = Number(process.env.PORT ?? 8443);
-
-const certificatePath = process.env.TLS_CERTIFICATE_PATH;
-const privateKeyPath = process.env.TLS_CERTIFICATE_KEY_PATH;
-const tls =
-  certificatePath && privateKeyPath
-    ? {
-        cert: readFileSync(certificatePath),
-        key: readFileSync(privateKeyPath),
-      }
-    : undefined;
 
 const server = new Hono();
 
@@ -85,6 +73,6 @@ serve(
         createServer: createHttpServer,
       },
   (info) => {
-    console.log(`mgo2-web-backend listening on ${tls ? 'https' : 'http'}://${info.address}:${info.port}`);
+    console.log(`mgo2-web-backend listening on http://${info.address}:${info.port}`);
   },
 );
