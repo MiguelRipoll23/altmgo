@@ -1,0 +1,9 @@
+# The children of altmgo-root, one Application per service, in the order they
+# must sync. Listed here so the folder is itself a kustomization, which keeps a
+# stray file in it from being silently ignored by the root Application.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - cluster.yaml
+  - backend.yaml

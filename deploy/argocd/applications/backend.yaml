@@ -1,0 +1,32 @@
+# Wave 2: the API, and so only ever synced once the namespace exists.
+#
+# The Tailscale Funnel reaches it at https://raspberrypi.tailbb45e2.ts.net:9090,
+# which proxies to the Service on this node.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: altmgo-backend
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: ssh://git@github.com/MiguelRipoll23/altmgo.git
+    targetRevision: main
+    path: deploy/backend
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: altmgo
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m

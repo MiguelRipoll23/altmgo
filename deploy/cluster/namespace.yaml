@@ -1,0 +1,5 @@
+# The namespace every AltMGO workload lives in.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: altmgo

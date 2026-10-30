@@ -1,7 +1,7 @@
 # altmgo-backend: the AltMGO API, in its own container.
 #
 # The site is deployed separately on Vercel and reaches this container at
-# http://raspberrypi.tailbb45e2.ts.net:8443, so every call is cross-origin and carries the
+# https://raspberrypi.tailbb45e2.ts.net:9090 through the Tailscale Funnel, so every call is cross-origin and carries the
 # `/api` prefix the app routes.
 #
 # The image is built from the repository root
@@ -59,7 +59,8 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: altmgo-secrets
-                  key: JWT_SECRET            readinessProbe:
+                  key: JWT_SECRET
+          readinessProbe:
             httpGet:
               path: /health
               port: http
@@ -95,21 +96,3 @@ spec:
             runAsUser: 1000
             seccompProfile:
               type: RuntimeDefault
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: altmgo-backend
-  namespace: altmgo
-spec:
-  type: LoadBalancer
-  # Preserve the caller's address: the API publishes it for the player's game,
-  # so a service that SNATs the connection would publish the node's address.
-  externalTrafficPolicy: Local
-  selector:
-    app: altmgo-backend
-  ports:
-    - name: http
-      port: 9090
-      targetPort: http
-      protocol: TCP
