@@ -5,7 +5,7 @@
  * backend on another port.
  */
 const apiBaseUrl = (
-  import.meta.env.VITE_API_BASE_URL ?? 'http://raspberrypi.tailbb45e2.ts.net:8443'
+  import.meta.env.VITE_API_BASE_URL ?? 'http://raspberrypi.tailbb45e2.ts.net:9090'
 ).replace(/\/+$/, '');
 
 export async function isBackendReachable(): Promise<boolean> {

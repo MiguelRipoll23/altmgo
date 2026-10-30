@@ -4,7 +4,7 @@ metadata:
   name: altmgo-backend
   namespace: argocd
 spec:
-  project: default
+  project: altmgo-backend
   source:
     repoURL: https://github.com/MiguelRipoll23/altmgo.git
     targetRevision: main
