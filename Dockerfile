@@ -36,7 +36,7 @@ FROM node:24-alpine
 WORKDIR /app
 
 ENV NODE_ENV=production \
-    PORT=8443
+    PORT=9090
 
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/backend/dist ./backend/dist
@@ -44,6 +44,6 @@ COPY --from=build /app/backend/package.json ./backend/package.json
 
 USER node
 
-EXPOSE 8443
+EXPOSE 9090
 
 CMD ["node", "backend/dist/server.js"]

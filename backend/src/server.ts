@@ -17,7 +17,7 @@ import app from './index.js';
  * the socket the request arrived on — the Service keeps it with
  * `externalTrafficPolicy: Local` — rather than from a proxy hop.
  */
-const port = Number(process.env.PORT ?? 8443);
+const port = Number(process.env.PORT ?? 9090);
 
 const server = new Hono();
 
@@ -30,7 +30,7 @@ server.use(
 );
 
 server.get('/health', (context) =>
-  context.json({ service: 'mgo2-web-backend', status: 'ok' }),
+  context.json({ service: 'altmgo-backend', status: 'ok' }),
 );
 
 /**
@@ -58,21 +58,13 @@ server.all('/api/*', handleApi);
 server.notFound((context) => context.json({ error: 'Not found.' }, 404));
 
 serve(
-  tls
-    ? {
-        fetch: server.fetch,
-        port,
-        hostname: '0.0.0.0',
-        createServer: createHttpsServer,
-        serverOptions: tls,
-      }
-    : {
-        fetch: server.fetch,
-        port,
-        hostname: '0.0.0.0',
-        createServer: createHttpServer,
-      },
+  {
+    fetch: server.fetch,
+    port,
+    hostname: '0.0.0.0',
+    createServer: createHttpServer,
+  },
   (info) => {
-    console.log(`mgo2-web-backend listening on http://${info.address}:${info.port}`);
+    console.log(`altmgo-backend listening on http://${info.address}:${info.port}`);
   },
 );

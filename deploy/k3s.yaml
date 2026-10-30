@@ -7,7 +7,7 @@
 # The image is built from the repository root
 # (`docker build -t altmgo-backend:latest .`) and loaded into k3s's containerd,
 # so it is referenced by a local tag and never pulled. The API listens on the
-# container's port 8443 over plain HTTP.
+# container's port 9090 over plain HTTP.
 #
 # The Deployment reads a secret named altmgo-secrets with two keys:
 #   DATABASE_URL  a standard postgresql:// URL (the game's Postgres)
@@ -45,11 +45,11 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
-              containerPort: 8443
+              containerPort: 9090
               protocol: TCP
           env:
             - name: PORT
-              value: "8443"
+              value: "9090"
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
@@ -59,8 +59,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: altmgo-secrets
-                  key: JWT_SECRET
-          readinessProbe:
+                  key: JWT_SECRET            readinessProbe:
             httpGet:
               path: /health
               port: http
@@ -81,6 +80,7 @@ spec:
             initialDelaySeconds: 15
             periodSeconds: 20
             timeoutSeconds: 3
+
           resources:
             requests:
               cpu: 50m
@@ -110,6 +110,6 @@ spec:
     app: altmgo-backend
   ports:
     - name: http
-      port: 8443
+      port: 9090
       targetPort: http
       protocol: TCP
