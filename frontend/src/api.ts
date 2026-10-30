@@ -5,17 +5,9 @@
  * backend on another port.
  */
 const apiBaseUrl = (
-  import.meta.env.VITE_API_BASE_URL ?? 'https://altmgo.duckdns.org:8443'
+  import.meta.env.VITE_API_BASE_URL ?? 'https://raspberrypi.tailbb45e2.ts.net'
 ).replace(/\/+$/, '');
 
-/**
- * Asks the backend's `/health` endpoint whether it is reachable.
- *
- * The backend lives on the tailnet, so a browser that has not joined it cannot
- * open the API at all. This is the one call that answers that question without
- * needing a session, and it is deliberately short-lived: a visitor should be
- * told to connect rather than watch a spinner for a minute.
- */
 export async function isBackendReachable(): Promise<boolean> {
   try {
     const response = await fetch(`${apiBaseUrl}/health`, {
