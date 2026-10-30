@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
+import { allowedOrigins } from './allowedOrigins.js';
 import type { AppBindings } from './authentication.js';
 import { authenticationRoutes } from './routes/authenticationRoutes.js';
 import { characterRoutes } from './routes/characterRoutes.js';
@@ -29,15 +30,14 @@ const app = new Hono<AppBindings>();
 
 app.use('*', logger());
 
-// Locally the site and this app sit on two origins — vite on :5173, `vercel dev`
-// on :3000 — so a development call is cross-origin and needs this. Deployed they
-// share one origin and none of it is in play. Nothing here is authenticated by a
-// cookie, so the browser's credential rules do not apply and the origin need not
-// be narrowed to allow the header the token travels in.
+// The site is on Vercel and this app is the mgo2-web-backend container, so every
+// browser call is cross-origin and needs this. Nothing here is authenticated by
+// a cookie, so the browser's credential rules do not apply; the origins are
+// listed so only the site itself may read the responses.
 app.use(
   '/api/*',
   cors({
-    origin: '*',
+    origin: allowedOrigins,
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowHeaders: ['Content-Type', 'Authorization'],
     maxAge: 86400,

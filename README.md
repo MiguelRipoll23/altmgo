@@ -3,19 +3,21 @@
 The companion site for the AltMGO game server: accounts, the characters they own, and the page a
 tailnet host is sent to so their game can be joined from outside their network.
 
-One repository, one Vercel project, one origin:
+One repository, two deployments:
 
 | folder | what it is |
 | --- | --- |
-| `frontend/` | Vite + React + Tailwind single-page site, built to `frontend/dist` and served as static files |
-| `backend/` | Hono app, reading the game's Neon database |
-| `api/` | the deployment's one function: a catch-all that hands every `/api/...` request to the Hono app |
+| `frontend/` | Vite + React + Tailwind single-page site, deployed to Vercel as static files |
+| `backend/` | Hono app over the game's Postgres, deployed to k3s as `mgo2-web-backend` |
+| `deploy/` | the k3s Deployment and Service for the backend |
 
-`vercel.json` at the root builds the site, serves `frontend/dist`, and wires the two together. Because
-the site and the API share an origin, the browser calls `/api/...` directly: there is no cross-origin
-request to allow, no build-time API origin to set, and — the reason it matters most here — the address
-the site publishes is read from the request's own connection rather than through a proxy hop that
-would have to be trusted to pass it along.
+The site is on Vercel and the API is a TLS container in the cluster, reached at
+`https://altmgo.duckdns.org:8443`. Every browser call is therefore cross-origin and carries the
+`/api` prefix, which the app's CORS middleware allows. On load the frontend calls `/health`; when the
+backend cannot be reached it tells the visitor to connect to Tailscale rather than failing page by
+page. The address the site publishes is read from the socket the request arrived on — the Service
+keeps it with `externalTrafficPolicy: Local` — rather than through a proxy hop that would have to be
+trusted to pass it along.
 
 ## What it does
 
@@ -48,59 +50,64 @@ would have to be trusted to pass it along.
 
 ## Environment variables
 
-One project reads them from Vercel's project settings.
+The Vercel project runs the site and needs no variables; its default API origin is the cluster's
+backend. `VITE_API_BASE_URL` is still honoured and is what a local frontend sets to reach a backend
+on another port.
+
+The `mgo2-web-backend` Deployment reads these from the `mgo2-web-secrets` secret in the `mgo2`
+namespace:
 
 | name | what it is |
 | --- | --- |
-| `DATABASE_URL` | Neon connection string — the **pooled** one |
+| `DATABASE_URL` | the game's Postgres URL, e.g. `postgresql://user:password@mgo2-postgres:5432/mgo2` |
 | `JWT_SECRET` | signs this site's session tokens |
-
-
-`VITE_API_BASE_URL` is deliberately **not** set: with one origin the calls stay relative. It is still
-honoured if it is set, which is what running the site and the API as two projects would need.
 
 `JWT_SECRET` signs this site's own session tokens, and nothing outside this app verifies them — so it
 does **not** have to be the game server's secret, and a value of its own is better. It is still a real
-secret: it is what makes a token the backend issues unforgeable, so keep it in the Vercel
-environment, never in the repository.
+secret: it is what makes a token the backend issues unforgeable, so keep it in the secret, never in
+the repository.
 
 ## Local development
 
 ```sh
 npm install                   # once, at the root — this is an npm workspaces repo
 
-cd backend && cp .env.example .env    # DATABASE_URL, JWT_SECRET, SERVER_IP
-cd frontend && cp .env.example .env   # VITE_API_BASE_URL, see below
+cd backend && cp .env.example .env    # DATABASE_URL, JWT_SECRET
+cd frontend && cp .env.example .env   # VITE_API_BASE_URL=http://localhost:8443
 
 npm run dev                   # vite, on http://localhost:5173
 
-# the API, in another shell, from the root
-vercel dev                    # on http://localhost:3000
+# the API, in another shell
+npm run dev --workspace backend      # builds and serves on http://localhost:8443
 ```
 
-Locally the two run on two ports, so they are two origins and the frontend needs
-`VITE_API_BASE_URL=http://localhost:3000` to reach the API. Deployed they are one origin, and that is
-exactly why the variable is unset there.
+Locally the backend runs without TLS, so the frontend's `VITE_API_BASE_URL` is
+`http://localhost:8443`. Deployed, the frontend defaults to `https://altmgo.duckdns.org:8443` and the
+variable is unset.
 
 ## Deploying
 
-1. Push this folder to a Git repository.
-2. Import it into Vercel as **one project**, with the repository root as the root directory — that is
-   where `vercel.json`, `api/` and the workspaces `package.json` live.
-3. Set `DATABASE_URL` and `JWT_SECRET`. `DATABASE_URL` is the Neon connection string; Neon's pooled
-   endpoint is the right one, because a function invocation is a connection.
-4. Nothing else is typed in by hand: `vercel.json` pins the build command, the output directory and
-   the route order below.
+The site and the API are deployed separately.
 
-## How the two halves are wired at the edge
+**Frontend (Vercel).** Import the repository root as one Vercel project. `vercel.json` pins the build
+command and the output directory, and the only rewrite sends every path to `index.html` so a deep
+link like `/dashboard` loads the site. No environment variables are required.
 
-`vercel.json` lists its rewrites in the order they are applied, and the order is the whole point:
+**Backend (k3s).**
 
-1. `/api/(.*)` → the function. Without this rule only **one** path segment reaches the app: Vercel's
-   own route for the catch-all function covers `/api/<segment>` and answers every deeper path with a
-   404, so `/api/auth/login` would never arrive.
-2. `/(.*)` → `/index.html`, so a deep link like `/dashboard` loads the site and the browser routes it.
-   It has to come second — it matches `/api/...` too, and the first rule that matches wins.
+1. Build the image from the repository root and load it into the cluster's containerd:
+   ```sh
+   docker build -t mgo2-web-backend:local .
+   docker save mgo2-web-backend:local | sudo k3s ctr images import -
+   ```
+2. Create the `mgo2-web-secrets` secret if it does not exist yet (see the comments in
+   `deploy/k3s.yaml`).
+3. Apply the Deployment and Service:
+   ```sh
+   sudo kubectl apply -f deploy/k3s.yaml
+   ```
+   The Service is a `LoadBalancer` on 8443, using the cluster's `mgo2-tls` certificate for
+   `altmgo.duckdns.org`.
 
 ## Publishing the address
 

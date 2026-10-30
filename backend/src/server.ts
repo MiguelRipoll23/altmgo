@@ -1,24 +1,25 @@
 import { serve } from '@hono/node-server';
 import { getConnInfo } from '@hono/node-server/conninfo';
-import { serveStatic } from '@hono/node-server/serve-static';
 import { Hono } from 'hono';
+import { cors } from 'hono/cors';
 import type { Context } from 'hono';
 import { readFileSync } from 'node:fs';
 import { createServer as createHttpServer } from 'node:http';
 import { createServer as createHttpsServer } from 'node:https';
+import { allowedOrigins } from './allowedOrigins.js';
 import app from './index.js';
 
 /**
- * The container's front door: one port serving the built site and handing
- * everything under `/api` to the Hono app the Vercel function also exports.
+ * The backend's front door: one TLS port handing everything under `/api` to the
+ * Hono app.
  *
- * The site and the API share this origin, so the browser's calls stay relative
- * and there is no cross-origin request to allow. That is the same arrangement
- * `vercel.json` makes at the edge, kept here so the repository can also run as
- * a single container.
+ * The site is its own deployment on Vercel and calls this container at
+ * https://altmgo.duckdns.org:8443, so the request is cross-origin. The app's
+ * CORS middleware answers the preflight, and the caller's address is read from
+ * the socket the request arrived on — the Service keeps it with
+ * `externalTrafficPolicy: Local` — rather than from a proxy hop.
  */
 const port = Number(process.env.PORT ?? 8443);
-const staticRoot = process.env.STATIC_ROOT ?? './public';
 
 const certificatePath = process.env.TLS_CERTIFICATE_PATH;
 const privateKeyPath = process.env.TLS_CERTIFICATE_KEY_PATH;
@@ -32,7 +33,17 @@ const tls =
 
 const server = new Hono();
 
-server.get('/health', (context) => context.json({ service: 'mgo2-web', status: 'ok' }));
+// The frontend asks for this on load to tell a reachable backend from a network
+// that has not joined the tailnet yet, so the answer has to be readable from the
+// Vercel origin.
+server.use(
+  '/health',
+  cors({ origin: allowedOrigins, allowMethods: ['GET', 'OPTIONS'], maxAge: 86400 }),
+);
+
+server.get('/health', (context) =>
+  context.json({ service: 'mgo2-web-backend', status: 'ok' }),
+);
 
 /**
  * Re-dispatches an API request into the existing app, naming the caller from
@@ -56,11 +67,7 @@ function handleApi(context: Context) {
 server.all('/api', handleApi);
 server.all('/api/*', handleApi);
 
-// A real file first, then the SPA's entry point for a deep link such as
-// `/dashboard`. The API is already answered above, so neither rule can swallow
-// it.
-server.get('*', serveStatic({ root: staticRoot }));
-server.get('*', serveStatic({ root: staticRoot, path: 'index.html' }));
+server.notFound((context) => context.json({ error: 'Not found.' }, 404));
 
 serve(
   tls
@@ -78,6 +85,6 @@ serve(
         createServer: createHttpServer,
       },
   (info) => {
-    console.log(`mgo2-web listening on ${tls ? 'https' : 'http'}://${info.address}:${info.port}`);
+    console.log(`mgo2-web-backend listening on ${tls ? 'https' : 'http'}://${info.address}:${info.port}`);
   },
 );

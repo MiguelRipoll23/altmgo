@@ -1,4 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BackendHealthNotice } from './components/BackendHealthNotice';
 import { DashboardRoute, OverviewSection } from './components/DashboardRoute';
 import { ClansPage } from './pages/ClansPage';
 import { ClanDetailPage } from './pages/ClanDetailPage';
@@ -67,6 +68,7 @@ import { TournamentPage } from './pages/TournamentPage';
 export function App() {
   return (
     <BrowserRouter>
+      <BackendHealthNotice />
       <Routes>
         <Route path="/" element={<HomePage />} />
 

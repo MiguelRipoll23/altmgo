@@ -1,10 +1,14 @@
-# mgo2-web: the AltMGO companion site and its API in one container.
+# mgo2-web-backend: the AltMGO API, in its own container.
 #
-# The image is built from the repository root (`docker build -t mgo2-web:local .`)
-# and loaded into k3s's containerd, so it is referenced by a local tag and never
-# pulled. The site and the API share the container's port 8443, served over TLS
-# with the cluster's mgo2-tls certificate, which is the same origin arrangement
-# `vercel.json` makes at the edge.
+# The site is deployed separately on Vercel and reaches this container at
+# https://altmgo.duckdns.org:8443, so every call is cross-origin and carries the
+# `/api` prefix the app routes.
+#
+# The image is built from the repository root
+# (`docker build -t mgo2-web-backend:local .`) and loaded into k3s's containerd,
+# so it is referenced by a local tag and never pulled. The API listens on the
+# container's port 8443, served over TLS with the cluster's mgo2-tls
+# certificate for altmgo.duckdns.org.
 #
 # The Deployment reads a secret named mgo2-web-secrets with two keys:
 #   DATABASE_URL  a standard postgresql:// URL (the game's Postgres)
@@ -16,16 +20,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mgo2-web
+  name: mgo2-web-backend
   namespace: mgo2
   labels:
-    app: mgo2-web
+    app: mgo2-web-backend
 spec:
   replicas: 1
   revisionHistoryLimit: 2
   selector:
     matchLabels:
-      app: mgo2-web
+      app: mgo2-web-backend
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -34,11 +38,11 @@ spec:
   template:
     metadata:
       labels:
-        app: mgo2-web
+        app: mgo2-web-backend
     spec:
       containers:
-        - name: mgo2-web
-          image: mgo2-web:local
+        - name: mgo2-web-backend
+          image: mgo2-web-backend:local
           imagePullPolicy: IfNotPresent
           ports:
             - name: https
@@ -111,7 +115,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: mgo2-web
+  name: mgo2-web-backend
   namespace: mgo2
 spec:
   type: LoadBalancer
@@ -119,7 +123,7 @@ spec:
   # so a service that SNATs the connection would publish the node's address.
   externalTrafficPolicy: Local
   selector:
-    app: mgo2-web
+    app: mgo2-web-backend
   ports:
     - name: https
       port: 8443

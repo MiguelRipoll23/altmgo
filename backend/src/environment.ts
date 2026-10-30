@@ -1,11 +1,11 @@
 /**
  * Settings the backend runs on. Every one is an environment variable of the
- * Vercel project, and each is read when it is needed rather than at import
- * time: a serverless function is started per invocation, so a value that is
- * absent should fail the request that wanted it instead of the whole module.
+ * container, and each is read when it is needed rather than at import time: a
+ * value that is absent should fail the request that wanted it instead of the
+ * whole module.
  */
 export type Environment = {
-  /** Neon connection string. */
+  /** The game's Postgres connection string. */
   readonly databaseUrl: string;
 
   /** Key this site's session tokens are signed with. */

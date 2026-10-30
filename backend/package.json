@@ -6,7 +6,8 @@
   "description": "AltMGO backend: accounts, characters and host links, on Hono over Neon or Postgres.",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "dev": "vercel dev",
+    "dev": "npm run build && node --env-file-if-exists=.env dist/server.js",
+    "start": "node --env-file-if-exists=.env dist/server.js",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

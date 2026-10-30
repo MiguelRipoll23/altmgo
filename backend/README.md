@@ -1,14 +1,14 @@
 # altmgo backend
 
-A Hono app deployed as the one function the site runs. `src/index.ts` default-exports the app, the
-repository root's `api/[...path].ts` re-exports that default, and the `vercel.json` there routes every
-`/api/...` request to it — letting Hono's own router match the path, so this folder holds no Vercel
-configuration of its own.
+A Hono app deployed as the `mgo2-web-backend` container in the k3s cluster, serving
+`https://altmgo.duckdns.org:8443`. `src/index.ts` is the app and `src/server.ts` is the container's
+front door: it serves TLS on 8443 and hands everything under `/api` to the app. The site is deployed
+separately on Vercel and calls this origin.
 
 ## Endpoints
 
-Everything lives under `/api`. The site and the API share an origin, so the frontend calls it
-relatively and the browser reaches the function directly.
+Everything lives under `/api`. The site and the API are on different origins, so the app allows the
+cross-origin calls and the browser sends its token in an `Authorization` header.
 
 Every route reads. There is no write here except the two that create a session and the one that
 publishes a public address, and those three are the only things a signed-in account may change about
@@ -48,7 +48,7 @@ routes.
 
 | file | what lives there |
 | --- | --- |
-| `src/index.ts` | the app itself: middleware, route mounting, the JSON error front, and the default export Vercel takes |
+| `src/index.ts` | the app itself: middleware, route mounting, the JSON error front, and the default export the container serves |
 | `src/environment.ts` | the settings, each refused when absent |
 | `src/database.ts` | the database client — Neon's HTTP driver for a Neon URL, node-postgres for any other Postgres — the unique-violation test and the raw-SQL escape hatch |
 | `src/authentication.ts` | password hashing, session tokens, and the one middleware |
@@ -67,20 +67,19 @@ routes.
 
 ## Notes worth keeping
 
-- **The driver follows the URL.** A `*.neon.tech` URL uses Neon's HTTP driver, which is what a
-  serverless function wants; any other Postgres URL uses node-postgres, which is what the container
-  deployment needs to read the game's own database in the cluster. Both are adapted to the same
-  tagged-template surface, so no query knows which one answered it.
+- **The driver follows the URL.** A `*.neon.tech` URL uses Neon's HTTP driver; any other Postgres URL
+  uses node-postgres, which is what the container deployment uses to read the game's own database in
+  the cluster. Both are adapted to the same tagged-template surface, so no query knows which one
+  answered it.
 - **The password digest is the game's.** Accounts hold `md5(password)` in lowercase hex, because
   that is what the client sends and what the server stores. The site hashes the same way so the two
   share credentials. That is a deliberate property of the game, not a choice made here.
 - **`HS256` is named on both sides.** `hono/jwt`'s `verify` requires an algorithm, and passing it is
   what stops a token from choosing its own; the game server's handler names it too.
-- **The address is read from the forwarded header.** Vercel terminates TLS in front of the function,
-  so the socket address is the edge's, not the visitor's. Only IPv4 is accepted — the game stores the
-  public address in a sixteen-byte field, so a v6 address has nowhere to go. Sharing an origin with
-  the site is what keeps this honest: the browser calls the function directly, so the forwarded header
-  names the visitor rather than an intermediate deployment.
+- **The address is read from the forwarded header.** Vercel puts the visitor's address in
+  `x-forwarded-for`; the container overwrites it with the socket address, which `externalTrafficPolicy:
+  Local` keeps as the visitor's. Only IPv4 is accepted — the game stores the public address in a
+  sixteen-byte field, so a v6 address has nowhere to go.
 - **Errors are JSON.** `app.onError` answers with `{ "error": "..." }` so the pages can show the
   reason rather than parsing a Vercel error page. Those messages are written for the player.
 - **There are no roles.** Every route above wants a valid token and nothing else, so there is no
@@ -116,5 +115,5 @@ routes.
 ```sh
 npm install          # once, at the repository root — this is an npm workspace
 npm run typecheck    # tsc --noEmit
-vercel dev           # from the repository root, on http://localhost:3000
+npm run dev          # from this folder: build and serve on http://localhost:8443
 ```

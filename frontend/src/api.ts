@@ -1,8 +1,40 @@
 /**
- * Origin of the backend deployment. When the two are served from one origin the
- * variable is unset and every call stays relative.
+ * Origin of the backend deployment. The site is on Vercel and the API is the
+ * mgo2-web-backend container in the k3s cluster, so every call is cross-origin.
+ * `VITE_API_BASE_URL` overrides this — that is how a local frontend reaches a
+ * backend on another port.
  */
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/+$/, '');
+const apiBaseUrl = (
+  import.meta.env.VITE_API_BASE_URL ?? 'https://altmgo.duckdns.org:8443'
+).replace(/\/+$/, '');
+
+/**
+ * Asks the backend's `/health` endpoint whether it is reachable.
+ *
+ * The backend lives on the tailnet, so a browser that has not joined it cannot
+ * open the API at all. This is the one call that answers that question without
+ * needing a session, and it is deliberately short-lived: a visitor should be
+ * told to connect rather than watch a spinner for a minute.
+ */
+export async function isBackendReachable(): Promise<boolean> {
+  try {
+    const response = await fetch(`${apiBaseUrl}/health`, {
+      headers: { Accept: 'application/json' },
+      signal: AbortSignal.timeout(5000),
+    });
+
+    if (!response.ok) {
+      return false;
+    }
+
+    const payload = (await response.json().catch(() => undefined)) as
+      | { status?: string }
+      | undefined;
+    return payload?.status === 'ok';
+  } catch {
+    return false;
+  }
+}
 
 /** A refusal the backend named, carrying the status it was answered with. */
 export class ApiError extends Error {
@@ -55,9 +87,8 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     throw new ApiError('Could not reach the server. Is it running?', 0);
   }
 
-  // A missing VITE_API_BASE_URL is the mistake this catches: the calls would go
-  // to this same origin, the SPA rewrite would answer them with index.html, and
-  // a 200 carrying a page would sail through as if it were a body.
+  // A backend that answers with HTML is a wrong origin or a stopped API, not a
+  // body this page can use, so it is refused before the JSON parse.
   const contentType = response.headers.get('content-type') ?? '';
   if (!contentType.includes('application/json')) {
     throw new ApiError(
