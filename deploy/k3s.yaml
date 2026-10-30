@@ -1,34 +1,34 @@
-# mgo2-web-backend: the AltMGO API, in its own container.
+# altmgo-backend: the AltMGO API, in its own container.
 #
 # The site is deployed separately on Vercel and reaches this container at
 # http://raspberrypi.tailbb45e2.ts.net:8443, so every call is cross-origin and carries the
 # `/api` prefix the app routes.
 #
 # The image is built from the repository root
-# (`docker build -t mgo2-web-backend:local .`) and loaded into k3s's containerd,
+# (`docker build -t altmgo-backend:local .`) and loaded into k3s's containerd,
 # so it is referenced by a local tag and never pulled. The API listens on the
 # container's port 8443 over plain HTTP.
 #
-# The Deployment reads a secret named mgo2-web-secrets with two keys:
+# The Deployment reads a secret named altmgo-secrets with two keys:
 #   DATABASE_URL  a standard postgresql:// URL (the game's Postgres)
 #   JWT_SECRET    a value of this site's own, e.g. `openssl rand -hex 32`
 # Create it before applying, for example:
-#   kubectl -n mgo2 create secret generic mgo2-web-secrets \
+#   kubectl -n altmgo create secret generic altmgo-secrets \
 #     --from-literal=DATABASE_URL='postgresql://user:password@mgo2-postgres:5432/mgo2' \
 #     --from-literal=JWT_SECRET="$(openssl rand -hex 32)"
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mgo2-web-backend
-  namespace: mgo2
+  name: altmgo-backend
+  namespace: altmgo
   labels:
-    app: mgo2-web-backend
+    app: altmgo-backend
 spec:
   replicas: 1
   revisionHistoryLimit: 2
   selector:
     matchLabels:
-      app: mgo2-web-backend
+      app: altmgo-backend
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -37,11 +37,11 @@ spec:
   template:
     metadata:
       labels:
-        app: mgo2-web-backend
+        app: altmgo-backend
     spec:
       containers:
-        - name: mgo2-web-backend
-          image: mgo2-web-backend:local
+        - name: altmgo-backend
+          image: altmgo-backend:local
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -53,12 +53,12 @@ spec:
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: mgo2-web-secrets
+                  name: altmgo-secrets
                   key: DATABASE_URL
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: mgo2-web-secrets
+                  name: altmgo-secrets
                   key: JWT_SECRET
           readinessProbe:
             httpGet:
@@ -99,15 +99,15 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: mgo2-web-backend
-  namespace: mgo2
+  name: altmgo-backend
+  namespace: altmgo
 spec:
   type: LoadBalancer
   # Preserve the caller's address: the API publishes it for the player's game,
   # so a service that SNATs the connection would publish the node's address.
   externalTrafficPolicy: Local
   selector:
-    app: mgo2-web-backend
+    app: altmgo-backend
   ports:
     - name: http
       port: 8443
