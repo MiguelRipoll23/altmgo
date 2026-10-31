@@ -1,7 +1,7 @@
 # altmgo backend
 
 A Hono app deployed as the `mgo2-web-backend` container in the k3s cluster, serving
-`https://altmgo.duckdns.org:8443`. `src/index.ts` is the app and `src/server.ts` is the container's
+`https://raspberrypi.tailbb45e2.ts.net:10000`. `src/index.ts` is the app and `src/server.ts` is the container's
 front door: it serves TLS on 8443 and hands everything under `/api` to the app. The site is deployed
 separately on Vercel and calls this origin.
 
@@ -115,5 +115,5 @@ routes.
 ```sh
 npm install          # once, at the repository root — this is an npm workspace
 npm run typecheck    # tsc --noEmit
-npm run dev          # from this folder: build and serve on http://localhost:8443
+npm run dev          # from this folder: build and serve on http://localhost:9090
 ```

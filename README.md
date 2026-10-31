@@ -12,7 +12,7 @@ One repository, two deployments:
 | `deploy/` | the k3s Deployment and Service for the backend |
 
 The site is on Vercel and the API is a TLS container in the cluster, reached at
-`https://altmgo.duckdns.org:8443`. Every browser call is therefore cross-origin and carries the
+`https://raspberrypi.tailbb45e2.ts.net:10000`. Every browser call is therefore cross-origin and carries the
 `/api` prefix, which the app's CORS middleware allows. On load the frontend calls `/health`; when the
 backend cannot be reached it tells the visitor to connect to Tailscale rather than failing page by
 page. The address the site publishes is read from the socket the request arrived on — the Service
@@ -73,16 +73,16 @@ the repository.
 npm install                   # once, at the root — this is an npm workspaces repo
 
 cd backend && cp .env.example .env    # DATABASE_URL, JWT_SECRET
-cd frontend && cp .env.example .env   # VITE_API_BASE_URL=http://localhost:8443
+cd frontend && cp .env.example .env   # VITE_API_BASE_URL=http://localhost:9090
 
 npm run dev                   # vite, on http://localhost:5173
 
 # the API, in another shell
-npm run dev --workspace backend      # builds and serves on http://localhost:8443
+npm run dev --workspace backend      # builds and serves on http://localhost:9090
 ```
 
 Locally the backend runs without TLS, so the frontend's `VITE_API_BASE_URL` is
-`http://localhost:8443`. Deployed, the frontend defaults to `https://altmgo.duckdns.org:8443` and the
+`http://localhost:9090`. Deployed, the frontend defaults to `https://raspberrypi.tailbb45e2.ts.net:10000` and the
 variable is unset.
 
 ## Deploying

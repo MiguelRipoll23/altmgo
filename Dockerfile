@@ -1,5 +1,5 @@
 # The backend container only: the Hono app is compiled to JavaScript and served
-# over plain HTTP on 8443. The site itself is deployed separately on Vercel and reaches
+# over plain HTTP on 9090. The site itself is deployed separately on Vercel and reaches
 # this container at http://raspberrypi.tailbb45e2.ts.net:10000.
 #
 # The image is built from this repository

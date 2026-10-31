@@ -1,7 +1,7 @@
 # altmgo-backend: the AltMGO API, in its own container.
 #
 # The site is deployed separately on Vercel and reaches this container at
-# https://raspberrypi.tailbb45e2.ts.net:9090 through the Tailscale Funnel, so every call is cross-origin and carries the
+# https://raspberrypi.tailbb45e2.ts.net:10000 through the Tailscale Funnel, so every call is cross-origin and carries the
 # `/api` prefix the app routes.
 #
 # The image is built from the repository root
