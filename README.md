@@ -101,13 +101,13 @@ link like `/dashboard` loads the site. No environment variables are required.
    docker save mgo2-web-backend:local | sudo k3s ctr images import -
    ```
 2. Create the `mgo2-web-secrets` secret if it does not exist yet (see the comments in
-   `deploy/k3s.yaml`).
+   `deploy/backend/kustomization.yaml`).
 3. Apply the Deployment and Service:
    ```sh
-   sudo kubectl apply -f deploy/k3s.yaml
+   sudo kubectl apply -f deploy/backend/kustomization.yaml
    ```
-The Service is a `LoadBalancer` on the node's address, port 9090, over plain HTTP, and the
-   `altmgo.duckdns.org`.
+   The Service is a `LoadBalancer` on the node's address, port 9090, over plain HTTP. A Tailscale
+   Funnel publishes it on 10000, and the Funnel is the only thing terminating TLS in front of it.
 
 ## Publishing the address
 
