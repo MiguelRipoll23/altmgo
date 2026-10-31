@@ -108,10 +108,10 @@ The Service is a `LoadBalancer` on the node's address, port 9090. A Tailscale
 Funnel publishes it publicly:
 
 ```sh
-sudo tailscale funnel --bg --https=9090 http://127.0.0.1:9090
+sudo tailscale funnel --bg --https=8443 http://127.0.0.1:9090
 ```
 
-so the API is at `https://raspberrypi.tailbb45e2.ts.net:9090` and the frontend on
+so the API is at `https://raspberrypi.tailbb45e2.ts.net:8443` and the frontend on
 Vercel points there. The Funnel does not take 443: that port belongs to the mgo2
 HTTP API, which answers `https://altmgo.duckdns.org`. A Funnel re-added on 443
 aborts the handshake for every hostname but the ts.net one, and a browser reports

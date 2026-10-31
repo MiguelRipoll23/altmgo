@@ -13,7 +13,7 @@ import app from './index.js';
  * Hono app.
  *
  * The site is its own deployment on Vercel and calls this container at
- * https://raspberrypi.tailbb45e2.ts.net:9090, so the request is cross-origin. The
+ * https://raspberrypi.tailbb45e2.ts.net:8443, so the request is cross-origin. The
  * app's CORS middleware answers the preflight, and the caller's address is read
  * from the socket when the client reached this container itself, or from the
  * `x-forwarded-for` the Tailscale Funnel writes when it proxied the request.

@@ -1,6 +1,6 @@
 # Wave 2: the API, and so only ever synced once the namespace exists.
 #
-# The Tailscale Funnel reaches it at https://raspberrypi.tailbb45e2.ts.net:9090,
+# The Tailscale Funnel reaches it at https://raspberrypi.tailbb45e2.ts.net:8443,
 # which proxies to the Service on this node.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
