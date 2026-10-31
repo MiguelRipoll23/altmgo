@@ -1,6 +1,6 @@
 # The backend container only: the Hono app is compiled to JavaScript and served
 # over plain HTTP on 8443. The site itself is deployed separately on Vercel and reaches
-# this container at http://raspberrypi.tailbb45e2.ts.net:8443.
+# this container at http://raspberrypi.tailbb45e2.ts.net:10000.
 #
 # The image is built from this repository
 # (`docker build -t altmgo-backend:latest .`) and loaded into k3s's containerd,
