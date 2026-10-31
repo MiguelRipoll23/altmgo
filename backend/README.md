@@ -2,7 +2,7 @@
 
 A Hono app deployed as the `mgo2-web-backend` container in the k3s cluster, serving
 `https://raspberrypi.tailbb45e2.ts.net:10000`. `src/index.ts` is the app and `src/server.ts` is the container's
-front door: it serves TLS on 8443 and hands everything under `/api` to the app. The site is deployed
+front door: it serves plain HTTP on 9090 and hands everything under `/api` to the app. The site is deployed
 separately on Vercel and calls this origin.
 
 ## Endpoints

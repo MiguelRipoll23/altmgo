@@ -106,7 +106,7 @@ link like `/dashboard` loads the site. No environment variables are required.
    ```sh
    sudo kubectl apply -f deploy/k3s.yaml
    ```
-   The Service is a `LoadBalancer` on 8443, using the cluster's `mgo2-tls` certificate for
+The Service is a `LoadBalancer` on the node's address, port 9090, over plain HTTP, and the
    `altmgo.duckdns.org`.
 
 ## Publishing the address
