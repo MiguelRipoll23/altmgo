@@ -63,7 +63,7 @@ export function AccountMenu({
     <DropdownMenu>
       <DropdownMenuTrigger
         className={cn(
-          'flex w-full items-center rounded-lg border border-border bg-card/60 px-3 py-2.5 text-base font-medium text-foreground transition hover:bg-accent/30 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer',
+          'flex w-full items-center rounded-lg border border-border bg-card/60 px-3 py-2.5 text-base font-medium text-muted-foreground transition hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer',
           reduced ? 'justify-center' : 'gap-3',
         )}
         aria-label={accountName === null ? 'My Account' : `My Account, ${accountName}`}
