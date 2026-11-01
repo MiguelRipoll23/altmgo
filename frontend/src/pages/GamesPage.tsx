@@ -108,7 +108,7 @@ const RuleOptions = [
 /** Every value the order-by offers, and what each of them means. */
 const OrderOptions = [
   { value: 'players', label: 'Most players' },
-  { value: 'ping', label: 'Lowest ping' },
+  /* { value: 'ping', label: 'Lowest ping' }, */
   { value: 'name', label: 'Game name' },
   { value: 'map', label: 'Map name' },
   { value: 'mode', label: 'Mode name' },
@@ -197,10 +197,10 @@ function compareGames(left: Game, right: Game, order: string): number {
   const byName = left.name.localeCompare(right.name) || left.id - right.id;
 
   switch (order) {
-    case 'ping':
-      return left.ping - right.ping || byName;
     case 'map':
       return mapName(left.map).localeCompare(mapName(right.map)) || byName;
+    // case 'ping':
+    //   return left.ping - right.ping || byName;
     case 'mode':
       return ruleName(left.rule).localeCompare(ruleName(right.rule)) || byName;
     default:

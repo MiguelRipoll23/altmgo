@@ -10,7 +10,6 @@ import { LoadingBlock, formatNumber } from '../components/DataDisplay';
 import { ClanEmblem } from '../components/ClanEmblem';
 import { StatusMessage } from '../components/StatusMessage';
 import type { Game } from '../components/GameCard';
-import { PingIndicator } from '../components/PingIndicator';
 import { Badge } from '../components/ui/badge';
 import {
   Card,
@@ -128,7 +127,6 @@ export function GameDetailPage() {
                   {game.name}
                 </h1>
                 <div className="flex shrink-0 items-center gap-2 text-white drop-shadow-md">
-                  <PingIndicator ping={game.ping} />
                   {game.hasPassword ? (
                     <LockKeyhole
                       className="size-4 shrink-0"
@@ -223,7 +221,6 @@ export function GameDetailPage() {
                             key={player.characterId}
                             className="flex min-w-0 items-center gap-3 rounded-xl border border-border bg-background/50 p-3"
                           >
-                            <PingIndicator ping={player.ping} />
                             {player.clan === null ? (
                               <span
                                 className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-border bg-muted/20 text-muted-foreground/50"

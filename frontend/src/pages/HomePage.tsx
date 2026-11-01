@@ -126,7 +126,7 @@ export function HomePage() {
               <span className="text-primary">Alt</span>MGO
             </h1>
             <p className="mx-auto mt-4 max-w-xl text-lg leading-relaxed text-muted-foreground lg:mx-0">
-              An alternative server for playing Metal Gear Online 2.
+              An alternative server for playing Metal Gear Online 2
             </p>
           </div>
 

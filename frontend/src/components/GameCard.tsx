@@ -1,7 +1,6 @@
 import { LockKeyhole, Map as MapIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatNumber } from './DataDisplay';
-import { PingIndicator } from './PingIndicator';
 import { ruleName } from '../lib/gameModes';
 import { mapImage, mapName } from '../lib/maps';
 
@@ -85,7 +84,6 @@ export function GameCard({ game }: { game: Game }) {
               {game.name}
             </h3>
             <div className="flex shrink-0 items-center gap-2">
-              <PingIndicator ping={game.ping} />
               {game.hasPassword ? (
                 <span title="Password protected">
                   <LockKeyhole className="size-4 shrink-0" aria-hidden="true" />
