@@ -126,7 +126,7 @@ export function GameDetailPage() {
                 <h1 className="min-w-0 truncate text-lg font-extrabold tracking-tight text-white drop-shadow-md sm:text-2xl">
                   {game.name}
                 </h1>
-                <div className="flex shrink-0 items-center gap-2 text-white drop-shadow-md">
+                <div className="flex shrink-0 items-center gap-2 text-white">
                   {game.hasPassword ? (
                     <LockKeyhole
                       className="size-4 shrink-0"
