@@ -22,7 +22,7 @@ function TabsTrigger({ className, ...props }: ComponentProps<typeof TabsPrimitiv
   return (
     <TabsPrimitive.Trigger
       className={cn(
-        'inline-flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-base font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-[var(--accent)] data-[state=active]:text-[var(--accent-foreground)]',
+        'inline-flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-base font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 cursor-pointer data-[state=active]:bg-[var(--accent)] data-[state=active]:text-[var(--accent-foreground)]',
         className,
       )}
       {...props}
