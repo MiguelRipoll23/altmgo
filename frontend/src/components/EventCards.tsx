@@ -67,7 +67,7 @@ export function EventCards({
         <Link
           key={schedule.id}
           to={`${basePath}/${schedule.id}`}
-          className="group flex flex-col gap-3 rounded-xl border border-border bg-card/50 px-4 py-4 transition hover:border-primary/40 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="group flex flex-col gap-3 rounded-xl border border-border bg-card/50 px-4 py-4 transition hover:border-primary/40 hover:bg-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="text-base font-extrabold tracking-tight text-foreground">

@@ -318,7 +318,7 @@ function ClanCard({ clan, basePath }: { clan: Clan; basePath: string }) {
   return (
     <Link
       to={`${basePath}/clans/${clan.id}`}
-      className="group flex h-full items-center gap-4 overflow-hidden rounded-xl border border-border bg-card/50 px-4 py-3.5 transition hover:border-primary/40 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="group flex h-full items-center gap-4 overflow-hidden rounded-xl border border-border bg-card/50 px-4 py-3.5 transition hover:border-primary/40 hover:bg-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <ClanEmblem clanId={clan.id} name={clan.name} hasEmblem={clan.hasEmblem} size="size-16" />
 

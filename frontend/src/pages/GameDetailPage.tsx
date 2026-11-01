@@ -177,21 +177,18 @@ export function GameDetailPage() {
             <TabsList>
               <TabsTrigger
                 value="players"
-                className="data-[state=active]:bg-[#007a96] data-[state=active]:text-white"
               >
                 <Users className="size-4" aria-hidden="true" />
                 Players
               </TabsTrigger>
               <TabsTrigger
                 value="playlist"
-                className="data-[state=active]:bg-[#007a96] data-[state=active]:text-white"
               >
                 <Gamepad2 className="size-4" aria-hidden="true" />
                 Map &amp; rules
               </TabsTrigger>
               <TabsTrigger
                 value="settings"
-                className="data-[state=active]:bg-[#007a96] data-[state=active]:text-white"
               >
                 Settings
               </TabsTrigger>

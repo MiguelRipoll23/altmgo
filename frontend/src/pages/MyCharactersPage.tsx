@@ -80,7 +80,7 @@ export function MyCharactersPage() {
             <li key={character.id}>
               <Link
                 to={`/dashboard/characters/${character.id}`}
-                className="group flex h-full flex-col gap-3 rounded-xl border border-border bg-card/50 px-4 py-4 transition hover:border-primary/40 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="group flex h-full flex-col gap-3 rounded-xl border border-border bg-card/50 px-4 py-4 transition hover:border-primary/40 hover:bg-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <div className="flex flex-wrap items-center gap-2">
                   <h2 className="text-base font-extrabold tracking-tight text-foreground">
