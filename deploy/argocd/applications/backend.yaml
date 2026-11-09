@@ -14,7 +14,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: ssh://git@github.com/MiguelRipoll23/altmgo.git
+    repoURL: https://github.com/MiguelRipoll23/altmgo.git
     targetRevision: main
     path: deploy/backend
   destination:
